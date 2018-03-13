@@ -1,4 +1,4 @@
-x% Setup
+% Setup
 \documentclass{article}
 
 % Packages
@@ -31,8 +31,8 @@ Recently an application of GANs to unsupervised audio generation introduced the 
 \newline
 \newline
 In an unconditioned generative model such as that produced for the initial WaveGAN, there is no control on the modes of data being generated.
-Conditioning of GANs to produce controllable generated output has been previously demonstrated on image generation applications (Mirza et al., 2014).
-Mirza et al. were able to succesfully control the output of a single GAN trained generative model to output 
+There are now two proposed models for controlling the output of a GAN: Conditional GAN and Controllable GAN.
+Currently it has not been demonstrated which of the two is most capable.
 
 \section{Related Work}
 
@@ -43,6 +43,15 @@ The time domain strategy was an approach that operated on the raw audio; this wa
 \newline
 \newline
 WaveGAN was adapted from a Deep Convolutional GAN model (Radford et al., 2016) that has been shown to produce convincing generation of scenes.
+\newline
+\newline
+Conditioning of GANs to produce controllable generated output has been previously demonstrated on image generation applications (Mirza et al., 2014).
+Mirza et al. were able to succesfully control the output of a single GAN trained generative model by inserting 1-hot vectors alongside random input into the generator.
+\newline
+\newline
+A recently proposed and tested approach is the Controllable Generative Adversarial Network (Lee et al., 2017).
+CGAN uses a three network model with a classifier network introduced alongside the regular generator and discriminator.
+Examples of compared output from both conditional and controllable GANs are shown in the paper but no rigorous evaluation is offered.
 
 \section{Hazards}
 
@@ -130,6 +139,8 @@ This would require the model to learn a further dimension of the sounds and woul
   Engel, Jesse, Resnick, Cinjon, Roberts, Adam, Dieleman, Sander, Eck, Douglas, Simonyan, Karen, and Norouzi, Mohammad. Neural audio synthesis of musical notes with WaveNet autoencoders. In ICML, 2017.
 \item
   Goodfellow, Ian, Pouget-Abadie, Jean, Mirza, Mehdi, Xu, Bing, Warde-Farley, David, Ozair, Sherjil, Courville, Aaron, and Bengio, Yoshua. Generative adversarial networks. In NIPS, 2014.
+\item
+  Lee, Minhyeok, Seok, Junhee. Controllable Generative Adversarial Network. 2017.
 \item
   Radford, Alec, Metz, Luke, and Chintala, Soumith. Unsupervised representation learning with deep convolutional generative adversarial networks. In ICLR, 2016.
 \item
