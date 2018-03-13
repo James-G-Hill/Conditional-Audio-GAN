@@ -1,5 +1,10 @@
-% Setup
+x% Setup
 \documentclass{article}
+
+% Packages
+\usepackage{hyperref}
+\usepackage[hyphenbreaks]{breakurl}
+
 
 % Document Information
 \title{Conditional WaveGAN}
@@ -39,15 +44,100 @@ The time domain strategy was an approach that operated on the raw audio; this wa
 \newline
 WaveGAN was adapted from a Deep Convolutional GAN model (Radford et al., 2016) that has been shown to produce convincing generation of scenes.
 
+\section{Hazards}
+
+The initial WaveGAN model was run for 4 days on an NVIDIA P100 GPU before converging (on sale for upwards of £6k at the time of writing).
+It is possible that this level of processing power will not be available.
+\newline
+\newline
+Firstly, the experiment can prove the concept of a conditional WaveGAN without using the full dataset used for the creation of the initial WaveGAN.
+The initial dataset used words for numbers zero through nine.
+A lower count of words may be chosen; two words only should be enough to prove the concept.
+\newline
+\newline
+Secondly, in order to reduce the amount of data to be processed, the experiment may also use downsampled versions of the dataset.
+Downsampling of audio may reduces the definition and will reduce the perceived quality (at least at the lower sample rates that would be needed in this case).
+This will not limits the validity of the experiment and resulting model however because the perceived audio quality is not a key measurement.
+
+\section{Experiment}
+
+\subsection{Preliminary Testing}
+
+Initially, a replica of the initial unsupervised WaveGAN will be trained.
+It will use near identical structure and hyperparameters as the model produced by Donahue et al.
+Unlike the original model it will be trained only on two of the numbers from the dataset: zero and one.
+Zero and one are chosen as they are the binary numbers, have different sounds, and also differ in number of syllables.
+The process of creating this initial model will allow for familiarization of the process of producing a mode from code to runtime; any difficulties encountered should be encountered and overcome within a simplified setting. 
+\newline
+\newline
+The second model will introduce conditioning into the original model.
+The new model will be similar to the first but with the introduction of an additional input layer that gives class labels to the zero and one.
+This model will be trained as a simplified version of a full conditional GAN; again this only uses two of the possible numbers.
+If successful, this model will prove that the concept of a conditional WaveGAN is sound.
+
+\subsection{Full Model}
+
+The full conditional WaveGAN model will be an expansion of the concept model previously produced.
+This model will use the full ten words for the numbers from ``zero'' through ``nine''.
+Ideally this model would be output at a sample rate equivalent to that used by Donahue et al. for the original WaveGAN model to allow for comparative evaluation of samples between models.
+This may not be possible however if there is a requirement to use lower sample rates for the audio.
+
+\subsection{Prototype Synthesizer}
+
+If there is time available after the completion of the full WaveGAN model, a further model can be created in an attempt to model a prototype of a 'synthesizer'.
+A synthesizer is an electronic musical instrument that artificially produces musical notes.
+Synthesizers make sounds that are consciouslly artificial, transparently artificial emulations of real instruments, or fairly convincing emulations of real instruments.
+Synthesizers use different models with increasing fidelity to real instruments: AM, FM, and physically modelled.
+\newline
+\newline
+A real synthesizer would be able to produce musical notes over a range of octaves each with the 12 notes of the Western musical scale.
+In order to simplify the experiment, an attempt would be made to only reproduce a simulation of the notes of a single instrument over a single scale (7 notes).
+(If possible, a single octave (12 notes) may be trained but due to the size of the dataset a smaller range of notes would likely be more attainable for this intial experiment.)
+\newline
+\newline
+Data for this model would be drawn from the NSynth dataset.
+
+\section{Evaluation}
+
+Evaluation of a Conditional WaveGAN that can generate words will be by comparing the quality of the reproduced sounds against those of the original WaveGAN.
+If downsampling has taken place, then an equivalent downsampling of the generated sounds from the original WaveGAN may also take place in order that comparisons are fair.
+This is acceptable as the comparison is between sets of generated samples and not against the absolute standard of real data.
+
+\section{Datasets}
+
+For the concept model, the dataset \textit{Speech Commands Zero Through Nine} (SC09) introduced by Donahue et al. will be used.
+This is a subset of the \textit{Speech Commands Dataset} (Warden, 2017) containing only the words for numbers ``zero'' through ``nine''.
+There are 1850 utterances of each word.
+Each utterance is one second in length.
+This results in 5.3 hours of speech.
+\newline
+\newline
+NSynth is a large-scale dataset of musical notes (Engel et al., 2017).
+It contains ~300k four-second annotated notes samples at 16kHz from ~1k harmonic music instruments.
+
+\section{Future Work}
+
+Further experimentation with a synthesizer would be possible by also introducing velocity as a second dimension of the conditional input (velocity relates to the hardness with which a musical note is played on an instrucment).
+This would require the model to learn a further dimension of the sounds and would be prototype for ultimately more realistic synthesizers.
+
 \section{References}
 
-Donahue, Chris, McAuley, Julian, Puckette, Miller. Synthesizing Audio with Generative Adversarial Networks.
-\newline
-\newline
-Goodfellow, Ian, Pouget-Abadie, Jean, Mirza, Mehdi, Xu, Bing, Warde-Farley, David, Ozair, Sherjil, Courville, Aaron, and Bengio, Yoshua. Generative adversarial networks. In NIPS, 2014.
-\newline
-\newline
-Radford, Alec, Metz, Luke, and Chintala, Soumith. Unsupervised representation learning with deep convolutional generative adversarial networks. In ICLR, 2016.
+\begin{enumerate}
+
+\item
+  Donahue, Chris, McAuley, Julian, Puckette, Miller. Synthesizing Audio with Generative Adversarial Networks.
+\item
+  Engel, Jesse, Resnick, Cinjon, Roberts, Adam, Dieleman, Sander, Eck, Douglas, Simonyan, Karen, and Norouzi, Mohammad. Neural audio synthesis of musical notes with WaveNet autoencoders. In ICML, 2017.
+\item
+  Goodfellow, Ian, Pouget-Abadie, Jean, Mirza, Mehdi, Xu, Bing, Warde-Farley, David, Ozair, Sherjil, Courville, Aaron, and Bengio, Yoshua. Generative adversarial networks. In NIPS, 2014.
+\item
+  Radford, Alec, Metz, Luke, and Chintala, Soumith. Unsupervised representation learning with deep convolutional generative adversarial networks. In ICLR, 2016.
+\item
+  Warden, Pete. Speech commands dataset.
+\burl{https://research.googleblog.com/2017/08/launching-speech-commands-dataset.html}, 2017.
+Accessed:
+
+\end{enumerate}
 
 % Wrapup
 \end{document}
