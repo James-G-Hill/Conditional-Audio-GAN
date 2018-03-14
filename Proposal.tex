@@ -5,9 +5,8 @@
 \usepackage{hyperref}
 \usepackage[hyphenbreaks]{breakurl}
 
-
 % Document Information
-\title{Conditional WaveGAN}
+\title{Sample Selection with WaveGAN}
 \author{James Hill}
 \date{}
 
@@ -30,9 +29,10 @@ Generative Adversarial Networks (Goodfellow et al., 2014) are unsupervised algor
 Recently an application of GANs to unsupervised audio generation introduced the WaveGAN model (Donahue et al., 2018) which was shown to successfully capture (and generate) words from a real data distribution for small-vocabulary speech.
 \newline
 \newline
-In an unconditioned generative model such as that produced for the initial WaveGAN, there is no control on the modes of data being generated.
-There are now two proposed models for controlling the output of a GAN: Conditional GAN and Controllable GAN.
-Currently it has not been demonstrated which of the two is most capable.
+In an unsupervised generative model such as the initial WaveGAN there is no control on the modes of data (output) being generated.
+\newline
+\newline
+There are now two proposed models for controlling the output of a GAN: Conditional GAN and Controllable GAN but it has not yet been demonstrated which is most capable of giving the best results.
 
 \section{Related Work}
 
@@ -53,22 +53,11 @@ A recently proposed and tested approach is the Controllable Generative Adversari
 CGAN uses a three network model with a classifier network introduced alongside the regular generator and discriminator.
 Examples of compared output from both conditional and controllable GANs are shown in the paper but no rigorous evaluation is offered.
 
-\section{Hazards}
+\section{Presentation of the Problem}
 
-The initial WaveGAN model was run for 4 days on an NVIDIA P100 GPU before converging (on sale for upwards of £6k at the time of writing).
-It is possible that this level of processing power will not be available.
-\newline
-\newline
-Firstly, the experiment can prove the concept of a conditional WaveGAN without using the full dataset used for the creation of the initial WaveGAN.
-The initial dataset used words for numbers zero through nine.
-A lower count of words may be chosen; two words only should be enough to prove the concept.
-\newline
-\newline
-Secondly, in order to reduce the amount of data to be processed, the experiment may also use downsampled versions of the dataset.
-Downsampling of audio may reduces the definition and will reduce the perceived quality (at least at the lower sample rates that would be needed in this case).
-This will not limits the validity of the experiment and resulting model however because the perceived audio quality is not a key measurement.
-
-\section{Experiment}
+The goal of the project is to produce the best possible WaveGAN model capable of generating different outputs as controlled by the user.
+There are two existing methodologies for achieving this: Conditional GAN and Controllable GAN.
+An essential part of the project is to determine through experimentation whether either of these, or any other possible model, will produce the best results.
 
 \subsection{Preliminary Testing}
 
@@ -100,7 +89,7 @@ Synthesizers use different models with increasing fidelity to real instruments: 
 \newline
 \newline
 A real synthesizer would be able to produce musical notes over a range of octaves each with the 12 notes of the Western musical scale.
-In order to simplify the experiment, an attempt would be made to only reproduce a simulation of the notes of a single instrument over a single scale (7 notes).
+In order to simplify the experiment, an attempt would be made to only reproduce a simulation of the notes of a single instrument over a single scale (8 notes with 1st and last note repeated).
 (If possible, a single octave (12 notes) may be trained but due to the size of the dataset a smaller range of notes would likely be more attainable for this intial experiment.)
 \newline
 \newline
@@ -111,6 +100,21 @@ Data for this model would be drawn from the NSynth dataset.
 Evaluation of a Conditional WaveGAN that can generate words will be by comparing the quality of the reproduced sounds against those of the original WaveGAN.
 If downsampling has taken place, then an equivalent downsampling of the generated sounds from the original WaveGAN may also take place in order that comparisons are fair.
 This is acceptable as the comparison is between sets of generated samples and not against the absolute standard of real data.
+
+\section{Potential Hazards}
+
+The initial WaveGAN model was run for 4 days on an NVIDIA P100 GPU before converging (on sale for upwards of £6k at the time of writing).
+It is possible that this level of processing power will not be available.
+\newline
+\newline
+Firstly, the experiment can prove the concept of a conditional WaveGAN without using the full dataset used for the creation of the initial WaveGAN.
+The initial dataset used words for numbers zero through nine.
+A lower count of words may be chosen; two words only should be enough to prove the concept.
+\newline
+\newline
+Secondly, in order to reduce the amount of data to be processed, the experiment may also use downsampled versions of the dataset.
+Downsampling of audio may reduces the definition and will reduce the perceived quality (at least at the lower sample rates that would be needed in this case).
+This will not limits the validity of the experiment and resulting model however because the perceived audio quality is not a key measurement.
 
 \section{Datasets}
 
