@@ -49,43 +49,60 @@ A recently proposed and tested approach is the Controllable Generative Adversari
 CGAN uses a three network model with a classifier network introduced alongside the regular generator and discriminator.
 Examples of compared output from both conditional and controllable GANs are shown in the paper but no rigorous evaluation is offered.
 
-\section{Presentation of the Problem}
+\section{Objectives}
 
-\subsection{Preliminary Testing}
+The project is split into stages: the main goal is to produce all three models with the maximum possible number of data modes (number of spoken words trained); equivalent to stage 3.4 below.
+
+\subsection{Baseline WaveGAN}
 
 Initially, a replica of the initial unsupervised WaveGAN will be trained.
 It will use near identical structure and hyperparameters as the model produced by Donahue et al.
 Unlike the original model it will be trained only on two of the numbers from the dataset: zero and one.
 Zero and one are chosen as they are the binary numbers, have different sounds, and also differ in number of syllables.
+\newline
+\newline
 The process of creating this initial model will allow for familiarization of the process of producing a mode from code to runtime; any difficulties encountered should be encountered and overcome within a simplified setting. 
-\newline
-\newline
+
+\subsection{Conditioned WaveGAN}
+
 The second model will introduce conditioning into the original model.
-The new model will be similar to the first but with the introduction of an additional input layer that gives class labels to the zero and one.
-This model will be trained as a simplified version of a full conditional GAN; again this only uses two of the possible numbers.
-If successful, this model will prove that the concept of a conditional WaveGAN is sound.
-
-\subsection{Full Model}
-
-The full conditional WaveGAN model will be an expansion of the concept model previously produced.
-This model will use the full ten words for the numbers from ``zero'' through ``nine''.
-Ideally this model would be output at a sample rate equivalent to that used by Donahue et al. for the original WaveGAN model to allow for comparative evaluation of samples between models.
-This may not be possible however if there is a requirement to use lower sample rates for the audio.
-
-\subsection{Prototype Synthesizer}
-
-If there is time available after the completion of the full WaveGAN model, a further model can be created in an attempt to model a prototype of a 'synthesizer'.
-A synthesizer is an electronic musical instrument that artificially produces musical notes.
-Synthesizers make sounds that are consciouslly artificial, transparently artificial emulations of real instruments, or fairly convincing emulations of real instruments.
-Synthesizers use different models with increasing fidelity to real instruments: AM, FM, and physically modelled.
+The new model will be a WaveGAN but with the introduction of an additional input layer that conditions the randomly generated input.
+This model will also be trained as a simplified version using only ``zero'' and ``one''.
 \newline
 \newline
-A real synthesizer would be able to produce musical notes over a range of octaves each with the 12 notes of the Western musical scale.
-In order to simplify the experiment, an attempt would be made to only reproduce a simulation of the notes of a single instrument over a single scale (8 notes with 1st and last note repeated).
-(If possible, a single octave (12 notes) may be trained but due to the size of the dataset a smaller range of notes would likely be more attainable for this intial experiment.)
+Once complete, the model will be evaluated against the Baseline model; it's expected (given the results of the initial Conditioned GAN created by Mirza et al.) that this model will intially produce generated samples less powerful than those created by the baseline WaveGan.
+This is acceptable as future exploration of the hyperparameters out of the scope of this experiment would be necessary as to produce better models.
+
+\subsection{Controlled WaveGAN}
+
+The third model will be a Controlled GAN trained on the same dataset of spoken ``zero'' and ``one''.
+If successful then the model will be evaluated for quality against both the baseline model and the Conditioned GAN.
+It is again expected that the initial model would be inferior to the baseline model.
+However, it will be interesting to compare against the Conditioned WaveGAN as a claim has been made that it should be a superior method for training GANs with conditioning.
+
+\subsection{Enlarged Models}
+
+Once all models have been produced and initially evaluated, an enlargement of the number of words used for their training will be considered.
+Ideally, the full set of spoken numbers from ``zero'' through ``nine'' would be used but this may not be possible with the available computational power.
+A decision will need to be made based on experimentation an dinformed by previous experience of the model training.
 \newline
 \newline
-Data for this model would be drawn from the NSynth dataset.
+If downsampling was used to increase the speed of model training previously, an increase in sample size may also be considered at this point.
+Ideally the sample size of the original dataset without any downsampling would be used.
+Again, experimentation and judgement based on previous experience will be necessary in order to decide on the best approach.
+\newline
+\newline
+Evaluation of the results would then be required on the final sets of generated samples: between the Conditional WaveGAN and baseline WaveGAN; between the Controlled WaveGAN and baseline WaveGAN; and between the Conditional WaveGAN and Controlled WaveGAN.
+
+\subsection{Further Work: Prototype Synthesizer}
+
+If time is available after the completion and evaluation of the three models then further work can encompass testing the creation of a prototype synthesizer.
+A synthesizer is an electronic or digital audio generator that can be controlled by pitch (most commonly by an electronic keyboard but other methods are available).
+Using the best of either the Conditional WaveGAN or Controlled WaveGAN models, training will take place over a subset of the NSynth dataset (Engel et al, 2017).
+\newline
+\newline
+The goal will be the training of a model that can be controlled by musical pitch.
+The resulting sounds should likely be limited to a relatively small musical range (perhaps a single octave of 12 notes) and a single type or family of musical instruments (one with a relatively simple frequency response).
 
 \section{Evaluation}
 
@@ -100,13 +117,15 @@ It is possible that this level of processing power will not be available.
 \newline
 \newline
 Firstly, the experiment can prove the concept of a conditional WaveGAN without using the full dataset used for the creation of the initial WaveGAN.
-The initial dataset used words for numbers zero through nine.
-A lower count of words may be chosen; two words only should be enough to prove the concept.
+The initial dataset for WaveGAN used words for numbers ``zero'' through ``nine''.
+To reduce the computational requirements a lower count of words may be chosen for the experiment.
+Two words, ``zero'' and ``one'' can be used to prove that the models work and should allow for comparison of generated sample quality.
+If the models are successful and if it seems sensible then the number of words used for the training of the models may be increased.
 \newline
 \newline
 Secondly, in order to reduce the amount of data to be processed, the experiment may also use downsampled versions of the dataset.
-Downsampling of audio may reduces the definition and will reduce the perceived quality (at least at the lower sample rates that would be needed in this case).
-This will not limits the validity of the experiment and resulting model however because the perceived audio quality is not a key measurement.
+Downsampling of audio reduces the definition and perceived quality (at least at the lower sample rates that might be needed in this case) but can reduce the .
+However, this should not limit the validity of the experiment because the perceived audio quality is not a key measurement; the difference in quality between models is of prime importance.
 
 \section{Datasets}
 
@@ -128,8 +147,8 @@ Audio samples used in the evaluation of the results will be presented in a Jupyt
 
 \section{Future Work}
 
-Further experimentation with a synthesizer would be possible by also introducing velocity as a second dimension of the conditional input (velocity relates to the hardness with which a musical note is played on an instrucment).
-This would require the model to learn a further dimension of the sounds and would be prototype for ultimately more realistic synthesizers.
+Further experimentation with a WaveGAN synthesizer would be possible by also introducing velocity as a second dimension of the conditional input (velocity relates to the force with which a musical note is played on an instrument).
+This would require the model to learn a further dimension of the sounds and would be a prototype for more realistic synthesizers.
 
 \section{References}
 
