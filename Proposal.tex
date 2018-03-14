@@ -18,21 +18,19 @@
 \section{Introduction}
 
 Generated audio has potential practical applications such as text-to-speech and digital audio music production.
-\newline
-\newline
 A practical audio generator would need to respond to an input and generate a corresponding output: written words could produce spoken words; digital audio commands (midi) could produce musical notes as played by a musical instrument.
 \newline
 \newline
 Generative Adversarial Networks (Goodfellow et al., 2014) are unsupervised algorithms that have produced consistently improved results for image generation.
-\newline
-\newline
 Recently an application of GANs to unsupervised audio generation introduced the WaveGAN model (Donahue et al., 2018) which was shown to successfully capture (and generate) words from a real data distribution for small-vocabulary speech.
 \newline
 \newline
 In an unsupervised generative model such as the initial WaveGAN there is no control on the modes of data (output) being generated.
-\newline
-\newline
 There are now two proposed models for controlling the output of a GAN: Conditional GAN and Controllable GAN but it has not yet been demonstrated which is most capable of giving the best results.
+\newline
+\newline
+The goal of the project is to produce the best possible WaveGAN model capable of generating controlled outputs as using either of the two methodologies for achieving this.
+An essential part of the project is to determine through experimentation which of these will produce the best results.
 
 \section{Related Work}
 
@@ -40,12 +38,10 @@ Generative Adversarial Networks were recently tested for audio applications for 
 Two strategies were tested: a frequency domain strategy and a time domain strategy.
 The frequency domain strategy was based on a naive application of image generating GAN methods to spectograms.
 The time domain strategy was an approach that operated on the raw audio; this was the basis of the WaveGAN model.
-\newline
-\newline
 WaveGAN was adapted from a Deep Convolutional GAN model (Radford et al., 2016) that has been shown to produce convincing generation of scenes.
 \newline
 \newline
-Conditioning of GANs to produce controllable generated output has been previously demonstrated on image generation applications (Mirza et al., 2014).
+Conditioning of GANs to produce controllable generated output was first demonstrated on image generation applications (Mirza et al., 2014).
 Mirza et al. were able to succesfully control the output of a single GAN trained generative model by inserting 1-hot vectors alongside random input into the generator.
 \newline
 \newline
@@ -54,10 +50,6 @@ CGAN uses a three network model with a classifier network introduced alongside t
 Examples of compared output from both conditional and controllable GANs are shown in the paper but no rigorous evaluation is offered.
 
 \section{Presentation of the Problem}
-
-The goal of the project is to produce the best possible WaveGAN model capable of generating different outputs as controlled by the user.
-There are two existing methodologies for achieving this: Conditional GAN and Controllable GAN.
-An essential part of the project is to determine through experimentation whether either of these, or any other possible model, will produce the best results.
 
 \subsection{Preliminary Testing}
 
@@ -132,7 +124,7 @@ It contains ~300k four-second annotated notes samples at 16kHz from ~1k harmonic
 
 The models will be designed with the TensorFlow machine intelligence package for Python programming language.
 Analysis of results will use a statistical language such as Python with extensions or possibly R programming language.
-Audio samples used in the evaluation of the results will be presented in a Jupyter Notebook format so that the reader may form their own judgement of the quality difference between outputs from each model.g
+Audio samples used in the evaluation of the results will be presented in a Jupyter Notebook format so that the reader may form their own judgement of the quality difference between outputs from each model.
 
 \section{Future Work}
 
