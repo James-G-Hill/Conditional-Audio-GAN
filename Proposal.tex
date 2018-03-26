@@ -4,6 +4,11 @@
 % Packages
 \usepackage{hyperref}
 \usepackage[hyphenbreaks]{breakurl}
+\usepackage{soul}
+\usepackage{xcolor}
+
+% Settings
+\sethlcolor{red}
 
 % Document Information
 \title{Sample Selection with WaveGAN}
@@ -31,10 +36,17 @@ There are now two proposed models for controlling the output of a GAN: Condition
 \newline
 The goal of the project is to produce the best possible WaveGAN model capable of generating controlled outputs as using either of the two methodologies for achieving this.
 An essential part of the project is to determine through experimentation which of these will produce the best results.
+\newline
+\newline
+This project will be submitted to complete the MSc Intelligent Technologies pathway of the MSc Advanced Computing Technologies degree.
+The work builds from the theoretical foundations provided in the Intelligent Technologies module (now Machine Learning) which is taught by George Magoulas.
 
 \section{Related Work}
 
-Generative Adversarial Networks were recently tested for audio applications for the first time by Donahue et al.
+Deep neural network models have already been applied to the problem of audio generation: the WaveNet autoencoder (Oord et al., 2016) was introduced as an autoregressive model operating directly on raw audio waveform; this has been further developed into a model that can generate musical notes (Engel et al., 2017).
+\newline
+\newline
+Generative Adversarial Networks have also been recently tested for audio generation (Donahue et al., 2018).
 Two strategies were tested: a frequency domain strategy and a time domain strategy.
 The frequency domain strategy was based on a naive application of image generating GAN methods to spectograms.
 The time domain strategy was an approach that operated on the raw audio; this was the basis of the WaveGAN model.
@@ -48,6 +60,22 @@ Mirza et al. were able to succesfully control the output of a single GAN trained
 A recently proposed and tested approach is the Controllable Generative Adversarial Network (Lee et al., 2017).
 CGAN uses a three network model with a classifier network introduced alongside the regular generator and discriminator.
 Examples of compared output from both conditional and controllable GANs are shown in the paper but no rigorous evaluation is offered.
+
+\section{Datasets}
+
+The dataset used for this project will be a custom downsampled version of the dataset \textit{Speech Commands Zero Through Nine} (SC09) introduced by Donahue et al. will be used.
+That subset was itself a subset of the \textit{Speech Commands Dataset} (Warden, 2017) containing only the words for numbers ``zero'' through ``nine''.
+There are 1850 utterances of each word with each utterance being one second in length.
+This results in 5.3 hours of speech.
+\newline
+\newline
+The custom version of this dataset will be downsampled from 16000 samples per second to 8000 samples per second.
+The most recognisable frequencies of the human voice which are identifiable as speech are within 4000hz (cycles per second).
+Each cycle requires two samples to be recorded, so a file with 8000 samples per second is sufficient to capture the main properties of the human voice.
+The benefit of using a sample size half of the original sample size is that the training time should be reduced; this is equivalent to using smaller image sizes for testing the training of convolution neural networks for image recognition.
+\newline
+\newline
+The name for this downsampled dataset will be \textit{Downsampled Speech Commands Zero Through Nine}.
 
 \section{Objectives}
 
@@ -96,48 +124,64 @@ Evaluation of the results would then be required on the final sets of generated 
 
 \subsection{Further Work: Prototype Synthesizer}
 
+\hl{
 If time is available after the completion and evaluation of the three models then further work can encompass testing the creation of a prototype synthesizer.
 A synthesizer is an electronic or digital audio generator that can be controlled by pitch (most commonly by an electronic keyboard but other methods are available).
-Using the best of either the Conditional WaveGAN or Controlled WaveGAN models, training will take place over a subset of the NSynth dataset (Engel et al, 2017).
+Using the best of either the Conditional WaveGAN or Controlled WaveGAN models, training will take place over a subset of the NSynth dataset (Engel et al, 2017).}
 \newline
 \newline
+\hl{
 The goal will be the training of a model that can be controlled by musical pitch.
-The resulting sounds should likely be limited to a relatively small musical range (perhaps a single octave of 12 notes) and a single type or family of musical instruments (one with a relatively simple frequency response).
+The resulting sounds should likely be limited to a relatively small musical range (perhaps a single octave of 12 notes) and a single type or family of musical instruments (one with a relatively simple frequency response).}
 
 \section{Evaluation}
 
-Evaluation of a Conditional WaveGAN that can generate words will be by comparing the quality of the reproduced sounds against those of the original WaveGAN.
-If downsampling has taken place, then an equivalent downsampling of the generated sounds from the original WaveGAN may also take place in order that comparisons are fair.
-This is acceptable as the comparison is between sets of generated samples and not against the absolute standard of real data.
+Evaluation and comparison of generative models is difficult but essential.
+In any case, generated samples from both of the conitioned models will be compared against each other and to the samples generated from the baseline WaveGAN.
+\newline
+\newline
+Subjective evaluation is an appropriate approach for generational models and human assessment of random samples by subjects may be used, particularly to obtain preferences between the Conditional WaveGAN and Controlled WaveGAN.
+\newline
+\newline
+Audio is difficult to represent visually so an interactive notebook will also be produced that will allow readers to listen to samples of the audio and compare the results.
+This will allow the reader to also make a subjective evaluation of the results.
 
 \section{Potential Hazards}
 
 The initial WaveGAN model was run for 4 days on an NVIDIA P100 GPU before converging (on sale for upwards of £6k at the time of writing).
 It is possible that this level of processing power will not be available.
+Downsampling of the original dataset is one method to ameliorate this problem.
 \newline
 \newline
-Firstly, the experiment can prove the concept of a conditional WaveGAN without using the full dataset used for the creation of the initial WaveGAN.
+However, the experiment can prove the concept of a conditional WaveGAN without using the full dataset used for the creation of the initial WaveGAN.
 The initial dataset for WaveGAN used words for numbers ``zero'' through ``nine''.
 To reduce the computational requirements a lower count of words may be chosen for the experiment.
 Two words, ``zero'' and ``one'' can be used to prove that the models work and should allow for comparison of generated sample quality.
 If the models are successful and if it seems sensible then the number of words used for the training of the models may be increased.
 \newline
 \newline
-Secondly, in order to reduce the amount of data to be processed, the experiment may also use downsampled versions of the dataset.
-Downsampling of audio reduces the definition and perceived quality (at least at the lower sample rates that might be needed in this case) but can reduce the .
-However, this should not limit the validity of the experiment because the perceived audio quality is not a key measurement; the difference in quality between models is of prime importance.
+Through the two methods of downsampling and using a smaller data set confined to only two modes of data it should be possible to bring computation time down by one half multiplied by one fifth, so to one tenth of the original calculation time.
+With four data modes: ``zero'' through ``three'', the computational time should still be brought down to within one firth of the time used in the training of the original WaveGAN model.
+\newline
+\newline
+\hl{Secondly, in order to reduce the amount of data to be processed, the experiment may also use downsampled versions of the dataset.
+Downsampling of audio reduces the definition and perceived quality (at least at the lower sample rates that might be needed in this case) but will reduce the amount of data to be trained in the networks.
+This shouldn't limit the validity of the experiment because perceived audio quality is not a key measurement; the difference in quality between models is of prime importance.}
 
 \section{Datasets}
 
+\hl{
 For the concept model, the dataset \textit{Speech Commands Zero Through Nine} (SC09) introduced by Donahue et al. will be used.
 This is a subset of the \textit{Speech Commands Dataset} (Warden, 2017) containing only the words for numbers ``zero'' through ``nine''.
 There are 1850 utterances of each word.
 Each utterance is one second in length.
-This results in 5.3 hours of speech.
+This results in 5.3 hours of speech.}
 \newline
 \newline
+\hl{
 NSynth is a large-scale dataset of musical notes (Engel et al., 2017).
 It contains ~300k four-second annotated notes samples at 16kHz from ~1k harmonic music instruments.
+It is divided into a large number of musical instrument families.}
 
 \section{Technologies}
 
@@ -147,6 +191,15 @@ Audio samples used in the evaluation of the results will be presented in a Jupyt
 
 \section{Future Work}
 
+Further work would potentially encompass testing the creation of a prototype generative adversarial network trained synthesizer.
+A synthesizer is an electronic or digital audio generator that can be controlled by pitch (most commonly by an electronic keyboard but other methods are available).
+Using the best of either the Conditional WaveGAN or Controlled WaveGAN models, training could take place over a subset of the NSynth dataset (Engel et al, 2017).
+\newline
+\newline
+The goal would be the training of a model that can be controlled by musical pitch.
+The resulting sounds should likely be limited to a relatively small musical range (perhaps a single octave of 12 notes) and a single type or family of musical instruments (one with a relatively simple frequency response).
+\newline
+\newline
 Further experimentation with a WaveGAN synthesizer would be possible by also introducing velocity as a second dimension of the conditional input (velocity relates to the force with which a musical note is played on an instrument).
 This would require the model to learn a further dimension of the sounds and would be a prototype for more realistic synthesizers.
 
@@ -155,7 +208,7 @@ This would require the model to learn a further dimension of the sounds and woul
 \begin{enumerate}
 
 \item
-  Donahue, Chris, McAuley, Julian, Puckette, Miller. Synthesizing Audio with Generative Adversarial Networks.
+  Donahue, Chris, McAuley, Julian, Puckette, Miller. Synthesizing Audio with Generative Adversarial Networks. 2018.
 \item
   Engel, Jesse, Resnick, Cinjon, Roberts, Adam, Dieleman, Sander, Eck, Douglas, Simonyan, Karen, and Norouzi, Mohammad. Neural audio synthesis of musical notes with WaveNet autoencoders. In ICML, 2017.
 \item
