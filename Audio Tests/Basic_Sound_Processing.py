@@ -1,5 +1,5 @@
+from librosa import* 
 from pylab import*
-from scipy.io import wavfile
 
 
 def soundInfo(s, sf):
@@ -66,14 +66,10 @@ def _fastFourier(s, sf):
     return (p, freqArray)
 
 
-#def main():
-#    """ Create objects from data file """
-filePath = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/zero/'
-fileName = '0ab3b47d_nohash_0.wav'
-sf, s = wavfile.read(filePath + fileName)
+fileFolder = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/zero/'
+fileName   = '0ab3b47d_nohash_0.wav'
+filePath   = fileFolder + fileName
+s, sr      = core.load(filePath, sr=None)
 
-
-#if __name__ == '__main__':
-#    main()
 
 # exec(open('Basic_Sound_Processing.py').read())
