@@ -1,14 +1,11 @@
 % Setup
-\documentclass{article}
+\documentclass[titlepage]{article}
 
 % Packages
 \usepackage{hyperref}
 \usepackage[hyphenbreaks]{breakurl}
 \usepackage{soul}
-\usepackage{xcolor}
-
-% Settings
-\sethlcolor{red}
+\usepackage[dvipsnames]{xcolor}
 
 % Document Information
 \title{Sample Selection with WaveGAN}
@@ -61,22 +58,6 @@ A recently proposed and tested approach is the Controllable Generative Adversari
 CGAN uses a three network model with a classifier network introduced alongside the regular generator and discriminator.
 Examples of compared output from both conditional and controllable GANs are shown in the paper but no rigorous evaluation is offered.
 
-\section{Datasets}
-
-The dataset used for this project will be a custom downsampled version of the dataset \textit{Speech Commands Zero Through Nine} (SC09) introduced by Donahue et al. will be used.
-That subset was itself a subset of the \textit{Speech Commands Dataset} (Warden, 2017) containing only the words for numbers ``zero'' through ``nine''.
-There are 1850 utterances of each word with each utterance being one second in length.
-This results in 5.3 hours of speech.
-\newline
-\newline
-The custom version of this dataset will be downsampled from 16000 samples per second to 8000 samples per second.
-The most recognisable frequencies of the human voice which are identifiable as speech are within 4000hz (cycles per second).
-Each cycle requires two samples to be recorded, so a file with 8000 samples per second is sufficient to capture the main properties of the human voice.
-The benefit of using a sample size half of the original sample size is that the training time should be reduced; this is equivalent to using smaller image sizes for testing the training of convolution neural networks for image recognition.
-\newline
-\newline
-The name for this downsampled dataset will be \textit{Downsampled Speech Commands Zero Through Nine}.
-
 \section{Objectives}
 
 The project is split into stages: the main goal is to produce all three models with the maximum possible number of data modes (number of spoken words trained); equivalent to stage 3.4 below.
@@ -95,7 +76,7 @@ The process of creating this initial model will allow for familiarization of the
 
 The second model will introduce conditioning into the original model.
 The new model will be a WaveGAN but with the introduction of an additional input layer that conditions the randomly generated input.
-This model will also be trained as a simplified version using only ``zero'' and ``one''.
+This model will also be trained as a simplified version using only 'zero' and 'one'.
 \newline
 \newline
 Once complete, the model will be evaluated against the Baseline model; it's expected (given the results of the initial Conditioned GAN created by Mirza et al.) that this model will intially produce generated samples less powerful than those created by the baseline WaveGan.
@@ -111,7 +92,7 @@ However, it will be interesting to compare against the Conditioned WaveGAN as a 
 \subsection{Enlarged Models}
 
 Once all models have been produced and initially evaluated, an enlargement of the number of words used for their training will be considered.
-Ideally, the full set of spoken numbers from ``zero'' through ``nine'' would be used but this may not be possible with the available computational power.
+Ideally, the full set of spoken numbers from 'zero' through 'nine' would be used but this may not be possible with the available computational power.
 A decision will need to be made based on experimentation an dinformed by previous experience of the model training.
 \newline
 \newline
@@ -124,52 +105,120 @@ Evaluation of the results would then be required on the final sets of generated 
 
 \subsection{Further Work: Prototype Synthesizer}
 
+\sethlcolor{Lavender}
 \hl{
 If time is available after the completion and evaluation of the three models then further work can encompass testing the creation of a prototype synthesizer.
 A synthesizer is an electronic or digital audio generator that can be controlled by pitch (most commonly by an electronic keyboard but other methods are available).
-Using the best of either the Conditional WaveGAN or Controlled WaveGAN models, training will take place over a subset of the NSynth dataset (Engel et al, 2017).}
+Using the best of either the Conditional WaveGAN or Controlled WaveGAN models, training will take place over a subset of the NSynth dataset (Engel et al, 2017).
+}
 \newline
 \newline
 \hl{
 The goal will be the training of a model that can be controlled by musical pitch.
-The resulting sounds should likely be limited to a relatively small musical range (perhaps a single octave of 12 notes) and a single type or family of musical instruments (one with a relatively simple frequency response).}
+The resulting sounds should likely be limited to a relatively small musical range (perhaps a single octave of 12 notes) and a single type or family of musical instruments (one with a relatively simple frequency response).
+}
 
 \section{Evaluation}
 
 Evaluation and comparison of generative models is difficult but essential.
-In any case, generated samples from both of the conitioned models will be compared against each other and to the samples generated from the baseline WaveGAN.
+In any case, generated samples from both of the conditioned models will be compared against each other and to the samples generated from the baseline WaveGAN.
 \newline
 \newline
 Subjective evaluation is an appropriate approach for generational models and human assessment of random samples by subjects may be used, particularly to obtain preferences between the Conditional WaveGAN and Controlled WaveGAN.
 \newline
 \newline
+\sethlcolor{SpringGreen}
+\hl{
+  The Inception Score is another form of evaluation that can be used for comparing generated samples against real data samples and has been used in a number of experiments for generative adversarial networks.
+  Concerns have been recently raised about the validity of the Inception Score but as there is currently no other comparable alternative it will need to be used in this experiment but with some caution applied to interpretation of the results.
+}
+\newline
+\newline
 Audio is difficult to represent visually so an interactive notebook will also be produced that will allow readers to listen to samples of the audio and compare the results.
-This will allow the reader to also make a subjective evaluation of the results.
+This will allow the reader of the final reprot to also make a subjective evaluation of the results.
+\hl{
+  Nonetheless, as shown by Engel et al. it is still possible demonstrate differences between audio visually through the use of 'rainbowgrams'; constant-q transform (CQT) plots of the audio.
+  These 'rainbowgrams' will therefore also be explored during the evaluation for possible visible differences in the generated and real data samples and will be produced in the final report if they produce interesting comparisons.
+}
 
 \section{Potential Hazards}
 
+\sethlcolor{Lavender}
+\hl{
 The initial WaveGAN model was run for 4 days on an NVIDIA P100 GPU before converging (on sale for upwards of £6k at the time of writing).
 It is possible that this level of processing power will not be available.
 Downsampling of the original dataset is one method to ameliorate this problem.
+}
 \newline
 \newline
+\hl{
 However, the experiment can prove the concept of a conditional WaveGAN without using the full dataset used for the creation of the initial WaveGAN.
-The initial dataset for WaveGAN used words for numbers ``zero'' through ``nine''.
+The initial dataset for WaveGAN used words for numbers 'zero' through 'nine'.
 To reduce the computational requirements a lower count of words may be chosen for the experiment.
-Two words, ``zero'' and ``one'' can be used to prove that the models work and should allow for comparison of generated sample quality.
+Two words, 'zero' and 'one' can be used to prove that the models work and should allow for comparison of generated sample quality.
 If the models are successful and if it seems sensible then the number of words used for the training of the models may be increased.
+}
 \newline
 \newline
-Through the two methods of downsampling and using a smaller data set confined to only two modes of data it should be possible to bring computation time down by one half multiplied by one fifth, so to one tenth of the original calculation time.
-With four data modes: ``zero'' through ``three'', the computational time should still be brought down to within one firth of the time used in the training of the original WaveGAN model.
-\newline
-\newline
-\hl{Secondly, in order to reduce the amount of data to be processed, the experiment may also use downsampled versions of the dataset.
+\hl{
+Secondly, in order to reduce the amount of data to be processed, the experiment may also use downsampled versions of the dataset.
 Downsampling of audio reduces the definition and perceived quality (at least at the lower sample rates that might be needed in this case) but will reduce the amount of data to be trained in the networks.
 This shouldn't limit the validity of the experiment because perceived audio quality is not a key measurement; the difference in quality between models is of prime importance.}
 
 \section{Datasets}
 
+\sethlcolor{SpringGreen}
+\hl{
+  I propose the creation of three different datasets for use in this project.
+  Each of these datasets is a subset of the previously existing \textit{Speech Commands Dataset} (Warden, 2017) published by Google.
+  A difference between these datasets and the original dataset is that all audio samples will be downsampled in order to decrease their size and the computational cost of running the experiments.
+}
+\newline
+\newline
+\hl{
+  The first of the datasets that I propose I name \textit{Downsampled Speech Commands Binary}.
+  This is the smallest dataset I propose and includes only the words for the numbers 'zero' and 'one' from the original \textit{Speech Commands Dataset}.
+  With only two different modes of data to discriminate between and generate, this is the simplest possible dataset which can be used to perform this experiment.
+  It is a neat dataset as it conforms to the binary numbers, has words of different syllabile count, and is also a subset of the \textit{Speech Commands Zero Through Nine} (SC09) introduced by Donahue et al.
+}
+\newline
+\newline
+\hl{
+  The second of the datasets that I propose I name \textit{Downsampled Speech Commands Directions}.
+  This dataset contains four directional commands from the \textit{Speech Commands Dataset}: 'up', 'down', 'left' and 'right'.
+  This dataset is double the size of the \textit{Downsampled Speech Commands Binary} dataset so will be used to expand the complexity of the experiment while still being limited enough to restrict potential computational cost.
+}
+\newline
+\newline
+\hl{
+  The third of the datasets that I propose is a \textit{Downsampled Speech Commands Zero Through Nine} dataset based on the \textit{Speech Commands Zero Through Nine} (SC09) introduced by Donahue et al.
+  The only variation between this and the original dataset it is based on is the downsampling of the audio files.
+}
+\newline
+\newline
+\hl{
+  The downsampled versions of these datasets downsample the audio files from 16000 samples per second.
+  Each cycle requires two samples to be recorded, so audio with 16000 samples per second is able to capture 8000hz.
+  The most recognisable frequencies of the human voice which are identifiable as speech are within a range up to 3000hz or 4000hz.
+  Downsampling to cover these ranges would therefore take the audio file samples per second from 16000 samples per second to between 6000 to 8000 samples per second.
+  Downsampling to 3000hz leaves a still recognizable voice and words but the resulting is noticeably 'deeper' and subjectively unnatural compared to sampeles at 4000hz.
+}
+\newline
+\newline
+\hl{
+  The purpose of downsampling is to reduce the size of the samples that the neural networks need to be trained on: this is equivalent to using smaller image sizes for testing the training of convolution neural networks for image recognition.
+  These proposed downsampled and limited datasets are therefore more computationally cost efficient and less expensive to experiment on; a real benefit for students of deep learning who will likely have no free access to the powerful GPUs that many deep learning experiments are run on.
+}
+\newline
+\newline
+\hl{
+  Reduction of the sample file size to 6000 rather than 8000 samples per second is therefore more desirable for the purpose of creating a more computationally cost efficient experiment.
+  However, the relatively unnatural sound of lower sample rates could potentially have an impact on any experiment evaluation involving human subjects listening and comparing audio samples.
+  For example, if the subject was requested to evaluate how natural a generated audio sample compares to a recorded sample, the noticeably lower audio quality of the 3000hz samples could confound the results: the subject may consider even the recorded sample to sound generated.
+}
+\newline
+\newline
+\sethlcolor{Lavender}
 \hl{
 For the concept model, the dataset \textit{Speech Commands Zero Through Nine} (SC09) introduced by Donahue et al. will be used.
 This is a subset of the \textit{Speech Commands Dataset} (Warden, 2017) containing only the words for numbers ``zero'' through ``nine''.
@@ -183,6 +232,46 @@ NSynth is a large-scale dataset of musical notes (Engel et al., 2017).
 It contains ~300k four-second annotated notes samples at 16kHz from ~1k harmonic music instruments.
 It is divided into a large number of musical instrument families.}
 
+\section{Finance}
+
+\sethlcolor{SpringGreen}
+\hl{
+  The financing of a deep learning experiment must be taken into consideration as the cost of computation can be expensive.
+  For example, the training of the original WaveGAN network by Donahue et al. required four days of calculation on an NVIDIA P100 GPU before convergence.
+  At the time of writing, an NVIDIA P100 GPU is on sale for approximatley \$5,500 on Amazon.com.
+  It is therefore essential to bring down the potential cost of the experiment.
+}
+\newline
+\newline
+\hl{
+  The creation of downsampled datasets for running the experiment is the first method of reducing the overall cost.
+  Downsampling can reduce the datasets to between 3/8s and 1/2 of the original size and should result in a similar reduction of the computation.
+}
+\newline
+\newline
+\hl{
+  The reduction of the number of modes of the data from ten in the original \textit{Speech Commands Zero Through Nine} dataset to two in the proposed \textit{Downsampled Speech Commands Binary} dataset and four in the \textit{Downsampled Speech Commands Directions} will also decrease the cost of the experiment.
+  The two mode dataset could reduce the final computation time to one fifth of the original undertaken by Donahue et al. while the four mode dataset would be two fifths of the computation time.
+}
+\newline
+\newline
+\hl{
+  With the proposed downsampling rates and limited datasets, the final time requirement for training of the initial WaveGAN on a similarly powered GPU could potentially be brought down to between 3/40ths and 1/5th.
+}
+\newline
+\newline
+\hl{
+  A GPU is available for use in this experiment: it is an NVIDIA GPU that can be used with CUDA (Compute Unified Device Architecture) with a compute capability of 2.1 (compared to a compute capability of 6.0 for an NVIDIA P100 GPU.
+  This is a substantially less powerful GPU but may be useful for at least running trials and the training of simpler models such as the discriminator networks for the variations on the WaveGAN model.
+}
+\newline
+\newline
+\hl{
+  Where the available GPU is insufficient, the experiment can be performed on cloud GPU.
+  For example, at the time of writing,} \href{https://cloud.google.com/gpu/}{Google Cloud} \hl{has NVIDIA P100 GPUs available at \$0.73 for preemptible instances that can be used for batch based processing.
+  There are other services available such as Amazon Web Services: the choice of service will need to consider the ease of use of the service, compatibility with the tools being used, and the relative pricing at time of running the experiment.
+}
+
 \section{Technologies}
 
 The models will be designed with the TensorFlow machine intelligence package for Python programming language.
@@ -191,9 +280,12 @@ Audio samples used in the evaluation of the results will be presented in a Jupyt
 
 \section{Future Work}
 
+\sethlcolor{Goldenrod}
+\hl{
 Further work would potentially encompass testing the creation of a prototype generative adversarial network trained synthesizer.
 A synthesizer is an electronic or digital audio generator that can be controlled by pitch (most commonly by an electronic keyboard but other methods are available).
 Using the best of either the Conditional WaveGAN or Controlled WaveGAN models, training could take place over a subset of the NSynth dataset (Engel et al, 2017).
+}
 \newline
 \newline
 The goal would be the training of a model that can be controlled by musical pitch.
@@ -203,6 +295,7 @@ The resulting sounds should likely be limited to a relatively small musical rang
 Further experimentation with a WaveGAN synthesizer would be possible by also introducing velocity as a second dimension of the conditional input (velocity relates to the force with which a musical note is played on an instrument).
 This would require the model to learn a further dimension of the sounds and would be a prototype for more realistic synthesizers.
 
+\newpage
 \section{References}
 
 \begin{enumerate}
