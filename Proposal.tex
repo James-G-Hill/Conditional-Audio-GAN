@@ -66,17 +66,17 @@ The project is split into stages: the main goal is to produce all three models w
 
 Initially, a replica of the initial unsupervised WaveGAN will be trained.
 It will use near identical structure and hyperparameters as the model produced by Donahue et al.
-Unlike the original model it will be trained only on two of the numbers from the dataset: zero and one.
-Zero and one are chosen as they are the binary numbers, have different sounds, and also differ in number of syllables.
+Unlike the original model it will be trained only on the words for two numbers from the dataset, 'zero' and 'one', as contained in the \textit{Downsampled Speech Commands Binary} dataset.
 \newline
 \newline
-The process of creating this initial model will allow for familiarization of the process of producing a mode from code to runtime; any difficulties encountered should be encountered and overcome within a simplified setting. 
+The process of creating this initial model will allow for familiarization of the process of producing a mode from code to runtime; any difficulties encountered should be encountered and overcome within a simplified setting.
+Elements of this model such as the discriminator will also be resuable for the conditioned and controlled versions of the WaveGAN.
 
 \subsection{Conditioned WaveGAN}
 
 The second model will introduce conditioning into the original model.
 The new model will be a WaveGAN but with the introduction of an additional input layer that conditions the randomly generated input.
-This model will also be trained as a simplified version using only 'zero' and 'one'.
+This model will also initially be trained on the simplified version using only 'zero' and 'one'.
 \newline
 \newline
 Once complete, the model will be evaluated against the Baseline model; it's expected (given the results of the initial Conditioned GAN created by Mirza et al.) that this model will intially produce generated samples less powerful than those created by the baseline WaveGan.
@@ -84,21 +84,27 @@ This is acceptable as future exploration of the hyperparameters out of the scope
 
 \subsection{Controlled WaveGAN}
 
-The third model will be a Controlled GAN trained on the same dataset of spoken ``zero'' and ``one''.
+The third model will be a Controlled GAN trained on the same dataset of spoken 'zero' and 'one'.
 If successful then the model will be evaluated for quality against both the baseline model and the Conditioned GAN.
 It is again expected that the initial model would be inferior to the baseline model.
 However, it will be interesting to compare against the Conditioned WaveGAN as a claim has been made that it should be a superior method for training GANs with conditioning.
 
 \subsection{Enlarged Models}
 
+\sethlcolor{Goldenrod}
+\hl{
 Once all models have been produced and initially evaluated, an enlargement of the number of words used for their training will be considered.
-Ideally, the full set of spoken numbers from 'zero' through 'nine' would be used but this may not be possible with the available computational power.
-A decision will need to be made based on experimentation an dinformed by previous experience of the model training.
+The experiment should first be replicated with the \textit{Downsampled Speech Commands Directions} dataset.
+If that is also successful, a decision will need to be made based on experimentation and informed by previous experience of the model training as to whether it is likely to be cost effective to repeat the experiment with the \textit{Downsampled Speech Commands Zero to Nine} dataset.
+}
 \newline
 \newline
-If downsampling was used to increase the speed of model training previously, an increase in sample size may also be considered at this point.
-Ideally the sample size of the original dataset without any downsampling would be used.
+\sethlcolor{Goldenrod}
+\hl{
+An alternative would be to increase the sample rate of the audio for a rerun of the experiment.
+A rerun with higher quality audio should give a firmer basis for the results of the experiment.
 Again, experimentation and judgement based on previous experience will be necessary in order to decide on the best approach.
+}
 \newline
 \newline
 Evaluation of the results would then be required on the final sets of generated samples: between the Conditional WaveGAN and baseline WaveGAN; between the Controlled WaveGAN and baseline WaveGAN; and between the Conditional WaveGAN and Controlled WaveGAN.
