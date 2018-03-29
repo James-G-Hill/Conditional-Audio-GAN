@@ -1,5 +1,5 @@
 % Setup
-\documentclass[titlepage]{article}
+\documentclass[a4paper, titlepage]{article}
 
 % Packages
 \usepackage{hyperref}
@@ -23,8 +23,8 @@ Generated audio has potential practical applications such as text-to-speech and 
 A practical audio generator would need to respond to an input and generate a corresponding output: written words could produce spoken words; digital audio commands (midi) could produce musical notes as played by a musical instrument.
 \newline
 \newline
-Generative Adversarial Networks (Goodfellow et al., 2014) are unsupervised algorithms that have produced consistently improved results for image generation.
-Recently an application of GANs to unsupervised audio generation introduced the WaveGAN model (Donahue et al., 2018) which was shown to successfully capture (and generate) words from a real data distribution for small-vocabulary speech.
+Generative Adversarial Networks \cite{2014arXiv1406.2661G} are unsupervised algorithms that have produced consistently improved results for image generation.
+Recently an application of GANs to unsupervised audio generation introduced the WaveGAN model \cite{2018arXiv180204208D} which was shown to successfully capture (and generate) words from a real data distribution for small-vocabulary speech.
 \newline
 \newline
 In an unsupervised generative model such as the initial WaveGAN there is no control on the modes of data (output) being generated.
@@ -40,7 +40,7 @@ The work builds from the theoretical foundations provided in the Intelligent Tec
 
 \section{Related Work}
 
-Deep neural network models have already been applied to the problem of audio generation: the WaveNet autoencoder (Oord et al., 2016) was introduced as an autoregressive model operating directly on raw audio waveform; this has been further developed into a model that can generate musical notes (Engel et al., 2017).
+Deep neural network models have already been applied to the problem of audio generation: the WaveNet autoencoder \cite{DBLP:journals/corr/OordDZSVGKSK16} was introduced as an autoregressive model operating directly on raw audio waveform; this has been further developed into a model that can generate musical notes \cite{2017arXiv170401279E}.
 \newline
 \newline
 \textcolor{red}{
@@ -59,18 +59,18 @@ Deep neural network models have already been applied to the problem of audio gen
 }
 \newline
 \newline
-Generative Adversarial Networks have also been recently tested for audio generation (Donahue et al., 2018).
+Generative Adversarial Networks have also been recently tested for audio generation \cite{2018arXiv180204208D}.
 Two strategies were tested: a frequency domain strategy and a time domain strategy.
 The frequency domain strategy was based on a naive application of image generating GAN methods to spectograms.
 The time domain strategy was an approach that operated on the raw audio; this was the basis of the WaveGAN model.
-WaveGAN was adapted from a Deep Convolutional GAN model (Radford et al., 2016) that has been shown to produce convincing generation of scenes.
+WaveGAN was adapted from a Deep Convolutional GAN model \cite{2015arXiv151106434R} that has been shown to produce convincing generation of scenes.
 \newline
 \newline
-Conditioning of GANs to produce controllable generated output was first demonstrated on image generation applications (Mirza et al., 2014).
+Conditioning of GANs to produce controllable generated output was first demonstrated on image generation applications \cite{2014arXiv1411.1784M}.
 Mirza et al. were able to succesfully control the output of a single GAN trained generative model by inserting 1-hot vectors alongside random input into the generator.
 \newline
 \newline
-A recently proposed and tested approach is the Controllable Generative Adversarial Network (Lee et al., 2017).
+A recently proposed and tested approach is the Controllable Generative Adversarial Network \cite{2017arXiv170800598L}.
 CGAN uses a three network model with a classifier network introduced alongside the regular generator and discriminator.
 Examples of compared output from both conditional and controllable GANs are shown in the paper but no rigorous evaluation is offered.
 \newline
@@ -119,7 +119,7 @@ With only two different modes of data to discriminate between and generate, this
 It is a neat dataset as it conforms to the binary numbers, has words of different syllabile count, and is also a subset of the \textit{Speech Commands Zero Through Nine} (SC09) introduced by Donahue et al.
 \newline
 \newline
-This dataset is a subset of the previously existing \textit{Speech Commands Dataset} (Warden, 2017) published by Google.
+This dataset is a subset of the previously existing \textit{Speech Commands Dataset} \cite{Google_Research_blog_2017} published by Google.
 A difference between this dataset and the original dataset is that all audio samples will be downsampled in order to decrease their size and the computational cost of running the experiments.
 \newline
 \newline
@@ -217,12 +217,12 @@ More detailed and clearer audio samples will allow for better evaluation of the 
 
 Once all models have been produced and initially evaluated, an enlargement of the number of words used for their training will be considered.
 The experiment should first be replicated with the \textit{Downsampled Speech Commands Directions} dataset.
-  This dataset contains four directional commands from the \textit{Speech Commands Dataset}: 'up', 'down', 'left' and 'right'.
-  This dataset is double the size of the \textit{Downsampled Speech Commands Binary} dataset so will be used to expand the complexity of the experiment while still being limited enough to restrict potential computational cost.
+This dataset contains four directional commands from the \textit{Speech Commands Dataset}: 'up', 'down', 'left' and 'right'.
+This dataset is double the size of the \textit{Downsampled Speech Commands Binary} dataset so will be used to expand the complexity of the experiment while still being limited enough to restrict potential computational cost.
 
 \subsubsection{Attempting a third model}
-  
-  Another possibility would be to train a third model: a Controlled GAN trained on the same dataset of spoken 'zero' and 'one'.
+
+Another possibility would be to train a third model: a Controlled GAN trained on the same dataset of spoken 'zero' and 'one'.
 If successful then the model will be evaluated for quality against both the baseline model and the Conditioned GAN.
 It is again expected that the initial model would be inferior to the baseline model.
 However, it will be interesting to compare against the Conditioned WaveGAN as a claim has been made that it should be a superior method for training GANs with conditioning.
@@ -281,26 +281,9 @@ For example, at the time of writing, \href{https://cloud.google.com/gpu/}{Google
 There are other services available such as Amazon Web Services: the choice of service will need to consider the ease of use of the service, compatibility with the tools being used, and the relative pricing at time of running the experiment.
 
 \newpage
-\section{References}
-
-\begin{enumerate}
-
-\item
-  Donahue, Chris, McAuley, Julian, Puckette, Miller. Synthesizing Audio with Generative Adversarial Networks. 2018.
-\item
-  Engel, Jesse, Resnick, Cinjon, Roberts, Adam, Dieleman, Sander, Eck, Douglas, Simonyan, Karen, and Norouzi, Mohammad. Neural audio synthesis of musical notes with WaveNet autoencoders. In ICML, 2017.
-\item
-  Goodfellow, Ian, Pouget-Abadie, Jean, Mirza, Mehdi, Xu, Bing, Warde-Farley, David, Ozair, Sherjil, Courville, Aaron, and Bengio, Yoshua. Generative adversarial networks. In NIPS, 2014.
-\item
-  Lee, Minhyeok, Seok, Junhee. Controllable Generative Adversarial Network. 2017.
-\item
-  Radford, Alec, Metz, Luke, and Chintala, Soumith. Unsupervised representation learning with deep convolutional generative adversarial networks. In ICLR, 2016.
-\item
-  Warden, Pete. Speech commands dataset.
-\burl{https://research.googleblog.com/2017/08/launching-speech-commands-dataset.html}, 2017.
-Accessed:
-
-\end{enumerate}
+% Bibliography
+\bibliography{Bibliography}
+\bibliographystyle{ieeetr}
 
 % Wrapup
 \end{document}
