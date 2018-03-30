@@ -1,3 +1,6 @@
+import numpy as np
+import soundfile as sf
+
 from librosa import*
 from librosa import display
 from pylab import*
@@ -74,17 +77,17 @@ def showWaveplot(series, sampRate):
     return
 
 
-def copyDownSampleFolder(inFilePath, folderName, outFilePath):
+def copyDownSampleFolder(inFilePath, folderName, outFilePath, newSampRate):
     files = util.find_files(inFilePath + folderName + '/', ext='wav')
     for file in files:
         path, name = os.path.split(file)
         series, sampRate = core.load(file, sr=None)
-        halfSampRate = int(sampRate/2)
-        reSampled = core.resample(series, sampRate, halfSampRate)
-        output.write_wav(
-            outFilePath + folderName + '/' + name,
-            reSampled,
-            halfSampRate)
+        reSampled = core.resample(series, sampRate, newSampRate)
+        sf.write(
+            file=outFilePath + folderName + '/' + name,
+            data=reSampled,
+            samplerate=newSampRate,
+            subtype='PCM_16')
     return
 
 
