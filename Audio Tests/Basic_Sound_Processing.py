@@ -74,7 +74,7 @@ def showWaveplot(series, sampRate):
     return
 
 
-def copyFolder(inFilePath, folderName, outFilePath):
+def copyDownSampleFolder(inFilePath, folderName, outFilePath):
     files = util.find_files(inFilePath + folderName + '/', ext='wav')
     for file in files:
         path, name = os.path.split(file)
