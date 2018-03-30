@@ -2,13 +2,15 @@ from librosa import*
 from pylab import*
 
 
-def soundInfo(s, sf):
+def soundInfo(fn, s, sf):
     """ Print out information about a sound """
+    print('File name              : ' + fn)
     print('Data type              : ' + str(s.dtype))
     print('Sample points          : ' + str(s.shape[0]))
     # print('Channel count          : ' + str(s.shape[1]))
     print('Sample frequency       : ' + str(sf))
     print('Sample rate            : ' + str(s.shape[0] / sf))
+    print('\n')
     return
 
 
