@@ -2,14 +2,13 @@ from librosa import*
 from pylab import*
 
 
-def soundInfo(fn, s, sf):
+def soundInfo(fileName, series, sampRate):
     """ Print out information about a sound """
-    print('File name              : ' + fn)
-    print('Data type              : ' + str(s.dtype))
-    print('Sample points          : ' + str(s.shape[0]))
-    # print('Channel count          : ' + str(s.shape[1]))
-    print('Sample frequency       : ' + str(sf))
-    print('Sample rate            : ' + str(s.shape[0] / sf))
+    print('File name              : ' + fileName)
+    print('Data type              : ' + str(series.dtype))
+    print('Sample points          : ' + str(series.shape[0]))
+    print('Sample frequency       : ' + str(sampRate))
+    print('Sample rate            : ' + str(series.shape[0] / sampRate))
     print('\n')
     return
 
@@ -68,10 +67,11 @@ def _fastFourier(s, sf):
     return (p, freqArray)
 
 
-fileFolder = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/zero/'
-fileName   = '0ab3b47d_nohash_0.wav'
-filePath   = fileFolder + fileName
-s, sr      = core.load(filePath, sr=None)
+filePath         = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/'
+fileFolder       = 'zero/'
+fileName         = '0ab3b47d_nohash_0.wav'
+fullPath         = filePath + fileFolder + fileName
+series, sampRate = core.load(fullPath, sr=None)
 
 
 # exec(open('Basic_Sound_Processing.py').read())
