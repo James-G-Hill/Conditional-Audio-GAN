@@ -1,4 +1,5 @@
-from librosa import* 
+from librosa import*
+from librosa import display
 from pylab import*
 
 
@@ -7,8 +8,8 @@ def soundInfo(fileName, series, sampRate):
     print('File name              : ' + fileName)
     print('Data type              : ' + str(series.dtype))
     print('Sample points          : ' + str(series.shape[0]))
-    print('Sample frequency       : ' + str(sampRate))
-    print('Sample rate            : ' + str(series.shape[0] / sampRate))
+    print('Sample rate            : ' + str(sampRate))
+    print('Duration               : ' + str(core.get_duration(series, sampRate)))
     print('\n')
     return
 
@@ -67,11 +68,17 @@ def _fastFourier(s, sf):
     return (p, freqArray)
 
 
-filePath         = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/'
-fileFolder       = 'zero/'
-fileName         = '0ab3b47d_nohash_0.wav'
-fullPath         = filePath + fileFolder + fileName
-series, sampRate = core.load(fullPath, sr=None)
+inFilePath    = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/'
+inFileFolder  = 'zero/'
+inFileName    = '0ab3b47d_nohash_0.wav'
+inFullPath    = inFilePath + inFileFolder + inFileName
 
+outFilePath   = '/home/zhanmusi/Documents/Data/Speech Commands Dataset Downsampled/'
+outFileFolder = 'zero/'
+outFileName   = 'downsampled_' + inFileName
+outFullPath   = outFilePath + outFileFolder + outFileName
+
+series, sampRate = core.load(inFullPath, sr=None)
+reSampled = core.resample(series, sampRate, int(sampRate/2))
 
 # exec(open('Basic_Sound_Processing.py').read())
