@@ -68,15 +68,35 @@ def _fastFourier(s, sf):
     return (p, freqArray)
 
 
+def showWaveplot(series, sampRate):
+    display.waveplot(series, sampRate)
+    plt.show()
+    return
+
+
+def copyFolder(inFilePath, folderName, outFilePath):
+    files = util.find_files(inFilePath + folderName + '/', ext='wav')
+    for file in files:
+        path, name = os.path.split(file)
+        series, sampRate = core.load(file, sr=None)
+        halfSampRate = int(sampRate/2)
+        reSampled = core.resample(series, sampRate, halfSampRate)
+        output.write_wav(
+            outFilePath + folderName + '/' + name,
+            reSampled,
+            halfSampRate)
+    return
+
+
 inFilePath    = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/'
-inFileFolder  = 'zero/'
+inFileFolder  = 'zero'
 inFileName    = '0ab3b47d_nohash_0.wav'
-inFullPath    = inFilePath + inFileFolder + inFileName
+inFullPath    = inFilePath + inFileFolder + '/' + inFileName
 
 outFilePath   = '/home/zhanmusi/Documents/Data/Speech Commands Dataset Downsampled/'
-outFileFolder = 'zero/'
+outFileFolder = 'zero'
 outFileName   = 'downsampled_' + inFileName
-outFullPath   = outFilePath + outFileFolder + outFileName
+outFullPath   = outFilePath + outFileFolder + '/' + outFileName
 
 series, sampRate = core.load(inFullPath, sr=None)
 reSampled = core.resample(series, sampRate, int(sampRate/2))
