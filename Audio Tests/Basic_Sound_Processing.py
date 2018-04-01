@@ -1,3 +1,4 @@
+import csv
 import librosa as lb
 import numpy as np
 import os
@@ -92,6 +93,26 @@ def copyDownSampleFolder(inFilePath, folderName, outFilePath, newSampRate):
     return
 
 
+def createTrainingDataCSV(folders, outFilePath):
+    """ Creates a training file as .csv """
+    trainData = []
+    trainLabel = []
+    for folder in folders:
+        files = lb.util.find_files(outFilePath + folder + '/', ext='wav')
+        for file in files:
+            path, name = os.path.split(file)
+            series, sampRate = lb.core.load(file, sr=None)
+            trainData.append(series)
+            trainLabel.append(folder)
+    with open(outFilePath + 'binaryTrainingData', 'w') as dataFile:
+        wr = csv.writer(dataFile, delimiter=',', quoting=csv.QUOTE_ALL)
+        wr.writerow(trainData)
+    with open(outFilePath + 'binaryTrainingLabels', 'w') as labelFile:
+        wr = csv.writer(labelFile, delimiter=',', quoting=csv.QUOTE_ALL)
+        wr.writerow(trainLabel)
+    return
+
+
 inFilePath = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/'
 inFileFolder = 'zero'
 inFileName = '0ab3b47d_nohash_0.wav'
@@ -106,5 +127,6 @@ outFullPath = outFilePath + outFileFolder + '/' + outFileName
 series, sampRate = lb.core.load(inFullPath, sr=None)
 reSampled = lb.core.resample(series, sampRate, int(sampRate / 2))
 
+binaryDatasetList = ['zero', 'one']
 
 # exec(open('Basic_Sound_Processing.py').read())
