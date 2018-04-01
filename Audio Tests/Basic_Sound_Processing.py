@@ -84,7 +84,10 @@ def copyDownSampleFolder(inFilePath, folderName, outFilePath, newSampRate):
     for file in files:
         path, name = os.path.split(file)
         series, sampRate = lb.core.load(file, sr=None)
-        reSampled = lb.core.resample(series, sampRate, newSampRate)
+        reSampled = lb.core.resample(
+            y=series,
+            orig_sr=sampRate,
+            target_sr=newSampRate)
         sf.write(
             file=outFilePath + folderName + '/' + name,
             data=reSampled,
@@ -121,7 +124,7 @@ inFullPath = inFilePath + inFileFolder + '/' + inFileName
 outFilePath = \
     '/home/zhanmusi/Documents/Data/Speech Commands Dataset Downsampled/'
 outFileFolder = 'zero'
-outFileName = 'downsampled_' + inFileName
+outFileName = inFileName
 outFullPath = outFilePath + outFileFolder + '/' + outFileName
 
 series, sampRate = lb.core.load(inFullPath, sr=None)
