@@ -26,24 +26,18 @@
 
 \section{Introduction}
 
-Generated audio has potential practical applications such as text-to-speech and digital audio music production.
-A practical audio generator would need to respond to an input and generate a corresponding output: written words could produce spoken words; digital audio commands (midi) could produce musical notes as played by a musical instrument.
+Generative Adversarial Networks (GANs) \cite{2014arXiv1406.2661G} are a type of generative neural network invented in 2014 and currently the subject of research.
+The first of these networks generated novel images and newer models have shown consistently improved results for visual applications.
 \newline
 \newline
-Generative Adversarial Networks \cite{2014arXiv1406.2661G} are unsupervised algorithms that have produced consistently improved results for image generation.
-Recently an application of GANs to unsupervised audio generation introduced the WaveGAN model \cite{2018arXiv180204208D} which was shown to successfully capture (and generate) words from a real data distribution for small-vocabulary speech.
+Sound generation has more recently become an area of research for GANs.
+Generated audio has practical applications such as natural sounding text-to-speech and realistically dynamic synthesizers for digital audio music production.
+Existing models such as WaveGAN \cite{2018arXiv180204208D} successfully capture recorded words from a real data distribution for small-vocabulary speech and randomly generate audio words similar to those in the dataset.
 \newline
 \newline
-In an unsupervised generative model such as the initial WaveGAN there is no control on the modes of data (output) being generated.
-There are now two proposed models for controlling the output of a GAN: Conditional GAN and Controllable GAN but it has not yet been demonstrated which is most capable of giving the best results.
-\newline
-\newline
-The goal of the project is to produce the best possible WaveGAN model capable of generating controlled outputs as using either of the two methodologies for achieving this.
-An essential part of the project is to determine through experimentation which of these will produce the best results.
-\newline
-\newline
-This project will be submitted to complete the MSc Intelligent Technologies pathway of the MSc Advanced Computing Technologies degree.
-The work builds from the theoretical foundations provided in the Intelligent Technologies module (now Machine Learning) which is taught by George Magoulas.
+A practical audio generator however must respond to an input and generate a corresponding determined output: written words must produce spoken words; sound pitches must produce musical notes.
+Methods of determining the output of a GAN have already been introduced and demonstrated for visual applications \cite{2014arXiv1411.1784M}.
+This project will attempt to demonstrate output selection with an audio generating GAN.
 
 \section{Related Work}
 
@@ -71,6 +65,12 @@ Two strategies were tested: a frequency domain strategy and a time domain strate
 The frequency domain strategy was based on a naive application of image generating GAN methods to spectograms.
 The time domain strategy was an approach that operated on the raw audio; this was the basis of the WaveGAN model.
 WaveGAN was adapted from a Deep Convolutional GAN model \cite{2015arXiv151106434R} that has been shown to produce convincing generation of scenes.
+\newline
+\newline
+\textcolor{red}{
+In an unsupervised generative model such as the initial WaveGAN there is no control on the modes of data (output) being generated.
+There are now two proposed models for controlling the output of a GAN: Conditional GAN and Controllable GAN but it has not yet been demonstrated which is most capable of giving the best results.
+}
 \newline
 \newline
 Conditioning of GANs to produce controllable generated output was first demonstrated on image generation applications \cite{2014arXiv1411.1784M}.
@@ -101,6 +101,10 @@ Synthesizers also are controlled on other dimensions to increase the realism and
 \section{Aims}
 
 The goal of this project is to produce a working controllable generative adversarial model for audio based upon the WaveGAN architecture and to evaluate it's output in relation to the first model.
+\newline
+\newline
+The goal of the project is to produce the best possible WaveGAN model capable of generating controlled outputs as using either of the two methodologies for achieving this.
+An essential part of the project is to determine through experimentation which of these will produce the best results.
 
 \section{Objectives}
 
