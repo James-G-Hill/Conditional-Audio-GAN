@@ -39,72 +39,57 @@ A practical audio generator however must respond to an input and generate a corr
 Methods of determining the output of a GAN have already been introduced and demonstrated for visual applications \cite{2014arXiv1411.1784M}.
 This project will attempt to demonstrate output selection with an audio generating GAN.
 
+\newpage
+
 \section{Related Work}
 
-Deep neural network models have already been applied to the problem of audio generation: the WaveNet autoencoder \cite{DBLP:journals/corr/OordDZSVGKSK16} was introduced as an autoregressive model operating directly on raw audio waveform; this has been further developed into a model that can generate musical notes \cite{2017arXiv170401279E}.
+Generative neural network models are powerful methods for making models understand a data distribution.
+They can provide important insight into the relationship between input variables and corresponding representations.
+They also have practical applications such as image denoising, inpainting, and super resolution, among others \cite{openai_blog_2017}.
 \newline
 \newline
-\textcolor{red}{
-  Why are GANs more interesting than other generative models (LeCun).
-  More general information on exactly how GANs work.
-  Discuss the architecture in more detail.
-  Discuess the competitive min/max game.
-  Discuss how they have been applied to other types of data.
-}
+There are a number of different generative models such as Botzmann machines and their variants, and deep belief networks.
+Difficulties arising from using these models include the requirement to use approximations of intractable probabilistic computations, such as Markov Chains.
+Another difficulty is the requirement for feedback loops during the generation process.
+The GAN model was proposed so as to sidestep these difficulties.
 \newline
 \newline
-\textcolor{red}{
-  Explain why audio has been less used than images for GANs.
-  Explain how there have been naive attempts to recreate audio as image files.
-  Explain how new methods of using GANs for audio are using signal processing.
-}
+Within a GAN model, a generator network is pitted against a discriminator network in a competition that drives both to improve.
+In the simplest form, the competition is a zero-sum minimax game where the discriminator is trained to maximize the probability of assigning correct labels to training examples and generated samples, and the generator is trained to minimize this probability.
 \newline
 \newline
-Generative Adversarial Networks have also been recently tested for audio generation \cite{2018arXiv180204208D}.
-Two strategies were tested: a frequency domain strategy and a time domain strategy.
-The frequency domain strategy was based on a naive application of image generating GAN methods to spectograms.
-The time domain strategy was an approach that operated on the raw audio; this was the basis of the WaveGAN model.
-WaveGAN was adapted from a Deep Convolutional GAN model \cite{2015arXiv151106434R} that has been shown to produce convincing generation of scenes.
+Initial experiments with GANs tended to focus on image generation with audio generation appearing later.
+The reasons for this we speculate are: the availability of suitable image datasets and lack of suitable audio datasets when GANs were first subject to experiment; the fact that very small images convey more information to the human subject than very short sounds despite being of similar bit size; and the suitability of images for printed reporting of results.
 \newline
 \newline
-\textcolor{red}{
-In an unsupervised generative model such as the initial WaveGAN there is no control on the modes of data (output) being generated.
-There are now two proposed models for controlling the output of a GAN: Conditional GAN and Controllable GAN but it has not yet been demonstrated which is most capable of giving the best results.
-}
+Demand for applications of speech synthesis, generating speech with computers, has largely been based on a so-called concatenative text-to-speech methods and only recently were generative network models introduced with Deep Mind's WaveNet model \cite{waveNetUrl}.
+WaveNet was introduced as an autoregressive model operating directly on raw audio waveform \cite{DBLP:journals/corr/OordDZSVGKSK16} (an adaptation can generate musical notes \cite{2017arXiv170401279E}).
 \newline
 \newline
-Conditioning of GANs to produce controllable generated output was first demonstrated on image generation applications \cite{2014arXiv1411.1784M}.
-Mirza et al. were able to succesfully control the output of a single GAN trained generative model by inserting 1-hot vectors alongside random input into the generator.
+Generative Adversarial Networks have also been recently applied to the problem of audio generation \cite{2018arXiv180204208D}.
+Two strategies were tested: a frequency domain strategy based on naive application of image generating GAN methods to spectograms representing audio; and a time domain strategy operating on raw audio.
+The time domain strategy was shown to produce superior results and is the foundation of the WaveGAN model.
+The architecture of the WaveGAN model was adapted from a deep convolutional GAN model that was shown to generate convincing images of faces of bedrooms \cite{2015arXiv151106434R}.
 \newline
 \newline
-A recently proposed and tested approach is the Controllable Generative Adversarial Network \cite{2017arXiv170800598L}.
-CGAN uses a three network model with a classifier network introduced alongside the regular generator and discriminator.
-Examples of compared output from both conditional and controllable GANs are shown in the paper but no rigorous evaluation is offered.
+Early experiments on GANs focussed exclusively on unconditioned generative models with no control on the data being generated.
+Conditioning of GANs to produce controllable generated data has since been demonstrated for image and textual tag generation \cite{2014arXiv1411.1784M}.
+These first conditional GANs succesfully controlled data generation by conditioning both the generator and discriminator on an extra input layer.
 \newline
 \newline
-\textcolor{red}{
-  Explain issues around the evaluation of GANs.
-}
-\newline
-\newline
-Controllable audio generative adversarial networks are important as they can be the foundation of future audio synethesizers.
-A synthesizer is a digital audio generator that can produce sounds that haven't bee n previously recorded.
-Existing synthesizer architectures include analogue (which can be emulated digitally), FM, and physical modelling.
-One motivation for producing synthesizers is to recreate the sound of real world mechanical instruments.
-Over time the realism and naturalism of synthesizers has increased.
-Generative Adversarial Networks however have the potential to introduce new levels of realism and naturalness while being easier to create than the currently most-realistic physically modelled synthesizers.
-\newline
-\newline
-A GAN-based synthesizer would be a model that can be controlled by musical pitch while reproducing realistic sounds.
-Synthesizers also are controlled on other dimensions to increase the realism and playability of the sound, such as velocity (which relates to the force with which a musical note is played on the keyboard or other input).
+A recently proposed alternative approach to conditioning GANs is the Controllable GAN (CGAN) which has been demonstrated with image generation \cite{2017arXiv170800598L}.
+CGAN uses a three network model with a classifier/encoder network introduced alongside the generator/decoder and discriminator networks.
+The networks conduct a three-player game where the generator attempts to deceive the discriminator and also be classified to the correct corresponding class by the classifier.
+
+\newpage
 
 \section{Aims}
 
-The goal of this project is to produce a working controllable generative adversarial model for audio based upon the WaveGAN architecture and to evaluate it's output in relation to the first model.
-\newline
-\newline
-The goal of the project is to produce the best possible WaveGAN model capable of generating controlled outputs as using either of the two methodologies for achieving this.
-An essential part of the project is to determine through experimentation which of these will produce the best results.
+The goal of the current project is to produce a conditioned GAN capable of generating audio samples.
+The resulting model will build upon the audio generating architecture of the WaveGAN model and the introduction of a third input layer as demonstrated by the Conditioned and Controllable GAN models.
+Generated audio samples from the model will be evaluated against those produced by a baseline unconditioned model with the expectation that the conditioned model will produce inferior samples.
+
+\newpage
 
 \section{Objectives}
 
@@ -119,6 +104,8 @@ An essential part of the project is to determine through experimentation which o
 \item Produce Jupyter output of example samples from both models to accompany the final report.
 \item Consider further repetitions of the experiment.
 \end{itemize}
+
+\newpage
 
 \section{Methodology}
 
@@ -242,6 +229,8 @@ However, a difficulty with attempting this third model is that the paper in whic
 \newline
 Evaluation of the results would then be required on the final sets of generated samples: between the Conditional WaveGAN and baseline WaveGAN; between the Controlled WaveGAN and baseline WaveGAN; and between the Conditional WaveGAN and Controlled WaveGAN.
 
+\newpage
+
 \section{Potential Difficulties}
 
 The initial WaveGAN model was run for 4 days on an NVIDIA P100 GPU before converging (on sale for upwards of £6k at the time of writing).
@@ -260,9 +249,13 @@ Secondly, in order to reduce the amount of data to be processed, the experiment 
 Downsampling of audio reduces the definition and perceived quality (at least at the lower sample rates that might be needed in this case) but will reduce the amount of data to be trained in the networks.
 This shouldn't limit the validity of the experiment because perceived audio quality is not a key measurement; the difference in quality between models is of prime importance.
 
+\newpage
+
 \section{Time Plan}
 
 Write here a detailed and realistic plan of how long each section of the project is likely to take.
+
+\newpage
 
 \section{Finance}
 
