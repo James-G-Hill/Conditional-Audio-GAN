@@ -1,12 +1,16 @@
 % Setup
-\documentclass[a4paper, titlepage]{article}
+\documentclass[a4paper, dvipsnames, titlepage]{article}
 
 % Packages
-\usepackage{hyperref}
 \usepackage[hyphenbreaks]{breakurl}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{pdflscape}
+\usepackage{pgfgantt}
+\usepackage{ragged2e}
 \usepackage{soul}
 \usepackage[nottoc, numbib]{tocbibind}
-\usepackage[dvipsnames]{xcolor}
+\usepackage{xcolor}
 
 % Preamble
 \hypersetup{hidelinks}
@@ -63,7 +67,7 @@ The reasons for this we speculate are: the availability of suitable image datase
 \newline
 \newline
 Demand for applications of speech synthesis, generating speech with computers, has largely been based on a so-called concatenative text-to-speech methods and only recently were generative network models introduced with Deep Mind's WaveNet model \cite{waveNetUrl}.
-WaveNet was introduced as an autoregressive model operating directly on raw audio waveform \cite{DBLP:journals/corr/OordDZSVGKSK16} (an adaptation can generate musical notes \cite{2017arXiv170401279E}).
+WaveNet was introduced as an autoregressive model operating directly on raw audio waveforms \cite{DBLP:journals/corr/OordDZSVGKSK16} (an adaptation can generate musical notes \cite{2017arXiv170401279E}).
 \newline
 \newline
 What advantages are there to use GANs over WaveNet?
@@ -326,7 +330,43 @@ If achievable however the evaluation could measure the quality of samples from t
 
 \section{Time Plan}
 
-Write here a detailed and realistic plan of how long each section of the project is likely to take.
+Following is a Gantt Chart showing the planned timeline for the project:
+\newline
+\newline
+
+\begin{ganttchart}[
+  vgrid,
+  hgrid,
+  x unit=2cm,
+  y unit title=0.7cm,
+  y unit chart=0.7cm,
+  progress label text={\quad\pgfmathprintnumber[precision=0, verbatim]{#1}\%},
+  milestone label font=\tiny,
+  group label font=\tiny,
+  title label font=\tiny,
+  bar label node/.style={text width=3cm, align=right, font=\scriptsize\RaggedLeft, anchor=east},
+  milestone label node/.style={text width=2cm, align=right, font=\scriptsize\RaggedLeft, anchor=east},
+  group label node/.style={text width=3cm, align=right, font=\scriptsize\RaggedLeft, anchor=east},
+  compress calendar,
+  time slot format=isodate
+  ]
+  {2018-06-01}
+  {2018-09-30}
+  \gantttitlecalendar{year, month=name} \\
+  \ganttgroup{Dataset}{2018-06-15}{2018-06-22} \\
+  \ganttgroup{WaveGAN}{2018-06-23}{2018-07-22} \\
+  \ganttbar{Write discriminator}{2018-06-23}{2018-06-30} \\
+  \ganttlinkedbar{Write generator}{2018-07-01}{2018-07-07} \\
+  \ganttlinkedbar{Train WaveGAN}{2018-07-08}{2018-07-22} \\
+  \ganttgroup{Conditioned WaveGAN}{2018-07-23}{2018-08-14} \\
+  \ganttbar{Input layer}{2018-07-23}{2018-08-31} \\
+  \ganttlinkedbar{Train conditioned WaveGAN}{2018-08-01}{2018-08-14} \\
+  \ganttgroup{Evaluation}{2018-08-15}{2018-09-30} \\
+  \ganttbar{Inception scores}{2018-08-15}{2018-08-22} \\
+  \ganttlinkedbar{Nearest neighbour}{2018-08-23}{2018-08-30} \\
+  \ganttlinkedbar{Project report}{2018-09-01}{2018-09-21} \\
+  \ganttlinkedbar{Jupyter report}{2018-09-22}{2018-09-30}
+\end{ganttchart}
 
 \newpage
 % Bibliography
