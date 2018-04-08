@@ -2,6 +2,7 @@
 \documentclass[a4paper, dvipsnames, titlepage]{article}
 
 % Packages
+\usepackage{amsfonts}
 \usepackage[hyphenbreaks]{breakurl}
 \usepackage{geometry}
 \usepackage{hyperref}
@@ -36,11 +37,11 @@ The first of these networks generated novel images and newer models have shown c
 \newline
 \newline
 Audio generation has more recently become an area of research for GANs.
-Generated audio has practical applications such as natural sounding text-to-speech and realistically synthesizers for digital audio music production.
+Generated audio has practical applications such as natural sounding text-to-speech and realistical synthesizers for digital audio music production.
 Existing models such as WaveGAN \citep{2018arXiv180204208D} successfully capture recorded words from a real data distribution for small-vocabulary speech and randomly generate audio words similar to those in the dataset.
 \newline
 \newline
-A practical audio generator however must respond to input and generate corresponding determined outputs: written words producing spoken words; sound pitche producing musical notes.
+A practical audio generator however must respond to input and generate corresponding determined outputs: written words producing spoken words; sound pitch producing musical notes.
 Methods of determining the output of GANs have already been demonstrated for visual applications \citep{2014arXiv1411.1784M}.
 This project will demonstrate output selection with an audio generating GAN.
 
@@ -60,7 +61,10 @@ The GAN model was proposed so as to sidestep these difficulties.
 \newline
 \newline
 Within a GAN model, a generator network is pitted against a discriminator network in a competition that drives both to improve.
-In the simplest form, the competition is a zero-sum minimax game where the discriminator is trained to maximize the probability of assigning correct labels to training examples and generated samples, and the generator is trained to minimize this probability.
+In the simplest form, the competition is a two-player zero-sum minimax game where the discriminator is trained to maximize the probability of assigning correct labels to training examples and generated samples, and the generator is trained to minimize this probability.
+\begin{equation}
+  \min_{G} \max_{D} V(D,G) = \mathbb{E}_{x \sim P_\mathrm{data}(x)}[\mathrm{log}\,D(x)] + \mathbb{E}_{z \sim p_z(z)}[\mathrm{log} (1 - D(G(z)))]
+\end{equation}
 \newline
 \newline
 Initial experiments with GANs tended to focus on image generation with audio generation appearing later.
@@ -71,7 +75,7 @@ Demand for applications of speech synthesis, generating speech with computers, h
 WaveNet was introduced as an autoregressive model operating directly on raw audio waveforms \citep{DBLP:journals/corr/OordDZSVGKSK16} (an adaptation can generate musical notes \citep{2017arXiv170401279E}).
 \newline
 \newline
-enerative Adversarial Networks have also been recently applied to the problem of audio generation \citep{2018arXiv180204208D}.
+Generative Adversarial Networks have also been recently applied to the problem of audio generation \citep{2018arXiv180204208D}.
 Two strategies were tested: a frequency domain strategy based on naive application of image generating GAN methods to spectograms representing audio; and a time domain strategy operating on raw audio.
 The time domain strategy was shown to produce superior results and is the foundation of the WaveGAN model.
 The architecture of the WaveGAN model was adapted from a deep convolutional GAN model that was shown to generate convincing images of faces of bedrooms \citep{2015arXiv151106434R}.
@@ -83,7 +87,10 @@ Donahue et al. however report that the WaveNet model is not competitive with the
 \newline
 Early experiments on GANs focussed exclusively on unconditioned generative models with no control on the data being generated.
 Conditioning of GANs to produce controllable generated data has since been demonstrated for image and textual tag generation \citep{2014arXiv1411.1784M}.
-These first conditional GANs succesfully controlled data generation by conditioning both the generator and discriminator on an extra input layer.
+These conditional GANs succesfully controlled data sample generation by conditioning both the generator and discriminator on an extra input layer.
+\begin{equation}
+  \min_{G} \max_{D} V(D,G) = \mathbb{E}_{x \sim P_\mathrm{data}(x)}[\mathrm{log}\,D(x|y)] + \mathbb{E}_{z \sim p_z(z)}[\mathrm{log} (1 - D(G(z|y)))]
+\end{equation}
 \newline
 \newline
 A recently proposed alternative approach to conditioning GANs is the Controllable GAN (CGAN) which has been demonstrated with image generation \citep{2017arXiv170800598L}.
