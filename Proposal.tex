@@ -66,6 +66,9 @@ Demand for applications of speech synthesis, generating speech with computers, h
 WaveNet was introduced as an autoregressive model operating directly on raw audio waveform \cite{DBLP:journals/corr/OordDZSVGKSK16} (an adaptation can generate musical notes \cite{2017arXiv170401279E}).
 \newline
 \newline
+What advantages are there to use GANs over WaveNet?
+\newline
+\newline
 Generative Adversarial Networks have also been recently applied to the problem of audio generation \cite{2018arXiv180204208D}.
 Two strategies were tested: a frequency domain strategy based on naive application of image generating GAN methods to spectograms representing audio; and a time domain strategy operating on raw audio.
 The time domain strategy was shown to produce superior results and is the foundation of the WaveGAN model.
@@ -93,69 +96,114 @@ Generated audio samples from the model will be evaluated against those produced 
 
 \section{Objectives}
 
+Listed below are the proposed milestones for the project:
+
 \begin{itemize}
-\item Create the initial Downsampled Binary dataset.
-\item Train the WaveGAN discriminator.
-\item Train the full WaveGAN model.
-\item Evaluate the performance of the full WaveGAN model compared to original paper.
-\item Create the input layer for the Conditioned WaveGAN model.
-\item Train the Conditioned WaveGAN model.
-\item Evaluate results of both models against each other.
-\item Produce Jupyter output of example samples from both models to accompany the final report.
-\item Consider further repetitions of the experiment.
+\item Dataset selection
+\item Building the WaveGAN model
+  \begin{itemize}
+  \item Writing the discriminator
+  \item Writing the generator
+  \item Training the WaveGAN model
+  \end{itemize}
+\item Building of conditioned WaveGAN model
+  \begin{itemize}
+  \item Repurposing components from the WaveGAN model
+  \item Integrating an input layer
+  \item Training the conditioned WaveGAN model
+  \end{itemize}
+\item Evaluating results
+  \begin{itemize}
+  \item Comparing Inception scores
+  \item Writing Jupyter report with audio samples
+  \item Writing project report
+  \end{itemize}
+\item Considering further experiments
 \end{itemize}
 
 \newpage
 
 \section{Methodology}
 
-\subsection{Dataset Creation}
+\subsection{Dataset Selection}
 
-The first of the datasets that I propose I name \textit{Downsampled Speech Commands Binary}.
-This is the smallest dataset I propose and includes only the words for the numbers 'zero' and 'one' from the original \textit{Speech Commands Dataset}.
-With only two different modes of data to discriminate between and generate, this is the simplest possible dataset which can be used to perform this experiment.
-It is a neat dataset as it conforms to the binary numbers, has words of different syllabile count, and is also a subset of the \textit{Speech Commands Zero Through Nine} (SC09) introduced by Donahue et al.
+The \textit{Speech Commands Dataset} \cite{speechcommands} produced by Google consists of thousands of approximately one second long recordings of different individuals pronouncing thirty different english language words.
+The \textit{Speech Commands Zero Through Nine} (SC09) dataset is a subset of the \textit{Speech Commands Dataset} used during the development of the WaveGAN model.
+The data used in this project will be taken from the \textit{Speech Commands Dataset} so as to maintain a level of consistency with previous experiments.
 \newline
 \newline
-This dataset is a subset of the previously existing \textit{Speech Commands Dataset} \cite{speechcommands} published by Google.
-A difference between this dataset and the original dataset is that all audio samples will be downsampled in order to decrease their size and the computational cost of running the experiments.
+Deep learning experiments can be computationally expensive.
+The training of the original WaveGAN model using the SC09 dataset required four days of computation on an NVIDIA P100 GPU.
+At the time of writing, NVIDIA P100 GPUs are available for approximately US \$5,500.
+Cloud computing services also provide GPUs at varying rates depending on the users requirements; for example, at the time of writing, \href{https://cloud.google.com/gpu/}{Google Cloud} has preemptible NVIDIA P100 GPU computation available at US \$0.73 per hour.
+Experiments with the SC09 dataset are both time consuming and have a significant financial cost.
 \newline
 \newline
-The downsampled versions of these datasets downsample the audio files from 16000 samples per second.
-Each cycle requires two samples to be recorded, so audio with 16000 samples per second is able to capture 8000hz.
-The most recognisable frequencies of the human voice which are identifiable as speech are within a range up to 3000hz or 4000hz.
-Downsampling to cover these ranges would therefore take the audio file samples per second from 16000 samples per second to between 6000 to 8000 samples per second.
-Downsampling to 3000hz leaves a still recognizable voice and words but the resulting is noticeably 'deeper' and subjectively unnatural compared to sampeles at 4000hz.
+Given the limits on time and finances available for this project, the selection of the dataset must reduce the computational cost where possible.
+This is achievable by a reduction in the size of the dataset used for the experiment.
+There are two aspects of an audio dataset that can be manipulated to reduce the size of the dataset: the number of elements within the dataset and the number of samples used to represent the audio (sample rate).
 \newline
 \newline
-The purpose of downsampling is to reduce the size of the samples that the neural networks need to be trained on: this is equivalent to using smaller image sizes for testing the training of convolution neural networks for image recognition.
-These proposed downsampled and limited datasets are therefore more computationally cost efficient and less expensive to experiment on; a real benefit for students of deep learning who will likely have no free access to the powerful GPUs that many deep learning experiments are run on.
+The SC09 dataset has approximately 2,370 elements per recorded number.
+With ten numbers included within the dataset, there are approximately 23,700 elements in total.
+To demonstrate the principle of conditional selection of generated samples from the WaveGAN model the minimum number of words required is two.
+With two words only the model can be conditioned to produce either depending on the input layer.
 \newline
 \newline
-Reduction of the sample file size to 6000 rather than 8000 samples per second is therefore more desirable for the purpose of creating a more computationally cost efficient experiment.
-However, the relatively unnatural sound of lower sample rates could potentially have an impact on any experiment evaluation involving human subjects listening and comparing audio samples.
-For example, if the subject was requested to evaluate how natural a generated audio sample compares to a recorded sample, the noticeably lower audio quality of the 3000hz samples could confound the results: the subject may consider even the recorded sample to sound generated.
+For the purpose of this experiment I propose to create a new \textit{Speech Commands Binary Dataset} as a subset of the \textit{Speech Commands Dataset} used in the original WaveGAN training.
+This dataset will contain only elements from the spoken words for the numbers 'zero' and 'one'.
+With words of different syllable counts, and with no shared syllables, the two words are easily distinguishable.
+The dataset also has consistency with the subject matter by representing the numbers used for digital computation.
+With this reduction of the dataset size to one-fifth of that used in the original WaveGAN experiment the computational cost of the experiment should be significantly reduced.
+\newline
+\newline
+Each recording within the \textit{Speech Commands Dataset} is of approximately one second long and at a sample rate of 16,000.
+A sample rate of 16,000 consists of 16,000 different numerical measurements.
+Humans hear audio as wave cycles measuered in hertz (hz).
+A cycle requires at least two samples to be recorded so a recording with a sample rate of 16,000 captures audio within the range from 0hz to 8,000hz.
+The most recognizable features of human speech actually lie in the range from 30hz to 4,000hz.
+Recordings with a frequency range up to 4,000hz are of lower quality than those with a frequency range up to 8,000hz but are still recognizable as speech; however, they only require a sample rate of 8,000 samples per second.
+\newline
+\newline
+The reduction of the sample rate of audio is 'downsampling'.
+Downsampling the dataset elements to 8,000 samples per second will halve the amount of data needed to be passed through the neural network.
+The number of convolution layers in the WaveGAN model assumes the division of an input layer of an approximatley 16,000 sample per second audio recording repeatedly by 4 (the stride of the convolution) to layer of length 16.
+To repeat this with an input layer of approximately 4,000 samples per second, the model would need to be smaller by one convolution layer.
+The reduction of the number of layers within the model may affect the ability of the model to converge as there is a relationship between number of layers and the capability of a model.
+\newline
+\newline
+A \textit{Downsampled Speech Commands Binary Dataset} will therefore be created with a sample rate of approximately 4,000 samples per second and will be tested during the model training to determine whether a smaller model will converge.
+If the smaller model succeeds it is possible that the training time will be noticeably reduced.
+The removal of the upper convolution layer on a 16,000 sample per second recording would reduce the number of convolution computations by two-thirds.
+This reduction of the sample rate is equivalent to using a smaller image size for experimentation with picture generating GANs.
+\newline
+\newline
+The two datasets, \textit{Speech Commands Binary Dataset} and \textit{Downsampled Speech Commands Binary Dataset}, will be produced through a simple Python program.
+The LibROSA Python package for music and audio analysis will be imported to enable the manipulation of the .wav files the \textit{Speech Commands Dataset} audio is stored within.
 
-\subsection{Baseline WaveGAN}
+\subsection{Building the WaveGAN Model}
 
-Initially, a replica of the initial unsupervised WaveGAN will be trained.
-It will use near identical structure and hyperparameters as the model produced by Donahue et al.
-Unlike the original model it will be trained only on the words for two numbers from the dataset, 'zero' and 'one', as contained in the \textit{Downsampled Speech Commands Binary} dataset.
+The WaveGAN model will be built with two variations: the first being a recreation of the original WaveGAN; the second being a slightly modified model with one fewer convolution layers to allow for testing the less computationally demanding \textit{Downsampled Speech Commands Binary Dataset}.
+Both variations will follow the structure and hyperparameters used within the original WaveGAN as closely as possible.
+The code from these baseline models will be reused when writing the conditioned WaveGAN model.
 \newline
 \newline
-The process of creating this initial model will allow for familiarization of the process of producing a mode from code to runtime; any difficulties encountered should be encountered and overcome within a simplified setting.
-Elements of this model such as the discriminator will also be resuable for the conditioned and controlled versions of the WaveGAN.
-\newline
-\newline
-The models will be designed with the TensorFlow machine intelligence package for Python programming language.
+The code for these models will be written with Python using the open-source TensorFlow machine learning frameowork published and maintained by Google.
+TensorFlow was designed for working with deep neural networks and has functionality such as pre-built convolution and dense layers that can be quickly plugged into a model.
+It also includes TensorBoard, a visualization tool that portrays the model graph visually, plots quantitative measures and includes debugging tools.
+Although TensorFlow is compatiable with some other languages, such as C++ and Java, the Python API for TensorFlow is ``the most complete and easiest to use.'' \cite{TensorFlowAPI}
 
-\subsubsection{Train the WaveGAN discriminator}
+\subsubsection{Writing the discriminator}
 
 How accurate does this discriminator need to be?
 
-\subsubsection{Train the full WaveGAN model}
+\subsubsection{Writing the generator}
 
-\subsubsection{Evaluate the performance of the WaveGAN model}
+\subsubsection{Training the WaveGAN model}
+
+
+
+
 
 Audio is difficult to represent visually so an interactive notebook will also be produced that will allow readers to listen to samples of the audio and compare the results.
 This will allow the reader of the final reprot to also make a subjective evaluation of the results.
