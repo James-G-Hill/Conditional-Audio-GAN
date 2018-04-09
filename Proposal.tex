@@ -109,8 +109,8 @@ The networks conduct a three-player game: the generator attempts to deceive the 
 \section{Aims}
 
 The goal of the current project is to produce a conditioned GAN capable of generating audio samples.
-The resulting model will build upon the audio generating architecture of the WaveGAN model and the introduction of a third input layer as demonstrated by the Conditioned and Controllable GAN models.
-Generated audio samples from the model will be evaluated against those produced by a baseline unconditioned model with the expectation that the conditioned model will produce inferior samples.
+This model will build upon the audio generating architecture of WaveGAN and will include an input layer as in the conditioned GAN architecture.
+Generated audio samples from the model will be evaluated against the training data and those produced by a baseline unconditioned WaveGAN model.
 
 \newpage
 
@@ -135,7 +135,6 @@ Listed below are the proposed milestones for the project:
   \begin{itemize}
   \item Comparing Inception scores
   \item Nearest neighbour comparison
-  \item Writing project report
   \item Writing Jupyter report with audio samples
   \end{itemize}
 \item Considering further experiments
@@ -292,7 +291,7 @@ Comparison against the training data will also support any claim that the sample
 \newline
 The evaluation of the quality of generated samples in the best case is performed by experimental subjects who are not aware of the source of the samples.
 These forms of evaluation are not always possible due to time and budget constraints: the need for ethical sign-off by a research institute, the design and production of a testing interface, and the need to gather subjects for testing in either a controlled environment or through a service such as Amazon's Mechanical Turk all place significnt demands on the experimenter.
-Given limited time and budget, it has been decided that evaluation by third-party subjects is outside the scope of this project.
+Given limited time and budget, evaluation by third-party subjects is outside the scope of this project.
 
 \subsubsection{Comparing Inception scores}
 
