@@ -34,70 +34,75 @@
 
 \section{Introduction}
 
-Generative Adversarial Networks (GANs) \citep{2014arXiv1406.2661G} are a type of generative neural network invented in 2014.
-The first of these networks generated novel images and newer models have shown consistently improved results for visual applications.
+Generative Adversarial Networks (GANs) are a powerful type of generative neural network \citep{2014arXiv1406.2661G}.
+They provide important insight into the relationship between input variables and corresponding representations, and have practical applications such as image denoising, inpainting, and super resolution \citep{openai_blog_2017}.
 \newline
 \newline
-Audio generation has more recently become an area of research for GANs.
 Generated audio has practical applications such as natural sounding text-to-speech and realistical synthesizers for digital audio music production.
-Existing models such as WaveGAN \citep{2018arXiv180204208D} successfully capture recorded words from a real data distribution for small-vocabulary speech and randomly generate audio words similar to those in the dataset.
+Only recently has audio become a research area for GANs however with the WaveGAN model successfully capturing recorded words from a small vocabulary dataset and generating similar words \citep{2018arXiv180204208D}.
 \newline
 \newline
-A practical audio generator however must respond to input and generate corresponding determined outputs: written words producing spoken words; sound pitch producing musical notes.
-Methods of determining the output of GANs have already been demonstrated for visual applications \citep{2014arXiv1411.1784M}.
-This project will demonstrate output selection with an audio generating GAN.
+Practical audio generators must respond to input and generate corresponding outputs: written words producing spoken words; sound pitches producing musical notes.
+Methods of conditioning the output of GANs have been demonstrated for image generating applications \citep{2014arXiv1411.1784M}; this project will demonstrate output selection with an audio generating GAN.
 
 \newpage
 
 \section{Related Work}
 
-Generative neural network models are powerful methods for making models understand a data distribution.
-They can provide important insight into the relationship between input variables and corresponding representations.
-They also have practical applications such as image denoising, inpainting, and super resolution, among others \citep{openai_blog_2017}.
-\newline
-\newline
-There are a number of different generative models such as Botzmann machines and their variants, and deep belief networks.
-Difficulties arising from using these models include the requirement to use approximations of intractable probabilistic computations, such as Markov Chains.
-Another difficulty is the requirement for feedback loops during the generation process.
-GANs were proposed to sidestep these difficulties.
-\newline
-\newline
-The architecture of a GAN pits a generator (G) network against a discriminator (D) network in a two-player zero-sum minimax game that drives mutual improvement.
+\subsection{Generative Networks}
+
+Existing generative models include fully-visible Bayes networks (FVBNs), Boltzmann machines, generative stochastic networks (GSNs), and variational autoencoders (VAEs).
+GANs have advantages over these other model types: they can generate samples in parallel; the generator function design has few restrictions; Markov chains are not needed; they are asymptomatically consistent; and they are regarded as producing subjectively better samples \citep{2017arXiv170100160G}.
+
+\subsection{GAN Architecture}
+
+The GAN architecture pits a generative model (G) against a discriminative model (D) in a two-player zero-sum minimax game that drives mutual improvement \citep{2014arXiv1406.2661G}.
 The discriminator is trained to maximize the probability of assigning correct labels to training examples and generated samples; the generator is trained to minimize this probability:
+\newline
+%
 \begin{equation}
   \min_{G} \max_{D} V(D,G) = \mathbb{E}_{x \sim P_\mathrm{data}(x)}[\mathrm{log}\,D(x)] + \mathbb{E}_{z \sim p_z(z)}[\mathrm{log} (1 - D(G(z)))]
 \end{equation}
+%
+\newline
+An analogy used by \citeauthor{2014arXiv1406.2661G} describes the generative model as a team of counterfeiters producing fake currency, and the the discriminative model as police trying to detect those counterfeits.
+
+\subsection{Generated Audio}
+
+Speech synthesis has commonly been based on concatenative text-to-speech methods which string together recorded syllables in an unnatural manner; only recently have generative networks been applied to the problem, beginning with Deep Mind's WaveNet \citep{waveNetUrl}.
+WaveNet is an autoregressive model operating directly on raw audio waveforms \citep{DBLP:journals/corr/OordDZSVGKSK16} (an adaptation can generate musical notes \citep{2017arXiv170401279E}).
 \newline
 \newline
-Initial experiments with GANs tended to focus on image generation with audio generation appearing later.
-The reasons for this we speculate are: the availability of suitable image datasets and lack of suitable audio datasets when GANs were first subject to experiment; the fact that very small images convey more information to the human subject than very short sounds despite being of similar bit size; and the suitability of images for printed reporting of results.
+Although \citeauthor{2018arXiv180204208D} recently applied GANs to the problem of audio generation, for some time experiments focussed instead on image generation.
+Speculatively, reasons for this are: the initial availability of suitable image datasets and lack of suitable audio datasets; very small images conveying subjectively more information to humans than very short sounds despite similar bit size; and the suitability of images for printed reporting of results.
 \newline
 \newline
-Demand for applications of speech synthesis, generating speech with computers, has largely been based on a so-called concatenative text-to-speech methods and only recently were generative network models introduced with Deep Mind's WaveNet model \citep{waveNetUrl}.
-WaveNet was introduced as an autoregressive model operating directly on raw audio waveforms \citep{DBLP:journals/corr/OordDZSVGKSK16} (an adaptation can generate musical notes \citep{2017arXiv170401279E}).
+\citeauthor{2018arXiv180204208D} tested two strategies for audio generation: a frequency domain strategy based on naive application of image generating GAN methods to spectograms representing audio; and a time domain strategy operating on raw audio.
+The time domain strategy produced superior results and forms the foundation of WaveGAN.
 \newline
 \newline
-Generative Adversarial Networks have also been recently applied to the problem of audio generation \citep{2018arXiv180204208D}.
-Two strategies were tested: a frequency domain strategy based on naive application of image generating GAN methods to spectograms representing audio; and a time domain strategy operating on raw audio.
-The time domain strategy was shown to produce superior results and is the foundation of the WaveGAN model.
-The architecture of the WaveGAN model was adapted from a deep convolutional GAN (DCGAN) that generated convincing images of faces and bedrooms \citep{2015arXiv151106434R}.
+The WaveGAN architecture was adapted from a Deep Convolutional GAN (DCGAN) that generates convincing images of faces and bedrooms \citep{2015arXiv151106434R}.
+It follows the architectural guidelines introduced by \citeauthor{2015arXiv151106434R}: replacing pooling layers with convolution layers; using batchnorm in both generator and discriminator; removing fully connected hidden layers; using ReLU activation in all layers other than output for the generator; and using LeakyReLU activation for all discriminator layers.
 \newline
 \newline
-The architecture of the WaveNet model allows for audio samples of arbitrary length whereas the the WaveGAN model with the current architecture only produces audio samples of a preset length.
-Donahue et al. however report that the WaveNet model is not competitive with the WaveGAN model and that work is ongoing on extending the WaveGAN model for arbitrary length audio.
+\citeauthor{2018arXiv180204208D} report that WaveNet is not competitive with WaveGAN for audio generation.
+WaveNet does however allow for generation of audio samples of arbitrary length whereas WaveGAN only produces audio samples of preset length; \citeauthor{2018arXiv180204208D} reported continuing work on extending WaveGAN to match this capability.
+
+\subsection{Conditioned GANs}
+
+The first GAN generated data samples randomly from the data distribution.
+Conditioning of GANs to control the generated data has since been demonstrated for image and textual tag generation \citep{2014arXiv1411.1784M}.
+These architectures control sample generation by conditioning the generator and discriminator on an extra input layer (y):
 \newline
-\newline
-Early experiments on GANs focussed exclusively on unconditioned generative models with no control on the data being generated.
-Conditioning of GANs to produce controllable generated data has since been demonstrated for image and textual tag generation \citep{2014arXiv1411.1784M}.
-Conditional GANs control data sample generation by conditioning the generator and discriminator on an extra input layer (y):
+%
 \begin{equation}
   \min_{G} \max_{D} V(D,G) = \mathbb{E}_{x \sim P_\mathrm{data}(x)}[\mathrm{log}\,D(x|y)] + \mathbb{E}_{z \sim p_z(z)}[\mathrm{log} (1 - D(G(z|y)))]
 \end{equation}
+%
 \newline
-\newline
-A recently proposed alternative approach to conditioning GANs is the Controllable GAN (CGAN) which has been demonstrated with image generation \citep{2017arXiv170800598L}.
-CGAN uses a three network model with a classifier/encoder network introduced alongside the generator/decoder and discriminator networks.
-The networks conduct a three-player game where the generator attempts to deceive the discriminator and also be classified to the correct corresponding class by the classifier.
+Controllable GAN (CGAN) is a proposed alternative approach to conditioning GANs that has been demonstrated for image generation \citep{2017arXiv170800598L}.
+CGAN uses a three network architecture with a classifier/encoder network introduced alongside the generator and discriminator.
+The networks conduct a three-player game: the generator attempts to deceive the discriminator and also be matched to the correct class by the classifier.
 
 \newpage
 
@@ -295,7 +300,7 @@ The \textit{inception score} is a measurement for generated images that has been
 Following the example of the paper introducing the original WaveGAN model, an inception classifier will be trained with the training dataset and used to evaluate the generated audio.
 The inception classifier will evaluate the audio from both generators represented as Fourier transformed frequency spectrum images.
 
-\subsubsection{Nearest Neighbour Comparison}
+\subsubsection{Nearest Neighbours Comparison}
 
 Nearest neighbours comparison with Euclidean distance will be used to confirm the models are not overfitting and reproducing the training data.
 This method is an adjunct to the \textit{inception score} measurements as it is only fit for detecting extreme examples of overfitting \citep{2015arXiv151101844T}.
