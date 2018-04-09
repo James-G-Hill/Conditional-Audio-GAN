@@ -3,6 +3,7 @@
 
 % Packages
 \usepackage{amsfonts}
+\usepackage[toc, page]{appendix}
 \usepackage[hyphenbreaks]{breakurl}
 \usepackage{geometry}
 \usepackage{hyperref}
@@ -11,6 +12,7 @@
 \usepackage{pgfgantt}
 \usepackage{ragged2e}
 \usepackage{soul}
+\usepackage{textgreek}
 \usepackage[nottoc, numbib]{tocbibind}
 \usepackage{xcolor}
 
@@ -382,6 +384,143 @@ Following is a Gantt Chart showing the planned timeline for the project:
 % Bibliography
 \bibliography{Bibliography}
 \bibliographystyle{plainnat}
+
+\newpage
+
+% Appendix
+\begin{appendices}
+
+  \section{Model Architecture Tables}
+
+  \begin{table}[h]
+    
+    \caption{\label{tab:table-name} WaveGAN Generator}
+    
+    \begin{center}
+      \begin{tabular}{ l | l | l}
+        
+        Operation & Kernel Size & Output Shape \\
+        \hline
+        Input {\it z} $\sim$ Uniform(-1, 1) & & ({\it n}, 100) \\
+        Dense 1 & (100, 256{\it d}) & ({\it n}, 256{\it d}) \\
+        Reshape & & ({\it n}, 16, 16{\it d}) \\
+        ReLU & & ({\it n}, 16, 16{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 16{\it d}, 8{\it d}) & ({\it n}, 64, 8{\it d}) \\
+        ReLU & & ({\it n}, 64, 8{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 8{\it d}, 4{\it d}) & ({\it n}, 256, 4{\it d}) \\
+        ReLU & & ({\it n}, 256, 4{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 4{\it d}, 2{\it d}) & ({\it n}, 1024, 2{\it d}) \\
+        ReLU & & ({\it n}, 1024, 2{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 2{\it d}, {\it d}) & ({\it n}, 4096, {\it d}) \\
+        ReLU & & ({\it n}, 4096, {\it d}) \\
+        Trans Conv1D (Stride=4) & (25, {\it d}, {\it c}) & ({\it n}, 16384, {\it d}) \\
+        Tanh & & ({\it n}, 16384, {\it d}) \\
+
+      \end{tabular}
+    \end{center}
+    
+  \end{table}
+
+  \begin{table}[h]
+    
+    \caption{\label{tab:table-name} WaveGAN Generator for downsampled data}
+    
+    \begin{center}
+      \begin{tabular}{ l | l | l}
+        
+        Operation & Kernel Size & Output Shape \\
+        \hline
+        Input {\it z} $\sim$ Uniform(-1, 1) & & ({\it n}, 100) \\
+        Dense 1 & (100, 256{\it d}) & ({\it n}, 256{\it d}) \\
+        Reshape & & ({\it n}, 16, 16{\it d}) \\
+        ReLU & & ({\it n}, 16, 16{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 16{\it d}, 8{\it d}) & ({\it n}, 64, 8{\it d}) \\
+        ReLU & & ({\it n}, 64, 8{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 8{\it d}, 4{\it d}) & ({\it n}, 256, 4{\it d}) \\
+        ReLU & & ({\it n}, 256, 4{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 4{\it d}, 2{\it d}) & ({\it n}, 1024, 2{\it d}) \\
+        ReLU & & ({\it n}, 1024, 2{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 2{\it d}, {\it d}) & ({\it n}, 4096, {\it d}) \\
+        Tanh & & ({\it n}, 4096, {\it d}) \\
+
+      \end{tabular}
+    \end{center}
+    
+  \end{table}
+  
+  \begin{table}[h]
+    
+    \caption{\label{tab:table-name} WaveGAN Discriminator}
+    
+    \begin{center}
+      \begin{tabular}{ l | l | l}
+        
+        Operation & Kernel Size & Output Shape \\
+        \hline
+        Input {\it x} or {\it G}({\it z}) & & ({\it n}, 16384, {\it c}) \\
+        % to 4096
+        Conv1D (Stride=4) & (25, {\it c}, {\it d}) & ({\it n}, 4096, {\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 4096, {\it d}) \\
+        Phase Shuffle ({\it n} = 2) & & ({\it n}, 4096, {\it d}) \\
+        % to 1024
+        Conv1D (Stride=4) & (25, {\it d}, 2{\it d}) & ({\it n}, 1024, 2{\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 1024, 2{\it d}) \\
+        Phase Shuffle ({\it n} = 2) & & ({\it n}, 1024, 2{\it d}) \\
+        % to 256
+        Conv1D (Stride=4) & (25, 2{\it d}, 4{\it d}) & ({\it n}, 256, 4{\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 256, 4{\it d}) \\
+        Phase Shuffle ({\it n} = 2) & & ({\it n}, 256, 4{\it d}) \\
+        % to 64
+        Conv1D (Stride=4) & (25, 4{\it d}, 8{\it d}) & ({\it n}, 64, 8{\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 64, 8{\it d}) \\
+        Phase Shuffle ({\it n} = 2) & & ({\it n}, 64, 8{\it d}) \\
+        % to 16
+        Conv1D (Stride=4) & (25, 8{\it d}, 16{\it d}) & ({\it n}, 16, 16{\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 16, 16{\it d}) \\
+        % Output
+        Reshape & & ({\it n}, 256{\it d}) \\
+        Dense & (256{\it d}, 1) & ({\it n}, 1)\\
+        
+      \end{tabular}
+    \end{center}
+    
+  \end{table}
+
+  \begin{table}[h]
+    
+    \caption{\label{tab:table-name} Wave GAN Discriminator for downsampled data}
+    
+    \begin{center}
+      \begin{tabular}{ l | l | l}
+        
+        Operation & Kernel Size & Output Shape \\
+        \hline
+        Input {\it x} or {\it G}({\it z}) & & ({\it n}, 4096, {\it c}) \\
+        % to 1024
+        Conv1D (Stride=4) & (25, {\it d}, 2{\it d}) & ({\it n}, 1024, 2{\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 1024, 2{\it d}) \\
+        Phase Shuffle ({\it n} = 2) & & ({\it n}, 1024, 2{\it d}) \\
+        % to 256
+        Conv1D (Stride=4) & (25, 2{\it d}, 4{\it d}) & ({\it n}, 256, 4{\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 256, 4{\it d}) \\
+        Phase Shuffle ({\it n} = 2) & & ({\it n}, 256, 4{\it d}) \\
+        % to 64
+        Conv1D (Stride=4) & (25, 4{\it d}, 8{\it d}) & ({\it n}, 64, 8{\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 64, 8{\it d}) \\
+        Phase Shuffle ({\it n} = 2) & & ({\it n}, 64, 8{\it d}) \\
+        % to 16
+        Conv1D (Stride=4) & (25, 8{\it d}, 16{\it d}) & ({\it n}, 16, 16{\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 16, 16{\it d}) \\
+        % Output
+        Reshape & & ({\it n}, 256{\it d}) \\
+        Dense & (256{\it d}, 1) & ({\it n}, 1)\\
+        
+      \end{tabular}
+    \end{center}
+    
+  \end{table}
+  
+\end{appendices}
 
 % Wrapup
 \end{document}
