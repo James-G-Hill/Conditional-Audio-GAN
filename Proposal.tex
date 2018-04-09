@@ -59,11 +59,11 @@ They also have practical applications such as image denoising, inpainting, and s
 There are a number of different generative models such as Botzmann machines and their variants, and deep belief networks.
 Difficulties arising from using these models include the requirement to use approximations of intractable probabilistic computations, such as Markov Chains.
 Another difficulty is the requirement for feedback loops during the generation process.
-The GAN model was proposed so as to sidestep these difficulties.
+GANs were proposed to sidestep these difficulties.
 \newline
 \newline
-Within a GAN model, a generator network is pitted against a discriminator network in a competition that drives both to improve.
-In the simplest form, the competition is a two-player zero-sum minimax game where the discriminator is trained to maximize the probability of assigning correct labels to training examples and generated samples, and the generator is trained to minimize this probability.
+The architecture of a GAN pits a generator (G) network against a discriminator (D) network in a two-player zero-sum minimax game that drives mutual improvement.
+The discriminator is trained to maximize the probability of assigning correct labels to training examples and generated samples; the generator is trained to minimize this probability:
 \begin{equation}
   \min_{G} \max_{D} V(D,G) = \mathbb{E}_{x \sim P_\mathrm{data}(x)}[\mathrm{log}\,D(x)] + \mathbb{E}_{z \sim p_z(z)}[\mathrm{log} (1 - D(G(z)))]
 \end{equation}
@@ -80,7 +80,7 @@ WaveNet was introduced as an autoregressive model operating directly on raw audi
 Generative Adversarial Networks have also been recently applied to the problem of audio generation \citep{2018arXiv180204208D}.
 Two strategies were tested: a frequency domain strategy based on naive application of image generating GAN methods to spectograms representing audio; and a time domain strategy operating on raw audio.
 The time domain strategy was shown to produce superior results and is the foundation of the WaveGAN model.
-The architecture of the WaveGAN model was adapted from a deep convolutional GAN model that was shown to generate convincing images of faces of bedrooms \citep{2015arXiv151106434R}.
+The architecture of the WaveGAN model was adapted from a deep convolutional GAN (DCGAN) that generated convincing images of faces and bedrooms \citep{2015arXiv151106434R}.
 \newline
 \newline
 The architecture of the WaveNet model allows for audio samples of arbitrary length whereas the the WaveGAN model with the current architecture only produces audio samples of a preset length.
@@ -89,7 +89,7 @@ Donahue et al. however report that the WaveNet model is not competitive with the
 \newline
 Early experiments on GANs focussed exclusively on unconditioned generative models with no control on the data being generated.
 Conditioning of GANs to produce controllable generated data has since been demonstrated for image and textual tag generation \citep{2014arXiv1411.1784M}.
-These conditional GANs succesfully controlled data sample generation by conditioning both the generator and discriminator on an extra input layer.
+Conditional GANs control data sample generation by conditioning the generator and discriminator on an extra input layer (y):
 \begin{equation}
   \min_{G} \max_{D} V(D,G) = \mathbb{E}_{x \sim P_\mathrm{data}(x)}[\mathrm{log}\,D(x|y)] + \mathbb{E}_{z \sim p_z(z)}[\mathrm{log} (1 - D(G(z|y)))]
 \end{equation}
@@ -219,7 +219,7 @@ Although TensorFlow is compatiable with some other languages, such as C++ and Ja
 The WaveGAN discriminator will take advantage of TensorFlow objects for one-dimensional convolution, denses layers and reshaping.
 A custom layer will be written to account for the 'Phase Shuffle' operation included in the original WaveGAN model.
 This 'Phase Shuffle' operation randomly shifts the phase of each layer's activations before input to the next layer; this shift accounts for artifacts in the data that are prouced by the convolution procedure.
-Two discriminators will be written; one that can accept 16,000 sample per second audio and another that can accept 8,000 sample per second audio.
+Two discriminators will be written; one accepting 16,000 sample per second audio (Table \ref{tab:Dis}) and another accepting 8,000 sample per second audio (Table \ref{tab:DisDown}).
 
 \subsubsection{Writing the Generator}
 
@@ -227,7 +227,7 @@ The WaveGAN generator will be written using the TensorFlow objects for dense lay
 Currently the TensorFlow object for the one-dimensional transposed convolution has not been exposed through the regular API because it is still being tested.
 The function is however available through the TensorFlow 'contrib' module (which is used to expose volatile or experimental code).
 The only remaining failed tests for this function are related to the MAC operating system and it should not interfere with this experiment which is being run on Linux Ubuntu systems.
-Two generators will be written; one that generates 16,000 sample per second audio and another that generates 8,000 sample per second audio.
+Two generators will be written; one that generates 16,000 sample per second audio (Table \ref{tab:Gen}) and another that generates 8,000 sample per second audio (Table \ref{tab:GenDown}).
 
 \subsubsection{Training the WaveGAN model}
 
@@ -297,16 +297,9 @@ The inception classifier will evaluate the audio from both generators represente
 
 \subsubsection{Nearest Neighbour Comparison}
 
-Nearest neighbour comparison will be used to confirm that the generators are not simply reproducing the training data; again the experiment follows the example of the original WaveGAN paper.
-This evaluation will measure the average Euclidean distance between the same frequency spectrum image representation used for inception score comparison.
-Two metrics will be measured via nearest neighbour comparison: firstly, the diversity amongst the generated samples; secondly, the distance between generated samples and their nearest neighbour in the training data.
-
-\subsubsection{Writing the Project Report}
-
-The final written report is a substantial work that needs to be considered during the planning of this project.
-While some of the report will be written in an ongoing manner, the results of the report can only be included after the full evaluation.
-A block of time will therefore be included for the purpose of finishing the report.
-The report will be written with LaTeX so as to allow for version control and to produce high-quality formatting and visuals. 
+Nearest neighbours comparison with Euclidean distance will be used to confirm the models are not overfitting and reproducing the training data.
+This method is an adjunct to the \textit{inception score} measurements as it is only fit for detecting extreme examples of overfitting \citep{2015arXiv151101844T}.
+Two metrics will be measured: the diversity amongst the generated samples; and distance between generated samples and their nearest neighbour in the training data.
 
 \subsubsection{Writing Jupyter Report with Audio Samples}
 
@@ -389,68 +382,13 @@ Following is a Gantt Chart showing the planned timeline for the project:
 
 % Appendix
 \begin{appendices}
-
+  
   \section{Model Architecture Tables}
 
-  \begin{table}[h]
+    \begin{table}[h]
     
-    \caption{\label{tab:table-name} WaveGAN Generator}
-    
-    \begin{center}
-      \begin{tabular}{ l | l | l}
-        
-        Operation & Kernel Size & Output Shape \\
-        \hline
-        Input {\it z} $\sim$ Uniform(-1, 1) & & ({\it n}, 100) \\
-        Dense 1 & (100, 256{\it d}) & ({\it n}, 256{\it d}) \\
-        Reshape & & ({\it n}, 16, 16{\it d}) \\
-        ReLU & & ({\it n}, 16, 16{\it d}) \\
-        Trans Conv1D (Stride=4) & (25, 16{\it d}, 8{\it d}) & ({\it n}, 64, 8{\it d}) \\
-        ReLU & & ({\it n}, 64, 8{\it d}) \\
-        Trans Conv1D (Stride=4) & (25, 8{\it d}, 4{\it d}) & ({\it n}, 256, 4{\it d}) \\
-        ReLU & & ({\it n}, 256, 4{\it d}) \\
-        Trans Conv1D (Stride=4) & (25, 4{\it d}, 2{\it d}) & ({\it n}, 1024, 2{\it d}) \\
-        ReLU & & ({\it n}, 1024, 2{\it d}) \\
-        Trans Conv1D (Stride=4) & (25, 2{\it d}, {\it d}) & ({\it n}, 4096, {\it d}) \\
-        ReLU & & ({\it n}, 4096, {\it d}) \\
-        Trans Conv1D (Stride=4) & (25, {\it d}, {\it c}) & ({\it n}, 16384, {\it d}) \\
-        Tanh & & ({\it n}, 16384, {\it d}) \\
-
-      \end{tabular}
-    \end{center}
-    
-  \end{table}
-
-  \begin{table}[h]
-    
-    \caption{\label{tab:table-name} WaveGAN Generator for downsampled data}
-    
-    \begin{center}
-      \begin{tabular}{ l | l | l}
-        
-        Operation & Kernel Size & Output Shape \\
-        \hline
-        Input {\it z} $\sim$ Uniform(-1, 1) & & ({\it n}, 100) \\
-        Dense 1 & (100, 256{\it d}) & ({\it n}, 256{\it d}) \\
-        Reshape & & ({\it n}, 16, 16{\it d}) \\
-        ReLU & & ({\it n}, 16, 16{\it d}) \\
-        Trans Conv1D (Stride=4) & (25, 16{\it d}, 8{\it d}) & ({\it n}, 64, 8{\it d}) \\
-        ReLU & & ({\it n}, 64, 8{\it d}) \\
-        Trans Conv1D (Stride=4) & (25, 8{\it d}, 4{\it d}) & ({\it n}, 256, 4{\it d}) \\
-        ReLU & & ({\it n}, 256, 4{\it d}) \\
-        Trans Conv1D (Stride=4) & (25, 4{\it d}, 2{\it d}) & ({\it n}, 1024, 2{\it d}) \\
-        ReLU & & ({\it n}, 1024, 2{\it d}) \\
-        Trans Conv1D (Stride=4) & (25, 2{\it d}, {\it d}) & ({\it n}, 4096, {\it d}) \\
-        Tanh & & ({\it n}, 4096, {\it d}) \\
-
-      \end{tabular}
-    \end{center}
-    
-  \end{table}
-  
-  \begin{table}[h]
-    
-    \caption{\label{tab:table-name} WaveGAN Discriminator}
+    \caption{WaveGAN Discriminator}
+    \label{tab:Dis}
     
     \begin{center}
       \begin{tabular}{ l | l | l}
@@ -488,7 +426,8 @@ Following is a Gantt Chart showing the planned timeline for the project:
 
   \begin{table}[h]
     
-    \caption{\label{tab:table-name} Wave GAN Discriminator for downsampled data}
+    \caption{Downsampled WaveGAN Discriminator}
+    \label{tab:DisDown}
     
     \begin{center}
       \begin{tabular}{ l | l | l}
@@ -497,24 +436,91 @@ Following is a Gantt Chart showing the planned timeline for the project:
         \hline
         Input {\it x} or {\it G}({\it z}) & & ({\it n}, 4096, {\it c}) \\
         % to 1024
-        Conv1D (Stride=4) & (25, {\it d}, 2{\it d}) & ({\it n}, 1024, 2{\it d}) \\
-        LReLU (\textalpha \, = 0.2) & & ({\it n}, 1024, 2{\it d}) \\
-        Phase Shuffle ({\it n} = 2) & & ({\it n}, 1024, 2{\it d}) \\
+        Conv1D (Stride=4) & (25, {\it c}, {\it d}) & ({\it n}, 1024, {\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 1024, {\it d}) \\
+        Phase Shuffle ({\it n} = 2) & & ({\it n}, 1024, {\it d}) \\
         % to 256
-        Conv1D (Stride=4) & (25, 2{\it d}, 4{\it d}) & ({\it n}, 256, 4{\it d}) \\
-        LReLU (\textalpha \, = 0.2) & & ({\it n}, 256, 4{\it d}) \\
-        Phase Shuffle ({\it n} = 2) & & ({\it n}, 256, 4{\it d}) \\
+        Conv1D (Stride=4) & (25, {\it d}, 2{\it d}) & ({\it n}, 256, 2{\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 256, 2{\it d}) \\
+        Phase Shuffle ({\it n} = 2) & & ({\it n}, 256, 2{\it d}) \\
         % to 64
-        Conv1D (Stride=4) & (25, 4{\it d}, 8{\it d}) & ({\it n}, 64, 8{\it d}) \\
-        LReLU (\textalpha \, = 0.2) & & ({\it n}, 64, 8{\it d}) \\
-        Phase Shuffle ({\it n} = 2) & & ({\it n}, 64, 8{\it d}) \\
+        Conv1D (Stride=4) & (25, 2{\it d}, 4{\it d}) & ({\it n}, 64, 4{\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 64, 4{\it d}) \\
+        Phase Shuffle ({\it n} = 2) & & ({\it n}, 64, 4{\it d}) \\
         % to 16
-        Conv1D (Stride=4) & (25, 8{\it d}, 16{\it d}) & ({\it n}, 16, 16{\it d}) \\
-        LReLU (\textalpha \, = 0.2) & & ({\it n}, 16, 16{\it d}) \\
+        Conv1D (Stride=4) & (25, 4{\it d}, 8{\it d}) & ({\it n}, 16, 8{\it d}) \\
+        LReLU (\textalpha \, = 0.2) & & ({\it n}, 16, 8{\it d}) \\
         % Output
         Reshape & & ({\it n}, 256{\it d}) \\
         Dense & (256{\it d}, 1) & ({\it n}, 1)\\
         
+      \end{tabular}
+    \end{center}
+    
+  \end{table}
+
+  \begin{table}[h]
+    
+    \caption{WaveGAN Generator}
+    \label{tab:Gen}
+    
+    \begin{center}
+      \begin{tabular}{ l | l | l}
+        
+        Operation & Kernel Size & Output Shape \\
+        \hline
+        Input {\it z} $\sim$ Uniform(-1, 1) & & ({\it n}, 100) \\
+        Dense 1 & (100, 256{\it d}) & ({\it n}, 256{\it d}) \\
+        Reshape & & ({\it n}, 16, 16{\it d}) \\
+        %
+        ReLU & & ({\it n}, 16, 16{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 16{\it d}, 8{\it d}) & ({\it n}, 64, 8{\it d}) \\
+        %
+        ReLU & & ({\it n}, 64, 8{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 8{\it d}, 4{\it d}) & ({\it n}, 256, 4{\it d}) \\
+        %
+        ReLU & & ({\it n}, 256, 4{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 4{\it d}, 2{\it d}) & ({\it n}, 1024, 2{\it d}) \\
+        %
+        ReLU & & ({\it n}, 1024, 2{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 2{\it d}, {\it d}) & ({\it n}, 4096, {\it d}) \\
+        %
+        ReLU & & ({\it n}, 4096, {\it d}) \\
+        Trans Conv1D (Stride=4) & (25, {\it d}, {\it c}) & ({\it n}, 16384, {\it d}) \\
+        Tanh & & ({\it n}, 16384, {\it d}) \\
+
+      \end{tabular}
+    \end{center}
+    
+  \end{table}
+
+  \begin{table}[h]
+    
+    \caption{Downsampled WaveGAN Generator}
+    \label{tab:GenDown}
+    
+    \begin{center}
+      \begin{tabular}{ l | l | l}
+        
+        Operation & Kernel Size & Output Shape \\
+        \hline
+        Input {\it z} $\sim$ Uniform(-1, 1) & & ({\it n}, 100) \\
+        Dense 1 & (100, 256{\it d}) & ({\it n}, 256{\it d}) \\
+        Reshape & & ({\it n}, 16, 8{\it d}) \\
+        %
+        ReLU & & ({\it n}, 16, 8{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 8{\it d}, 4{\it d}) & ({\it n}, 64, 4{\it d}) \\
+        %
+        ReLU & & ({\it n}, 64, 4{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 4{\it d}, 2{\it d}) & ({\it n}, 256, 2{\it d}) \\
+        %
+        ReLU & & ({\it n}, 256, 2{\it d}) \\
+        Trans Conv1D (Stride=4) & (25, 2{\it d}, {\it d}) & ({\it n}, 1024, {\it d}) \\
+        %
+        ReLU & & ({\it n}, 1024, {\it d}) \\
+        Trans Conv1D (Stride=4) & (25, {\it d}, {\it c}) & ({\it n}, 4096, {\it d}) \\
+        Tanh & & ({\it n}, 4096, {\it d}) \\
+
       \end{tabular}
     \end{center}
     
