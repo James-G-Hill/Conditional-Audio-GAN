@@ -44,6 +44,11 @@ Only recently has audio become a research area for GANs however with the WaveGAN
 \newline
 Practical audio generators must respond to input and generate corresponding outputs: written words producing spoken words; sound pitches producing musical notes.
 Methods of conditioning the output of GANs have been demonstrated for image generating applications \citep{2014arXiv1411.1784M}; this project will demonstrate output selection with an audio generating GAN.
+\newline
+\newline
+The document follows with a review of generative models and their application to audio in section 2.
+Section 3 describes the aim of the project and the objectives and milestones are listed in section 4.
+The methodology of the project is described in section 5 and a detailed time plan showing how the objectives will be met appears in section 6.
 
 \newpage
 
@@ -116,54 +121,119 @@ Generated audio samples from the model will be evaluated against the training da
 
 \section{Objectives}
 
-Listed below are the proposed milestones for the project:
+Below are the proposed milestones for the project:
 
 \begin{itemize}
-\item Dataset selection
-\item Building the WaveGAN model
-  \begin{itemize}
-  \item Writing the discriminator
-  \item Writing the generator
-  \item Training the WaveGAN model
-  \end{itemize}
-\item Building the conditioned WaveGAN model
-  \begin{itemize}
-  \item Integrating an input layer
-  \item Training the conditioned WaveGAN model
-  \end{itemize}
-\item Evaluating results
-  \begin{itemize}
-  \item Comparing Inception scores
-  \item Nearest neighbour comparison
-  \item Writing Jupyter report with audio samples
-  \end{itemize}
-\item Considering further experiments
-  \begin{itemize}
-  \item Increasing the sample rate of training data
-  \item Enlargement of the training dataset
-  \item Training a third model
-  \end{itemize}
+\item Requirements Gathering
+\item Design
+\item Implementation
+\item Evaluation
+\item Potential Extensions
 \end{itemize}
 
 \newpage
 
 \section{Methodology}
 
-\subsection{Dataset Selection}
+The following discusses the planning, design, implementation and evaluation of the models.
+
+\subsection{Requirements Gathering}
+
+We consider here some of the challenges faced when designing GAN models.
+
+\subsubsection{Computational Cost}
+
+A significant challenge for researchers experimenting with deep learning models is the computational cost of training and the impact this has on project deadlines and financing.
+Faster computation is often attainable with a larger budget but, with multiple training runs and large datasets, costs can grow quickly and may surpass a project budget.
+\newline
+\newline
+The original WaveGAN model implemented by \citeauthor{2018arXiv180204208D} required four days of training with a top-of-the-range NVIDIA Tesla P100 GPU.
+At the time of writing, this GPU is available from Amazon for US \$5,500, beyond an acceptable budget for a student project.
+The same GPU can be accessed over the \href{https://cloud.google.com/gpu/}{Google Cloud} computing service on demand for US \$1.46 per hour and in preemptible instances for US \$0.73 per hour; preemptible training brings the potential cost down significantly but may cause milestone deadlines to overrun.
+\newline
+\newline
+Reduction of the training time and cost of the project will be addressed through the selection and adaptation of the dataset; intitial estimates suggest that the training time for a baseline WaveGAN model can be reduced to at least one fifth of that taken by \citeauthor{2018arXiv180204208D}.
+The final models and dataset will also be tested on an available NVIDIA GPU before deciding whether to use cloud computing services; if this is successful then the cost will be reduced further, although training time will need to be assessed.
+
+\subsubsection{Framework Selection}
+
+The implementation of recently designed or novel neural network architectures may also require components that are not yet available in existing frameworks.
+Comparison of the WaveGAN architecture with TensorFlow shows that it is capable of producing all required layers for the network; only a 1-dimensional transposed convolution component is not within the stable API.
+\newline
+\newline
+This component is however within the TensorFlow 'contrib' module used for volatile or experimental code; a review of GitHub shows the only remaining failed tests relate to the MAC operating system which is not being used for this project.
+The TensorFlow framework therefore can reproduce the model architecture needed for this project.
+
+\subsection{Design}
+
+
+
+\subsubsection{Baseline WaveGAN Design}
+
+The baseline WaveGAN model will be designed to be as similar as possible to that implemented by \citeauthor{2018arXiv180204208D}.
+The hyperparameters will intitially be chosen to match those reported as succesful for the training of the original WaveGAN.
+The loss function will be WGAN-GP (Gulrajani et al, 2017) with a lambda of 10.
+The optimizer will be Adam type as recommended by the DCGAN paper.
+\newline
+\newline
+The discriminator accepts input of a fixed size that is dependent on the sample rate chosen for the dataset.
+The structure is then composed of repeated 1-dimensional convolution layers being input into a Leaky ReLU and then through a phase shuffle layer.
+Finally the data is reshaped and passed into a dense layer which classifies a sample (Table \ref{tab:Dis}).
+\newline
+\newline
+The generator accepts an input noise layer that is passed into a dense layer then reshaped.
+The structure is then composed of alternating transoposed 1-dimensional convolution layers and ReLU layers before finally being output through a Tanh layer (Table \ref{tab:Gen}).
+\newline
+\newline
+The architecture may be modified slightly dependent on the sample rate of the dataset being used for training and evaluation; if audio with a sample rate dissimilar to that used by \citeauthor{2018arXiv180204208D} is used then the number of layers may need to be modified.
+If these changes cause the model to fail to converge then some experimentation with the hyperparameters will also be attempted.
+
+\subsubsection{Conditioned WaveGAN Design}
+
+The design of the conditioned WaveGAN will be identical to that of the successfully trained baseline WaveGAN in most respects.
+The main modification will be the adaptation of the internal networks to accept and combine a second input layer that encodes class labels of the training data as one-hot vectors.
+The discriminator requires that the input layer be combined with the training data before convolution begins.
+The generator requires that the existing prior input noise is combined with the conditioning input layer before the first transposed convolution layer.
+
+\subsection{Implementation}
+
+The models will be implemented using the open-source TensorFlow machine learning framework published and maintained by Google.
+TensorFlow is designed specifically for working with deep neural networks; apart from inbuilt components for amny different layer types it also includes TensorBoard, a visualization tool that assists in the design, measurement and debugging of networks.
+Although TensorFlow has compatiable APIs for multiple languages such as C++ and Java, the Python API is ``the most complete and easiest to use'' \citep{TensorFlowAPI} and so Python will be used for this implementation.
+\newline
+\newline
+Most components of the WaveGAN architecture are already available within TensorFlow; the only layer that will need further coding is the 'phase shuffle' operation layer which randomly shifts the phase of the audio after each convolution to accounts for potential periodic artifacts appearing in the data.
+This will first be attempted as a composition of existing TensorFlow operations but if this is not feasible the design will be completed in C++ \citep{TensorFlowAPIOps}.
+\newline
+\newline
+Manipulation and visualization of the audio datasets used in the experiments will be through Python scripts with the LibROSA python package.
+Final presentation of the audio samples for subjective evaluation by the reader will be through the Jupyter Notebook framework.
+
+\subsection{Evaluation}
+
+The primary outcome of this project is the ability of the conditioned WaveGAN to reproduce the correct word given a class label as input.
+Inspection of the generated samples by the experimenter is a first step but requires subjective evaluation of the data.
+Since a poor model may generate convincing samples by copying elements of the data; subjective evaluation is not sufficient to confirm the quality of the model.
+\newline
+\newline
+A secondary outcome is the quality of the generated samples from the conditioned WaveGAN compared to the baseline model and training data.
+Based on the \citeauthor{2014arXiv1411.1784M}s previous experiment with GAN conditioning, the conditioned model is not expected to generate outputs of the same quality as the unconditioned model.
+Measurement of the difference in quality will however give an objective basis for any claim that the conditioned model is generating distinguishable samples that match the data class input into the generator.
+\newline
+\newline
+The evaluation of generated sample quality in the best case is performed by experimental subjects who are not aware of the source of the samples.
+These forms of evaluation however are not always possible due to time and budget constraints: the need for ethical sign-off by a research institute, the design and production of a testing interface, and the need to gather subjects for testing in either a controlled environment or through a service such as Amazon's Mechanical Turk all place significnt demands on the experimenter.
+Given limited time and budget, evaluation by third-party subjects is outside the scope of this project.
+
+\subsubsection{Dataset Selection}
 
 The \textit{Speech Commands Dataset} \citep{speechcommands} produced by Google consists of thousands of approximately one second long recordings of different individuals pronouncing thirty different english language words.
 The \textit{Speech Commands Zero Through Nine} (SC09) dataset is a subset of the \textit{Speech Commands Dataset} used during the development of the WaveGAN model.
 The data used in this project will be taken from the \textit{Speech Commands Dataset} so as to maintain a level of consistency with previous experiments.
 \newline
 \newline
-Deep learning experiments can be computationally expensive.
-The training of the original WaveGAN model using the SC09 dataset required four days of computation on an NVIDIA P100 GPU.
-At the time of writing, NVIDIA P100 GPUs are available for approximately US \$5,500.
-Cloud computing services also provide GPUs at varying rates depending on the users requirements; for example, at the time of writing, \href{https://cloud.google.com/gpu/}{Google Cloud} has preemptible NVIDIA P100 GPU computation available at US \$0.73 per hour.
 Experiments with the SC09 dataset are both time consuming and have a significant financial cost.
-\newline
-\newline
-Given the limits on time and finances available for this project, the selection of the dataset must reduce the computational cost where possible.
+Given the previously described limits on time and finances available for this project, selection of the dataset must reduce the computational cost where possible.
 This is achievable by a reduction in the size of the dataset used for the experiment.
 There are two aspects of an audio dataset that can be manipulated to reduce the size of the dataset: the number of elements within the dataset and the number of samples used to represent the audio (sample rate).
 \newline
@@ -171,172 +241,69 @@ There are two aspects of an audio dataset that can be manipulated to reduce the 
 The SC09 dataset has approximately 2,370 elements per recorded number.
 With ten numbers included within the dataset, there are approximately 23,700 elements in total.
 To demonstrate the principle of conditional selection of generated samples from the WaveGAN model the minimum number of words required is two.
-With two words only the model can be conditioned to produce either depending on the input layer.
+I therefore propose for the purpose of this experiment a new \textit{Speech Commands Binary Dataset} as a subset of the \textit{Speech Commands Dataset}.
 \newline
 \newline
-For the purpose of this experiment I propose to create a new \textit{Speech Commands Binary Dataset} as a subset of the \textit{Speech Commands Dataset} used in the original WaveGAN training.
-This dataset will contain only elements from the spoken words for the numbers 'zero' and 'one'.
-With words of different syllable counts, and with no shared syllables, the two words are easily distinguishable.
-The dataset also has consistency with the subject matter by representing the numbers used for digital computation.
-With this reduction of the dataset size to one-fifth of that used in the original WaveGAN experiment the computational cost of the experiment should be significantly reduced.
+This \textit{Speech Commands Binary Dataset} will contain only the spoken words for numbers 'zero' and 'one'.
+With words of different syllable counts, and with no shared syllables, the two words are easily distinguishable; the dataset also has consistency with the subject matter by representing the numbers used for digital computation.
 \newline
 \newline
-Each recording within the \textit{Speech Commands Dataset} is of approximately one second long and at a sample rate of 16,000.
-A sample rate of 16,000 consists of 16,000 different numerical measurements.
+Recordings within the \textit{Speech Commands Dataset} are approximately one second long with a sample rate of 16,000.
 Humans hear audio as wave cycles measuered in hertz (hz).
 A cycle requires at least two samples to be recorded so a recording with a sample rate of 16,000 captures audio within the range from 0hz to 8,000hz.
-The most recognizable features of human speech actually lie in the range from 30hz to 4,000hz.
-Recordings with a frequency range up to 4,000hz are of lower quality than those with a frequency range up to 8,000hz but are still recognizable as speech; however, they only require a sample rate of 8,000 samples per second.
-The subjective quality of the audio will not be invalidate the results of the experiment as evaluation will rely largely on metrics rather than human listening.
+The most recognizable features of human speech lie in the range from 30hz to 4,000hz.
+Recordings with a frequency range up to 4,000hz are of lower quality than those with a frequency range up to 8,000hz but are still recognizable as speech; they also only require a sample rate of 8,000.
+The subjective quality of the audio will not invalidate the results of the experiment as evaluation relies largely on metrics.
 \newline
 \newline
 The reduction of the sample rate of audio is 'downsampling'.
-Downsampling the dataset elements to 8,000 samples per second will halve the amount of data needed to be passed through the neural network.
-The number of convolution layers in the WaveGAN model assumes the division of an input layer of an approximatley 16,000 sample per second audio recording repeatedly by 4 (the stride of the convolution) to layer of length 16.
-To repeat this with an input layer of approximately 4,000 samples per second, the model would need to be smaller by one convolution layer.
-The reduction of the number of layers within the model may affect the ability of the model to converge as there is a relationship between number of layers and the capability of a model.
-\newline
-\newline
-A \textit{Downsampled Speech Commands Binary Dataset} will therefore be created with a sample rate of approximately 4,000 samples per second and will be tested during the model training to determine whether a smaller model will converge.
+Downsampling the dataset elements to 8,000 samples per second will halve the data needed to be passed through the neural network.
+A \textit{Downsampled Speech Commands Binary Dataset} will therefore be created with a sample rate of 8,000 and will be tested during the model training to determine whether a smaller model will converge.
 If the smaller model succeeds it is possible that the training time will be noticeably reduced.
-The removal of the upper convolution layer on a 16,000 sample per second recording would reduce the number of convolution computations by two-thirds.
 This reduction of the sample rate is equivalent to using a smaller image size for experimentation with picture generating GANs.
-\newline
-\newline
-The two datasets, \textit{Speech Commands Binary Dataset} and \textit{Downsampled Speech Commands Binary Dataset}, will be produced through a simple Python program.
-The LibROSA Python package for music and audio analysis will be imported to enable the manipulation of the .wav files the \textit{Speech Commands Dataset} audio is stored within.
 
-\subsection{Building the WaveGAN Model}
-
-The WaveGAN model will be built with two variations: the first being a recreation of the original WaveGAN; the second being a slightly modified model with one fewer convolution layers to allow for testing the less computationally demanding \textit{Downsampled Speech Commands Binary Dataset}.
-Both variations will follow the structure and hyperparameters used within the original WaveGAN as closely as possible.
-The code from these baseline models will be reused when writing the conditioned WaveGAN model.
-\newline
-\newline
-The code for these models will be written with Python using the open-source TensorFlow machine learning frameowork published and maintained by Google.
-TensorFlow was designed for working with deep neural networks and has functionality such as pre-built convolution and dense layers that can be quickly plugged into a model.
-It also includes TensorBoard, a visualization tool that portrays the model graph visually, plots quantitative measures and includes debugging tools.
-Although TensorFlow is compatiable with some other languages, such as C++ and Java, the Python API for TensorFlow is ``the most complete and easiest to use.'' \citep{TensorFlowAPI}
-
-\subsubsection{Writing the Discriminator}
-
-The WaveGAN discriminator will take advantage of TensorFlow objects for one-dimensional convolution, denses layers and reshaping.
-A custom layer will be written to account for the 'Phase Shuffle' operation included in the original WaveGAN model.
-This 'Phase Shuffle' operation randomly shifts the phase of each layer's activations before input to the next layer; this shift accounts for artifacts in the data that are prouced by the convolution procedure.
-Two discriminators will be written; one accepting 16,000 sample per second audio (Table \ref{tab:Dis}) and another accepting 8,000 sample per second audio (Table \ref{tab:DisDown}).
-
-\subsubsection{Writing the Generator}
-
-The WaveGAN generator will be written using the TensorFlow objects for dense layers and reshaping.
-Currently the TensorFlow object for the one-dimensional transposed convolution has not been exposed through the regular API because it is still being tested.
-The function is however available through the TensorFlow 'contrib' module (which is used to expose volatile or experimental code).
-The only remaining failed tests for this function are related to the MAC operating system and it should not interfere with this experiment which is being run on Linux Ubuntu systems.
-Two generators will be written; one that generates 16,000 sample per second audio (Table \ref{tab:Gen}) and another that generates 8,000 sample per second audio (Table \ref{tab:GenDown}).
-
-\subsubsection{Training the WaveGAN model}
-
-The training of the intergrated WaveGAN model will begin with an attempt to train with the \textit{Downsampled Speech Commands Binary Dataset}.
-If attempts to train with the downsampled audio and smaller network fail then the experiment will continue with training on the \textit{Speech Commands Binary Dataset} which will be a near replica of the original WaveGAN model.
-\newline
-\newline
-Hyperparameters chosen for the model will match as closely as possible those chosen for the original WaveGAN model.
-The model used for the downsampled dataset may need some slight adjustment and if intitial training fails to converge some experimentation with the parameters will be considered before switching to replica model.
-\newline
-\newline
-An NVIDIA GPU will be available for this experiment and initial tests of the training will take place on that device using the NVIDIA Compute Unified Device Architecture (CUDA) for GPU acceleration.
-The available GPU is an older card with a CUDA compute capability of 2.1 compared to the compute capability of 6.0 for the NVIDIA Tesla P100 GPU used in the original WaveGAN experiment.
-This GPU will be useful for running some tests upon and debugging the WaveGAN model but only experimentation will determine whether it is suitable to train even the minimal dataset proposed for this project.
-\newline
-\newline
-If the available GPU is insufficient for training then the experiment will be continued on a cloud GPU service such as those provided by Google Cloud or Amazon Web Services.
-The choice of service may be price dependent as the cost of computation changes over time.
-At the time of writing the costs are reasonable for the purpose of this experiment; for example, \href{https://cloud.google.com/gpu/}{Google Cloud} has NVIDIA Tesla P100 GPUs available at US \$0.73 per hour for preemptible instances that can be used for batch processing.
-Even if the computation needs to be hurried, the current cost for on demand GPU computation on the same GPUs at Google is only US \$1.46 per hour.
-\newline
-\newline
-Given the reduction in the data being processed to one fifth the size of the original \textit{Speech Commands Dataset}; it is possible that the training time will be less than one day (compared four days required for training the original WaveGAN).
-With a further reduction of the number of computations possible through downsampling it is possible that the training time will be reduced to a few hours.
-(This assumes a linear relationship between the size of the dataset, count of samples, and the training time; the true relationship is unlikely to be so simple).
-It seems likely that the budget for this project will not exceed US \$200 even with a few failed attempts at training at on demand pricing; this is a reasonable and affordable amount for this project.
-
-\subsection{Building the Conditioned WaveGAN Model}
-
-The conditioned WaveGAN model will be an adaptation of the successfully trained WaveGAN model: this will be the model with downsampled 8,000 sample per second audio as input if that is successful; otherwise it will be the model with 16,000 sample per second audio.
-
-\subsubsection{Integrating an Input Layer}
-
-The code written for the successfully trained WaveGAN implemention will be copied over to the conditioned WaveGAN model.
-The model will then be adapted to include an input layer that feeds class labels of the audio samples encoded as one-hot vectors into both the generator and discriminator.
-The generator will require the existing prior input noise to be combined with the conditioning input layer before the first transposed convolution layer.
-The discriminator will require conditioning input layer to be combined with the data element being tested before convolution begins.
-
-\subsubsection{Training the Conditioned WaveGAN Model}
-
-The training of the conditioned WaveGAN model will begin by following the method used successfully in the training of the baseline WaveGAN model trained for this project.
-Results of previous experimentation with a conditioned GAN suggest that the architecture of the discriminator is not a critical factor so the discriminator within this model is unlikely to require any significant changes \citep{2014arXiv1411.1784M}.
-The architecture of the generator was not addressed within the report on that experiment so training must begin with the assumption that the generator is modified as little as possible.
-
-\subsection{Evaluating Results}
-
-The primary outcome of the project is the ability of the conditioned WaveGAN to reproduce the correct word given a particular class label as an input.
-Inspection of the generated samples by the experimenter is a first step towards the evaluation of generative models and therefore requires a subjective evaluation of the generated data; this will even take place during training as the result of an evaluation may demand changes to the model or hyperparameters.
-A poor model may however generate convincing samples by copying elements of the data; human evaluation is therefore not sufficient to confirm the quality of the model.
-\newline
-\newline
-A second outcome is the quality of the generated samples from the conditioned model in comparison to both the baseline model and the training data.
-Based on the previous experiment with conditioning a GAN, the conditioned model is not expected to generated outputs to the same quality as the unconditioned GAN.
-Measurement of the difference in quality will however give an objective basis for any claim that the conditioned model is generating distinguishable samples.
-Comparison against the training data will also support any claim that the samples being generated match the correct class that has been input into the generator.
-\newline
-\newline
-The evaluation of the quality of generated samples in the best case is performed by experimental subjects who are not aware of the source of the samples.
-These forms of evaluation are not always possible due to time and budget constraints: the need for ethical sign-off by a research institute, the design and production of a testing interface, and the need to gather subjects for testing in either a controlled environment or through a service such as Amazon's Mechanical Turk all place significnt demands on the experimenter.
-Given limited time and budget, evaluation by third-party subjects is outside the scope of this project.
-
-\subsubsection{Comparing Inception scores}
+\subsubsection{Metrics}
 
 The \textit{inception score} is a measurement for generated images that has been shown to correspond well with human judgement.
 Following the example of the paper introducing the original WaveGAN model, an inception classifier will be trained with the training dataset and used to evaluate the generated audio.
 The inception classifier will evaluate the audio from both generators represented as Fourier transformed frequency spectrum images.
-
-\subsubsection{Nearest Neighbours Comparison}
-
+\newline
+\newline
 Nearest neighbours comparison with Euclidean distance will be used to confirm the models are not overfitting and reproducing the training data.
 This method is an adjunct to the \textit{inception score} measurements as it is only fit for detecting extreme examples of overfitting \citep{2015arXiv151101844T}.
 Two metrics will be measured: the diversity amongst the generated samples; and distance between generated samples and their nearest neighbour in the training data.
 
-\subsubsection{Writing Jupyter Report with Audio Samples}
+\subsubsection{Presentation}
 
 Due to the difficulty for humans in comparing audio through visual representations, a selection of generated samples from both models will be presented alongside selected training data samples in an interactive Jupyter notebook.
-The reader will therefore able to subjectively evaluate the results of the project.
+The reader will therefore be able to subjectively evaluate the results of the experiments.
 
-\subsection{Considering Further Experiments}
+\subsection{Potential Extensions}
 
-If the project runs ahead of schedule there are a number of possible further experiments that may be considered in order to bolster the results.
-Experience of the time and financial cost of training the initial models will inform whether further experiments are viable within the scope of this project; the choice of further experimentation will be dependent on the time available and the benefits that may result from the extra data.
+If the project runs ahead of schedule further experiments may be considered in order to bolster the results.
+Experience of the time and financial cost of training the initial models will inform whether these extensions of the experiment are viable within the scope of this project; this will be dependent on time available and potential benefits resulting from the extra data.
 
 \subsubsection{Increasing the Sample Rate of Training Data}
 
-If the experiment had been successfully completed with the \textit{Downsampled Speech Commands Binary Dataset} a rerun with higher quality audio from the \textit{Speech Commands Binary Dataset} should be considered.
-The discriminator and generator models will already be available with the correct architecture as they will be produced during the initial writing of the baseline WaveGAN model.
-More detailed and clearer audio samples will allow for a better evaluation and clearer comparison to the results of the original WaveGAN experiment.
+If the experiment had been successfully completed with the \textit{Downsampled Speech Commands Binary Dataset} a rerun with higher quality audio from the \textit{Speech Commands Binary Dataset} will be considered.
+This will require slight modification of the generator and discriminator within both models.
+More detailed audio samples will allow for a clearer comparison to the results of the original WaveGAN experiment.
 
 \subsubsection{Enlargement of the Training Dataset}
 
-Training of the models with a larger dataset consisting of more than two words would introduce further complexity into the models.
+Training with a larger dataset consisting of more than two words would introduce further complexity into the models.
 A consistent themed subset of the \textit{Speech Commands Dataset} dataset is a proposed \textit{Speech Commands Directions Dataset} containing recordings of the words for 'up', 'down', 'left' and 'right'.
-This dataset is double the size of the \textit{Speech Commands Binary Dataset} yet still restricted to reduce the potential computational cost; it may be downsampled for further cost effectiveness.
+This dataset is double the size of the \textit{Speech Commands Binary Dataset} yet still restricted to reduce the potential computational cost; it may be downsampled for further cost-effectiveness.
 
 \subsubsection{Training a Third Model}
 
 A final possibility is to train a third model based on the controllable GAN (CGAN).
-This would require modifying the baseline WaveGAN model to include a classifier/encoder network.
-This would be a challenging and time-consuming addition to the experiment and the difficulty is compounded by a lack of details about the architecture within the paper that originally introduced this model.
-If achievable however the evaluation could measure the quality of samples from the conditional GAN against the controllable GAN.
+This would require modifying the WaveGAN model to include a classifier/encoder network; a challenging and time-consuming addition to the experiment with the difficulty compounded by a lack of detail about the architecture within the paper by \citeauthor{2017arXiv170800598L}.
+The benefit of completing this extension to the project would be a comparison of the sample quality from conditional and controlled GANs within the context of audio generation.
 
 \newpage
 
-\section{Time Plan}
+\section{Project Timeline}
 
 Following is a Gantt Chart showing the planned timeline for the project:
 \newline
@@ -430,41 +397,6 @@ Following is a Gantt Chart showing the planned timeline for the project:
 
   \begin{table}[h]
     
-    \caption{Downsampled WaveGAN Discriminator}
-    \label{tab:DisDown}
-    
-    \begin{center}
-      \begin{tabular}{ l | l | l}
-        
-        Operation & Kernel Size & Output Shape \\
-        \hline
-        Input {\it x} or {\it G}({\it z}) & & ({\it n}, 4096, {\it c}) \\
-        % to 1024
-        Conv1D (Stride=4) & (25, {\it c}, {\it d}) & ({\it n}, 1024, {\it d}) \\
-        LReLU (\textalpha \, = 0.2) & & ({\it n}, 1024, {\it d}) \\
-        Phase Shuffle ({\it n} = 2) & & ({\it n}, 1024, {\it d}) \\
-        % to 256
-        Conv1D (Stride=4) & (25, {\it d}, 2{\it d}) & ({\it n}, 256, 2{\it d}) \\
-        LReLU (\textalpha \, = 0.2) & & ({\it n}, 256, 2{\it d}) \\
-        Phase Shuffle ({\it n} = 2) & & ({\it n}, 256, 2{\it d}) \\
-        % to 64
-        Conv1D (Stride=4) & (25, 2{\it d}, 4{\it d}) & ({\it n}, 64, 4{\it d}) \\
-        LReLU (\textalpha \, = 0.2) & & ({\it n}, 64, 4{\it d}) \\
-        Phase Shuffle ({\it n} = 2) & & ({\it n}, 64, 4{\it d}) \\
-        % to 16
-        Conv1D (Stride=4) & (25, 4{\it d}, 8{\it d}) & ({\it n}, 16, 8{\it d}) \\
-        LReLU (\textalpha \, = 0.2) & & ({\it n}, 16, 8{\it d}) \\
-        % Output
-        Reshape & & ({\it n}, 256{\it d}) \\
-        Dense & (256{\it d}, 1) & ({\it n}, 1)\\
-        
-      \end{tabular}
-    \end{center}
-    
-  \end{table}
-
-  \begin{table}[h]
-    
     \caption{WaveGAN Generator}
     \label{tab:Gen}
     
@@ -498,38 +430,6 @@ Following is a Gantt Chart showing the planned timeline for the project:
     
   \end{table}
 
-  \begin{table}[h]
-    
-    \caption{Downsampled WaveGAN Generator}
-    \label{tab:GenDown}
-    
-    \begin{center}
-      \begin{tabular}{ l | l | l}
-        
-        Operation & Kernel Size & Output Shape \\
-        \hline
-        Input {\it z} $\sim$ Uniform(-1, 1) & & ({\it n}, 100) \\
-        Dense 1 & (100, 256{\it d}) & ({\it n}, 256{\it d}) \\
-        Reshape & & ({\it n}, 16, 8{\it d}) \\
-        %
-        ReLU & & ({\it n}, 16, 8{\it d}) \\
-        Trans Conv1D (Stride=4) & (25, 8{\it d}, 4{\it d}) & ({\it n}, 64, 4{\it d}) \\
-        %
-        ReLU & & ({\it n}, 64, 4{\it d}) \\
-        Trans Conv1D (Stride=4) & (25, 4{\it d}, 2{\it d}) & ({\it n}, 256, 2{\it d}) \\
-        %
-        ReLU & & ({\it n}, 256, 2{\it d}) \\
-        Trans Conv1D (Stride=4) & (25, 2{\it d}, {\it d}) & ({\it n}, 1024, {\it d}) \\
-        %
-        ReLU & & ({\it n}, 1024, {\it d}) \\
-        Trans Conv1D (Stride=4) & (25, {\it d}, {\it c}) & ({\it n}, 4096, {\it d}) \\
-        Tanh & & ({\it n}, 4096, {\it d}) \\
-
-      \end{tabular}
-    \end{center}
-    
-  \end{table}
-  
 \end{appendices}
 
 % Wrapup
