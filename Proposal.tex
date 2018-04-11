@@ -10,6 +10,7 @@
 \usepackage[round]{natbib}
 \usepackage{pdflscape}
 \usepackage{pgfgantt}
+\usepackage{pifont}
 \usepackage{ragged2e}
 \usepackage{soul}
 \usepackage{textgreek}
@@ -121,14 +122,37 @@ Generated audio samples from the model will be evaluated against the training da
 
 \section{Objectives}
 
-Below are the proposed milestones for the project:
+Objectives for the project are listed below:
+\newline
 
 \begin{itemize}
-\item Requirements Gathering
-\item Design
-\item Implementation
-\item Evaluation
-\item Potential Extensions
+
+\item[\ding{221}] Requirements Gathering:
+  \begin{itemize}
+  \item[\ding{213}] Identify methods for managing the computational cost of the project
+  \item[\ding{213}] Ensure the chosen machine learning framework can reproduce the architecture
+  \end{itemize}
+
+\item[\ding{221}] Design:
+  \begin{itemize}
+  \item[\ding{213}] Confirm the final design of the WaveGAN architecture
+  \item[\ding{213}] Confirm the design of the conditioned WaveGAN architecture
+  \end{itemize}
+
+\item[\ding{221}] Implementation:  
+  \begin{itemize}
+  \item[\ding{213}] Implement and train the WaveGAN model
+  \item[\ding{213}] Implement and train the conditioned WaveGAN model
+  \end{itemize}
+
+\item[\ding{221}] Evaluation:
+  \begin{itemize}
+  \item[\ding{213}] Define the criteria for measuring success
+  \item[\ding{213}] Select an appropriate dataset for training
+  \item[\ding{213}] Confirm the choice of metrics
+  \item[\ding{213}] Presentation and discussion of findings
+  \end{itemize}
+
 \end{itemize}
 
 \newpage
@@ -158,15 +182,13 @@ The final models and dataset will also be tested on an available NVIDIA GPU befo
 \subsubsection{Framework Selection}
 
 The implementation of recently designed or novel neural network architectures may also require components that are not yet available in existing frameworks.
-Comparison of the WaveGAN architecture with TensorFlow shows that it is capable of producing all required layers for the network; only a 1-dimensional transposed convolution component is not within the stable API.
+Comparison of the WaveGAN architecture with TensorFlow shows it should be capable of producing all required layers for the network; only a 1-dimensional transposed convolution component is not within the stable API.
 \newline
 \newline
 This component is however within the TensorFlow 'contrib' module used for volatile or experimental code; a review of GitHub shows the only remaining failed tests relate to the MAC operating system which is not being used for this project.
-The TensorFlow framework therefore can reproduce the model architecture needed for this project.
+TensorFlow therefore should be capable of reproducing the necessary model architecture but some experimentation will be required; Torch or Theano will be reviewed as potential fallback frameworks.
 
 \subsection{Design}
-
-
 
 \subsubsection{Baseline WaveGAN Design}
 
@@ -210,6 +232,8 @@ Manipulation and visualization of the audio datasets used in the experiments wil
 Final presentation of the audio samples for subjective evaluation by the reader will be through the Jupyter Notebook framework.
 
 \subsection{Evaluation}
+
+\subsubsection{Definition of Criteria}
 
 The primary outcome of this project is the ability of the conditioned WaveGAN to reproduce the correct word given a class label as input.
 Inspection of the generated samples by the experimenter is a first step but requires subjective evaluation of the data.
@@ -310,9 +334,9 @@ Following is a Gantt Chart showing the planned timeline for the project:
 \newline
 
 \begin{ganttchart}[
-  vgrid,
+  %vgrid=*{7}{dotted}
   hgrid,
-  x unit=2cm,
+  x unit=0.085cm,
   y unit title=0.7cm,
   y unit chart=0.7cm,
   progress label text={\quad\pgfmathprintnumber[precision=0, verbatim]{#1}\%},
@@ -322,25 +346,21 @@ Following is a Gantt Chart showing the planned timeline for the project:
   bar label node/.style={text width=3cm, align=right, font=\scriptsize\RaggedLeft, anchor=east},
   milestone label node/.style={text width=2cm, align=right, font=\scriptsize\RaggedLeft, anchor=east},
   group label node/.style={text width=3cm, align=right, font=\scriptsize\RaggedLeft, anchor=east},
-  compress calendar,
   time slot format=isodate
   ]
   {2018-06-01}
   {2018-09-30}
   \gantttitlecalendar{year, month=name} \\
-  \ganttgroup{Dataset}{2018-06-15}{2018-06-22} \\
-  \ganttgroup{WaveGAN}{2018-06-23}{2018-07-22} \\
-  \ganttbar{Write discriminator}{2018-06-23}{2018-06-30} \\
-  \ganttlinkedbar{Write generator}{2018-07-01}{2018-07-07} \\
-  \ganttlinkedbar{Train WaveGAN}{2018-07-08}{2018-07-22} \\
-  \ganttgroup{Conditioned WaveGAN}{2018-07-23}{2018-08-14} \\
-  \ganttbar{Input layer}{2018-07-23}{2018-08-31} \\
-  \ganttlinkedbar{Train conditioned WaveGAN}{2018-08-01}{2018-08-14} \\
-  \ganttgroup{Evaluation}{2018-08-15}{2018-09-30} \\
-  \ganttbar{Inception scores}{2018-08-15}{2018-08-22} \\
-  \ganttlinkedbar{Nearest neighbour}{2018-08-23}{2018-08-30} \\
-  \ganttlinkedbar{Project report}{2018-09-01}{2018-09-21} \\
-  \ganttlinkedbar{Jupyter report}{2018-09-22}{2018-09-30}
+  \ganttgroup{\textbf{Implementation}}{2018-06-04}{2018-07-15} \\
+  \ganttbar{\textit{Dataset Design}}{2018-06-04}{2018-06-10} \\
+  \ganttbar{\textit{WaveGAN}}{2018-06-11}{2018-07-01} \\
+  \ganttbar{\textit{Conditioned W-GAN}}{2018-07-02}{2018-07-15} \\
+  \ganttgroup{\textbf{Evaluation}}{2018-07-16}{2018-09-16} \\
+  \ganttbar{\textit{Experiments}}{2018-07-16}{2018-07-29} \\
+  \ganttbar{\textit{Inception Scores}}{2018-07-30}{2018-08-12} \\
+  \ganttbar{\textit{Nearest Neighbours}}{2018-08-13}{2018-08-19} \\
+  \ganttbar{\textit{Jupyter Report}}{2018-08-20}{2018-08-26} \\
+  \ganttbar{\textit{Project Report}}{2018-08-27}{2018-09-16}
 \end{ganttchart}
 
 \newpage
