@@ -54,6 +54,7 @@ Methods of conditioning the output of GANs have been demonstrated for image gene
 The document follows with a review of generative models and their application to audio in section 2.
 Section 3 describes the aim of the project and the objectives and milestones are listed in section 4.
 The methodology of the project is described in section 5 and a detailed time plan showing how the objectives will be met appears in section 6.
+Potential extensions to the project are described in section 7.
 
 \newpage
 
@@ -87,7 +88,7 @@ The original WaveNet architecture was difficult to apply to real-time production
 An adaptation of WaveNet was also produced that can generate musical notes rather than audio waveforms \citep{2017arXiv170401279E}.
 \newline
 \newline
-Only recently GANs have been applied to the problem of audio generation, for some time experiments focused instead on image generation.
+Only recently have GANs been applied to the problem of audio generation, earlier experiments focused instead on image generation.
 Speculatively, reasons for this are: the initial availability of suitable image datasets and lack of suitable audio datasets; very small images conveying subjectively more information to humans than very short sounds despite similar bit size; and the suitability of images for printed reporting of results.
 \newline
 \newline
@@ -206,10 +207,10 @@ TensorFlow therefore should be capable of reproducing the necessary model archit
 
 \subsubsection{Baseline WaveGAN Design}
 
-The baseline WaveGAN model will be designed to be as similar as possible to that implemented by \citeauthor{2018arXiv180204208D}.
-The hyperparameters will initially be chosen to match those reported as successful for the training of the original WaveGAN.
+The baseline WaveGAN model will be designed to be as similar as possible to that implemented by \citeauthor{2018arXiv180204208D} so as to produce comparable results.
+Hyperparameters will be chosen to match those reported as successful for the training of the original WaveGAN.
 The loss function will be Wasserstein GAN-GP designed for stable training of GANs \citep{2017arXiv170400028G}.
-The optimiser will be Adam type as recommended by the DCGAN paper.
+The optimiser will be Adam type as recommended by \citeauthor{2015arXiv151106434R} in their paper introducing DCGAN.
 \newline
 \newline
 The discriminator accepts input of a fixed size that is dependent on the sample rate chosen for the dataset.
@@ -221,21 +222,20 @@ The generator accepts an input noise layer that is passed into a dense layer the
 The structure is then composed of alternating transposed 1-dimensional convolution layers and ReLU layers before finally being output through a Tanh layer (Table \ref{tab:Gen}).
 \newline
 \newline
-The architecture may be modified slightly dependent on the sample rate of the dataset being used for training and evaluation; if audio with a sample rate dissimilar to that used by \citeauthor{2018arXiv180204208D} is used then the number of layers may need to be modified.
-If these changes cause the model to fail to converge then some experimentation with the hyperparameters will also be attempted.
+The architecture may be modified dependent on the sample rate of the dataset being used for training; if audio with a sample rate dissimilar to that used by \citeauthor{2018arXiv180204208D} is used then the number of layers will need to be modified.
+If these changes cause the model to fail to converge then experimentation with the hyperparameters will be attempted.
 
 \subsubsection{Conditioned WaveGAN Design}
 
-The design of the conditioned WaveGAN will be similar to that of the original WaveGAN.
-The main modification will be the adaptation of the internal networks to accept and combine a second input layer encoding class labels as one-hot vectors.
+First attempts at producing a conditioned WaveGAN will exploit the architecture described by \citeauthor{2014arXiv1411.1784M}; this requires a modification of the internal networks to combine a second input layer encoding class labels as one-hot vectors.
 The discriminator requires that the input layer be combined with the training data before convolution begins.
 The generator requires that the existing prior input noise is combined with the conditioning input layer before the first transposed convolution layer.
 
 \subsection{Implementation}
 
-The models will be implemented using the open-source TensorFlow machine learning framework published and maintained by Google.
-TensorFlow is designed specifically for working with deep neural networks; apart from inbuilt components for many different layer types it also includes TensorBoard, a visualisation tool that assists in the design, measurement and debugging of networks.
-Although TensorFlow has compatible APIs for multiple languages such as C++ and Java, the Python API is ``the most complete and easiest to use'' \citep{TensorFlowAPI} and so Python will be used for this implementation.
+It is planned that the models be implemented using the open-source TensorFlow machine learning framework published and maintained by Google.
+TensorFlow is designed specifically for working with deep neural networks; apart from inbuilt components for many different layer types it includes TensorBoard, a visualisation tool that assists in the design, measurement and debugging of networks.
+TensorFlow has compatible APIs for multiple languages such as C++ and Java but the Python API is ``the most complete and easiest to use'' \citep{TensorFlowAPI} and so Python will be used for this implementation.
 \newline
 \newline
 Most components of the WaveGAN architecture are already available within TensorFlow; the only layer that will need further coding is the 'phase shuffle' operation layer which randomly shifts the phase of the audio after each convolution to accounts for potential periodic artifacts appearing in the data.
@@ -253,19 +253,19 @@ Since a poor model may generate convincing samples by copying elements of the da
 \newline
 \newline
 A secondary outcome is the quality of the generated samples from the conditioned WaveGAN compared to the baseline model and training data.
-Based on the \citeauthor{2014arXiv1411.1784M}s previous experiment with GAN conditioning, the conditioned model is not expected to generate outputs of the same quality as the unconditioned model.
-Measurement of the difference in quality will however give an objective basis for any claim that the conditioned model is generating distinguishable samples that match the data class input into the generator.
+Based on \citeauthor{2014arXiv1411.1784M}'s previous experiment with GAN conditioning, the conditioned model is not expected to generate outputs of the same quality as the unconditioned model.
+Measurement of the difference in quality will however give an objective basis for any claim that the conditioned model generates distinguishable samples matching the data class input into the generator.
 \newline
 \newline
-The evaluation of generated sample quality in the best case is performed by experimental subjects who are not aware of the source of the samples.
-These forms of evaluation however are not always possible due to time and budget constraints: the need for ethical sign-off by a research institute, the design and production of a testing interface, and the need to gather subjects for testing in either a controlled environment or through a service such as Amazon's Mechanical Turk all place significant demands on the experimenter.
+The evaluation of generated sample quality in the best case is performed by experimental subjects who are unaware of the source of the samples.
+This form of evaluation however is not always possible due to time and budget constraints: the need for ethical sign-off by a research institute, the design and production of a testing interface, and the need to gather subjects for testing in either a controlled environment or through a service such as Amazon's Mechanical Turk all place significant demands on the experimenter.
 Given limited time and budget, evaluation by third-party subjects is outside the scope of this project.
 
 \subsubsection{Dataset Selection}
 
 The \textit{Speech Commands Dataset} \citep{speechcommands} produced by Google consists of thousands of approximately one second long recordings of different individuals pronouncing thirty different English language words.
 The \textit{Speech Commands Zero Through Nine} (SC09) dataset is a subset of the \textit{Speech Commands Dataset} used during the development of the WaveGAN model.
-The data used in this project will be taken from the \textit{Speech Commands Dataset} so as to maintain a level of consistency with previous experiments.
+The data used in this project will be taken from the \textit{Speech Commands Dataset} so as to maintain consistency with previous experiments.
 \newline
 \newline
 Experiments with the SC09 dataset are both time consuming and have a significant financial cost.
@@ -277,66 +277,43 @@ There are two aspects of an audio dataset that can be manipulated to reduce the 
 The SC09 dataset has approximately 2,370 elements per recorded number.
 With ten numbers included within the dataset, there are approximately 23,700 elements in total.
 To demonstrate the principle of conditional selection of generated samples from the WaveGAN model the minimum number of words required is two.
-I therefore propose for the purpose of this experiment a new \textit{Speech Commands Binary Dataset} as a subset of the \textit{Speech Commands Dataset}.
+This experiment will therefore use a new \textit{Speech Commands Binary Dataset} as a subset of the \textit{Speech Commands Dataset}.
 \newline
 \newline
 This \textit{Speech Commands Binary Dataset} will contain only the spoken words for numbers 'zero' and 'one'.
-With words of different syllable counts, and with no shared syllables, the two words are easily distinguishable; the dataset also has consistency with the subject matter by representing the numbers used for digital computation.
+With words of different syllable counts, and with no shared syllables, the words are easily distinguishable; the dataset also has consistency with the subject matter by representing the numbers used for digital computation.
 \newline
 \newline
 Recordings within the \textit{Speech Commands Dataset} are approximately one second long with a sample rate of 16,000.
-Humans hear audio as wave cycles measured in hertz (hz).
-A cycle requires at least two samples to be recorded so a recording with a sample rate of 16,000 captures audio within the range from 0hz to 8,000hz.
-The most recognisable features of human speech lie in the range from 30hz to 4,000hz.
-Recordings with a frequency range up to 4,000hz are of lower quality than those with a frequency range up to 8,000hz but are still recognisable as speech; they also only require a sample rate of 8,000.
-The subjective quality of the audio will not invalidate the results of the experiment as evaluation relies largely on metrics.
+Humans hear audio as wave cycles measured in hertz (Hz).
+A cycle requires at least two samples to be recorded so a recording with a sample rate of 16,000 captures audio within the range from 0 Hz to 8,000 Hz.
+The most recognisable features of human speech lie in the range from 30 Hz to 4,000 Hz.
+Recordings with a frequency range up to 4,000 Hz are of lower quality than those with a frequency range up to 8,000 Hz but are still recognisable as speech; they also only require a sample rate of 8,000.
+The subjective quality of the audio will not invalidate the results of the experiment as evaluation relies on metrics.
 \newline
 \newline
 The reduction of the sample rate of audio is 'downsampling'.
-Downsampling the dataset elements to 8,000 samples per second will halve the data needed to be passed through the neural network.
-A \textit{Downsampled Speech Commands Binary Dataset} will therefore be created with a sample rate of 8,000 and will be tested during the model training to determine whether a smaller model will converge.
-If the smaller model succeeds it is possible that the training time will be noticeably reduced.
-This reduction of the sample rate is equivalent to using a smaller image size for experimentation with picture generating GANs.
+Downsampling the dataset elements to 8,000 samples per second will halve the data needed to be passed through the neural networks.
+A \textit{Downsampled Speech Commands Binary Dataset} will be created with a sample rate of 8,000 and tested during training to determine whether a smaller model will converge.
+If the smaller model succeeds it is possible that the training time will be signficantly reduced.
+This reduction of the sample rate is equivalent to using a smaller picture size for experimentation with image generating GANs.
 
 \subsubsection{Metrics}
 
 The \textit{inception score} is a measurement for generated images that corresponds relatively well with human judgement.
-Following the example of the paper introducing the original WaveGAN model, an inception classifier will be trained with the training dataset and used to evaluate the generated audio.
+Following the example of the paper introducing the WaveGAN model, an inception classifier will be trained with the training dataset and used to evaluate the generated audio.
 The inception classifier will evaluate the audio from both generators represented as Fourier transformed frequency spectrum images.
 \newline
 \newline
 When working with the \textit{inception score} it has been advised to always use an alternative score to demonstrate the model is not overfitting \citep{2018arXiv180101973B}.
-This experiment therefore uses nearest neighbours comparison with Euclidean distance to ensure the models are simply reproducing the training data.
+Nearest neighbours comparison with Euclidean distance will therefore be used to ensure the models are not simply reproducing the training data.
 This method is an adjunct to the \textit{inception score} measurements as it is only fit for detecting extreme examples of overfitting \citep{2015arXiv151101844T}.
-Two metrics will be measured: the diversity amongst the generated samples; and distance between generated samples and their nearest neighbour in the training data.
+Two nearest neighbours metrics will be measured: diversity amongst generated samples and distance between generated samples and their nearest neighbour in the training data.
 
 \subsubsection{Presentation}
 
 Due to the difficulty for humans in comparing audio through visual representations, a selection of generated samples from both models will be presented alongside selected training data samples in an interactive Jupyter notebook.
 The reader will therefore be able to subjectively evaluate the results of the experiments.
-
-\subsection{Potential Extensions}
-
-If the project runs ahead of schedule further experiments may be considered in order to bolster the results.
-Experience of the time and financial cost of training the initial models will inform whether these extensions of the experiment are viable within the scope of this project; this will be dependent on time available and potential benefits resulting from the extra data.
-
-\subsubsection{Increasing the Sample Rate of Training Data}
-
-If the experiment had been successfully completed with the \textit{Downsampled Speech Commands Binary Dataset} a rerun with higher quality audio from the \textit{Speech Commands Binary Dataset} will be considered.
-This will require slight modification of the generator and discriminator within both models.
-More detailed audio samples will allow for a clearer comparison to the results of the original WaveGAN experiment.
-
-\subsubsection{Enlargement of the Training Dataset}
-
-Training with a larger dataset consisting of more than two words would introduce further complexity into the models.
-A consistent themed subset of the \textit{Speech Commands Dataset} dataset is a proposed \textit{Speech Commands Directions Dataset} containing recordings of the words for 'up', 'down', 'left' and 'right'.
-This dataset is double the size of the \textit{Speech Commands Binary Dataset} yet still restricted to reduce the potential computational cost; it may be downsampled for further cost-effectiveness.
-
-\subsubsection{Training a Third Model}
-
-A final possibility is to train a third model based on the controllable GAN (CGAN).
-This would require modifying the WaveGAN model to include a classifier/encoder network; a challenging and time-consuming addition to the experiment with the difficulty compounded by a lack of detail about the architecture within the paper by \citeauthor{2017arXiv170800598L}.
-The benefit of completing this extension to the project would be a comparison of the sample quality from conditional and controlled GANs within the context of audio generation.
 
 \newpage
 
@@ -375,6 +352,31 @@ Following is a Gantt Chart showing the planned timeline for the project:
   \ganttbar{\textit{Jupyter Report}}{2018-08-20}{2018-08-26} \\
   \ganttbar{\textit{Project Report}}{2018-08-27}{2018-09-16}
 \end{ganttchart}
+
+\newpage
+
+\section{Potential Extensions}
+
+If the project runs ahead of schedule further experiments may be considered in order to bolster the results.
+Experience of the time and financial cost of training the initial models will inform whether these extensions of the experiment are viable within the scope of this project; this will be dependent on remaining time available and potential benefits resulting from the extra data.
+
+\subsection{Increasing the Sample Rate of Training Data}
+
+If the experiment is successfully completed with the \textit{Downsampled Speech Commands Binary Dataset} then a rerun with higher quality audio from the \textit{Speech Commands Binary Dataset} will be considered.
+This will require slight modification of the generator and discriminator within both models.
+More detailed audio samples will allow for a clearer comparison to the results of the original WaveGAN experiment.
+
+\subsection{Enlargement of the Training Dataset}
+
+Training with a larger dataset consisting of more than two words would introduce complexity into the models.
+A consistent themed subset of the \textit{Speech Commands Dataset} dataset is a proposed \textit{Speech Commands Directions Dataset} containing recordings of the words for 'up', 'down', 'left' and 'right'.
+This dataset is double the size of the \textit{Speech Commands Binary Dataset} yet still restricted to reduce potential computational cost; it may be downsampled for further cost-effectiveness.
+
+\subsection{Training a Third Model}
+
+A final possibility is to train a third model based on the controllable GAN (CGAN).
+This would require modifying the WaveGAN model to include a classifier/encoder network; a challenging addition to the experiment with the difficulty compounded by a lack of detail about the architecture within the paper by \citeauthor{2017arXiv170800598L}.
+The benefit of completing this extension would be a comparison of the sample quality from conditioned and controlled GANs within the context of audio generation.
 
 \newpage
 
