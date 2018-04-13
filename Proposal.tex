@@ -286,14 +286,15 @@ With words of different syllable counts, and with no shared syllables, the words
 \newline
 Recordings within the \textit{Speech Commands Dataset} are approximately one second long with a sample rate of 16,000.
 Humans hear audio as wave cycles measured in hertz (Hz).
-A cycle requires at least two samples to be recorded so a recording with a sample rate of 16,000 captures audio within the range from 0 Hz to 8,000 Hz.
-The most recognisable features of human speech lie in the range from 30 Hz to 4,000 Hz.
-Recordings with a frequency range up to 4,000 Hz are of lower quality than those with a frequency range up to 8,000 Hz but are still recognisable as speech; they also only require a sample rate of 8,000.
-The subjective quality of the audio will not invalidate the results of the experiment as evaluation relies on metrics.
+The most recognisable features of human speech lie in the range from 30 Hz to 5000 Hz.
+Recordings with a frequency range up to 5000 Hz are of lower quality than those with a frequency range up to 16000 Hz but are still recognisable as speech.
 \newline
 \newline
-The reduction of the sample rate of audio is 'downsampling'.
-Downsampling the dataset elements to 8,000 samples per second will halve the data needed to be passed through the neural networks.
+Reduction of the sample rate of audio is 'downsampling'.
+Downsampling the dataset elements to 8000 samples per second will halve the data needed to be passed through the neural networks, thus not requiring significant architectural changes.
+The subjective quality of the downsampled audio will not invalidate the results of the experiment as evaluation relies on metrics.
+\newline
+\newline
 A \textit{Downsampled Speech Commands Binary Dataset} will be created with a sample rate of 8,000 and tested during training to determine whether a smaller model will converge.
 If the smaller model succeeds it is possible that the training time will be signficantly reduced.
 This reduction of the sample rate is equivalent to using a smaller picture size for experimentation with image generating GANs.
