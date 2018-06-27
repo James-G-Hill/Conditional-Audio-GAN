@@ -8,12 +8,14 @@ import soundfile as sf
 inPath = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/'
 outPath = '/home/zhanmusi/Documents/Data/Speech Commands Dataset Downsampled '
 sampleRate = 16000
+newSampleRate = 0
 
 # List of folders the word recordings should be extracted from
 folders = ['zero', 'one']
 
 
 def main(divideBy):
+    global newSampleRate
     newSampleRate = sampleRate / divideBy
     fullOutPath = outPath + newSampleRate + '/'
     loopFolders(fullOutPath)
@@ -55,4 +57,4 @@ if __name__ == "__main__":
         type=int,
         required=True,
         help="A divider for downsampling")
-    parser.parse_args()
+    main(parser.parse_args())
