@@ -1,3 +1,4 @@
+import argparse as ag
 import librosa as lb
 import os
 import soundfile as sf
@@ -5,24 +6,22 @@ import soundfile as sf
 
 # The paths for loading & saving the .wav files
 inPath = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/'
-outPath = '/home/zhanmusi/Documents/Data/Speech Commands Dataset Downsampled/'
+outPath = '/home/zhanmusi/Documents/Data/Speech Commands Dataset Downsampled '
+sampleRate = 16000
 
 # List of folders the word recordings should be extracted from
 folders = ['zero', 'one']
 
-# divideBy can be changed to determine the downsample rate
-divideBy = 4
-sampleRate = 16000
-newSampleRate = sampleRate / divideBy
 
-
-def main():
-    loopFolders()
+def main(divideBy):
+    newSampleRate = sampleRate / divideBy
+    fullOutPath = outPath + newSampleRate + '/'
+    loopFolders(fullOutPath)
     return
 
 
-def loopFolders():
-    for folder in folders:
+def loopFolders(fullOutPath):
+    for folder in fullOutPath:
         loopFiles(folder)
     return
 
@@ -50,4 +49,10 @@ def saveFile(folder, resampled, fileName):
 
 
 if __name__ == "__main__":
-    main()
+    parser = ag.ArgumentParser(description="Pass the downsample divider:")
+    parser.add_argument(
+        'divider',
+        type=int,
+        required=True,
+        help="A divider for downsampling")
+    parser.parse_args()
