@@ -1,14 +1,15 @@
 import argparse as ag
 import librosa as lb
+import numpy as np
 import os
 import soundfile as sf
 
 
-# The paths for loading & saving the .wav files
-inPath = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/'
-outPath = '/home/zhanmusi/Documents/Data/Speech Commands Dataset Downsampled '
-sampleRate = 16000
-newSampleRate = 0
+# Constants
+IN_PATH = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/'
+OUT_PATH = '/home/zhanmusi/Documents/Data/Speech Commands Dataset Downsampled '
+WAV_LENGTH = 16384
+SAMP_RATE = 8192
 
 # List of folders the word recordings should be extracted from
 folders = ['zero', 'one']
@@ -16,16 +17,16 @@ folders = ['zero', 'one']
 
 def main(divideBy):
     """ Runs the code """
-    global newSampleRate
-    newSampleRate = sampleRate / divideBy
+    global SAMP_RATE
+    SAMP_RATE = WAV_LENGTH / divideBy
     loopFolders()
     return
 
 
 def loopFolders():
-    """ Loops through all folders found at the inPath """
+    """ Loops through all folders found at the IN_PATH """
     for folder in folders:
-        path = inPath + folder + '/'
+        path = IN_PATH + folder + '/'
         loopFiles(path)
     return
 
@@ -35,7 +36,7 @@ def loopFiles(folder):
     allFiles = lb.util.find_files(folder, ext='wav')
     for eachFile in allFiles:
         filePath, fileName = os.path.split(eachFile)
-        resampled = resampleFile(eachFile)
+        resampled = resampleFile(standardFile)
         saveFile(folder, resampled, fileName)
     return
 
@@ -43,19 +44,29 @@ def loopFiles(folder):
 def resampleFile(wav):
     """ Resample the wav file passed to the function """
     series, sampRate = lb.core.load(wav, sr=None)
+    newSeries = standardizeLength(series)
     resampled = lb.core.resample(
-        y=series,
+        y=newSeries,
         orig_sr=sampRate,
-        target_sr=newSampleRate)
+        target_sr=SAMP_RATE)
     return resampled
+
+
+def standardizeLength(series):
+    """ Standardizes the length of the wav before resampling """
+    if len(series) < WAV_LENGTH:
+        series = np.append(series, np.zeros(WAV_LENGTH - len(series)))
+    elif len(series) > WAV_LENGTH:
+        series = series[:WAV_LENGTH]
+    return series
 
 
 def saveFile(folder, resampled, fileName):
     """ Save the file """
     sf.write(
-        file=outPath + folder + '/' + fileName,
+        file=OUT_PATH + folder + '/' + fileName,
         data=resampled,
-        samplerate=newSampleRate,
+        samplerate=SAMP_RATE,
         subtype='PCM_16')
     return
 
