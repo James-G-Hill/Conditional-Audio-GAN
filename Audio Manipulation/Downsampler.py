@@ -9,21 +9,18 @@ import soundfile as sf
 IN_PATH = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/'
 OUT_PATH = '/home/zhanmusi/Documents/Data/Speech Commands Dataset Downsampled '
 WAV_LENGTH = 16384
-SAMP_RATE = 8192
-
-# List of folders the word recordings should be extracted from
-folders = ['zero', 'one']
+SAMP_RATE = 16384
 
 
-def main(divideBy):
+def main(divideBy, folders):
     """ Runs the code """
     global SAMP_RATE
     SAMP_RATE = WAV_LENGTH / divideBy
-    loopFolders()
+    loopFolders(folders)
     return
 
 
-def loopFolders():
+def loopFolders(folders):
     """ Loops through all folders found at the IN_PATH """
     for folder in folders:
         path = IN_PATH + folder + '/'
@@ -36,7 +33,7 @@ def loopFiles(folder):
     allFiles = lb.util.find_files(folder, ext='wav')
     for eachFile in allFiles:
         filePath, fileName = os.path.split(eachFile)
-        resampled = resampleFile(standardFile)
+        resampled = resampleFile(eachFile)
         saveFile(folder, resampled, fileName)
     return
 
@@ -75,7 +72,15 @@ if __name__ == "__main__":
     parser = ag.ArgumentParser(description="Pass a downsample divider:")
     parser.add_argument(
         'divider',
+        default=2,
         type=int,
         required=True,
-        help="A divider for downsampling")
+        help="A divider for downsampling."
+    )
+    parser.add_argument(
+        'words',
+        default=['zero', 'one'],
+        nargs=ag.REMAINDER,
+        help="Names of words (and folders) to be resampled."
+    )
     main(parser.parse_args())
