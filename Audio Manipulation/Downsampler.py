@@ -12,11 +12,11 @@ WAV_LENGTH = 16384
 SAMP_RATE = 16384
 
 
-def main(divideBy, folders):
+def main(args):
     """ Runs the code """
     global SAMP_RATE
-    SAMP_RATE = WAV_LENGTH / divideBy
-    loopFolders(folders)
+    SAMP_RATE = WAV_LENGTH / args.div
+    loopFolders(args.words)
     return
 
 
@@ -71,16 +71,19 @@ def saveFile(folder, resampled, fileName):
 if __name__ == "__main__":
     parser = ag.ArgumentParser(description="Pass a downsample divider:")
     parser.add_argument(
-        'divider',
-        default=2,
+        name='div',
+        nargs=1,
         type=int,
+        choices=[2, 4, 8, 16],
         required=True,
-        help="A divider for downsampling."
+        help="A divider for downsampling.",
+        dest='div'
     )
     parser.add_argument(
-        'words',
-        default=['zero', 'one'],
+        name='word',
         nargs=ag.REMAINDER,
-        help="Names of words (and folders) to be resampled."
+        default=['zero', 'one'],
+        help="Names of words (and folders) to be resampled.",
+        dest='words'
     )
     main(parser.parse_args())
