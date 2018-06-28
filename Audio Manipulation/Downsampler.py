@@ -16,32 +16,32 @@ def main(args):
     """ Runs the code """
     global SAMP_RATE
     SAMP_RATE = WAV_LENGTH / args.div
-    loopFolders(args.words)
+    _loopFolders(args.words)
     return
 
 
-def loopFolders(folders):
+def _loopFolders(folders):
     """ Loops through all folders found at the IN_PATH """
     for folder in folders:
         path = IN_PATH + folder + '/'
-        loopFiles(path)
+        _loopFiles(path)
     return
 
 
-def loopFiles(folder):
+def _loopFiles(folder):
     """ Loop through all files found within the folder  """
     allFiles = lb.util.find_files(folder, ext='wav')
     for eachFile in allFiles:
         filePath, fileName = os.path.split(eachFile)
-        resampled = resampleFile(eachFile)
-        saveFile(folder, resampled, fileName)
+        resampled = _resampleFile(eachFile)
+        _saveFile(folder, resampled, fileName)
     return
 
 
-def resampleFile(wav):
+def _resampleFile(wav):
     """ Resample the wav file passed to the function """
     series, sampRate = lb.core.load(wav, sr=None)
-    newSeries = standardizeLength(series)
+    newSeries = _standardizeLength(series)
     resampled = lb.core.resample(
         y=newSeries,
         orig_sr=sampRate,
@@ -49,7 +49,7 @@ def resampleFile(wav):
     return resampled
 
 
-def standardizeLength(series):
+def _standardizeLength(series):
     """ Standardizes the length of the wav before resampling """
     if len(series) < WAV_LENGTH:
         series = np.append(series, np.zeros(WAV_LENGTH - len(series)))
@@ -58,7 +58,7 @@ def standardizeLength(series):
     return series
 
 
-def saveFile(folder, resampled, fileName):
+def _saveFile(folder, resampled, fileName):
     """ Save the file """
     sf.write(
         file=OUT_PATH + folder + '/' + fileName,
