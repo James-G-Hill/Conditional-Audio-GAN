@@ -15,7 +15,7 @@ SAMP_RATE = 16384
 def main(args):
     """ Runs the code """
     global SAMP_RATE
-    SAMP_RATE = WAV_LENGTH / args.div
+    SAMP_RATE = int(WAV_LENGTH / args.divider[0])
     _loopFolders(args.words)
     return
 
@@ -24,13 +24,13 @@ def _loopFolders(folders):
     """ Loops through all folders found at the IN_PATH """
     for folder in folders:
         path = IN_PATH + folder + '/'
-        _loopFiles(path)
+        _loopFiles(path, folder)
     return
 
 
-def _loopFiles(folder):
+def _loopFiles(path, folder):
     """ Loop through all files found within the folder  """
-    allFiles = lb.util.find_files(folder, ext='wav')
+    allFiles = lb.util.find_files(path, ext='wav')
     for eachFile in allFiles:
         filePath, fileName = os.path.split(eachFile)
         resampled = _resampleFile(eachFile)
@@ -60,8 +60,11 @@ def _standardizeLength(series):
 
 def _saveFile(folder, resampled, fileName):
     """ Save the file """
+    path = OUT_PATH + str(SAMP_RATE) + '/' + folder + '/'
+    if not os.path.exists(path):
+        os.makedirs(path)
     sf.write(
-        file=OUT_PATH + folder + '/' + fileName,
+        file=path + fileName,
         data=resampled,
         samplerate=SAMP_RATE,
         subtype='PCM_16')
@@ -71,19 +74,17 @@ def _saveFile(folder, resampled, fileName):
 if __name__ == "__main__":
     parser = ag.ArgumentParser(description="Pass a downsample divider:")
     parser.add_argument(
-        name='div',
+        dest='divider',
         nargs=1,
         type=int,
         choices=[2, 4, 8, 16],
-        required=True,
-        help="A divider for downsampling.",
-        dest='div'
+        help="A divider for downsampling."
     )
     parser.add_argument(
-        name='word',
-        nargs=ag.REMAINDER,
+        dest='words',
+        nargs='*',
+        type=str,
         default=['zero', 'one'],
-        help="Names of words (and folders) to be resampled.",
-        dest='words'
+        help="Names of words (and folders) to be resampled."
     )
     main(parser.parse_args())
