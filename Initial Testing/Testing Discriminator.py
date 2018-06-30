@@ -1,5 +1,6 @@
-def loadData():
+def loadData(folderNames):
     """ Loads the audio data into list form """
+
     return
 
 
@@ -11,3 +12,6 @@ def trainDiscriminator():
 def waveGANdiscriminator():
     """ A discriminator for a WaveGAN Model """
     return
+
+
+d
