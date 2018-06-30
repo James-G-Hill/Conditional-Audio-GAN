@@ -7,7 +7,7 @@ import soundfile as sf
 
 # Constants
 IN_PATH = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/'
-OUT_PATH = '/home/zhanmusi/Documents/Data/Speech Commands Dataset Downsampled '
+OUT_PATH = '/home/zhanmusi/Documents/Data/Speech Commands Dataset Downsampled/'
 WAV_LENGTH = 16384
 SAMP_RATE = 16384
 
