@@ -19,6 +19,7 @@ def loadData(inFilePath, folderNames):
 
 
 def _resetGlobalVariables():
+    """ Resets the variables if the module has already been used """
     global TRAIN_DATA
     global TRAIN_LABELS
     global LABEL_LOOKUP
