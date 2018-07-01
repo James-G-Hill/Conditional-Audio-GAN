@@ -74,7 +74,7 @@ def estimator(features, labels, mode):
 
     reshape = tf.reshape(
         tensor=convolution5,
-        shape=[BATCH_SIZE, 64 * MODEL_SIZE],
+        shape=[BATCH_SIZE, 32 * MODEL_SIZE],
         name="Reshape"
     )
 
@@ -85,7 +85,7 @@ def estimator(features, labels, mode):
 
     loss = tf.losses.sparse_softmax_cross_entropy(
         labels=labels,
-        logit=result
+        logits=result
     )
 
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=LEARN_RATE)
@@ -109,7 +109,8 @@ def estimator(features, labels, mode):
     estimator = tf.estimator.EstimatorSpec(
         eval_metric_ops=eval_metrics,
         loss=loss,
-        train_op=train_op_param
+        train_op=train_op_param,
+        mode=mode
     )
 
     return estimator
