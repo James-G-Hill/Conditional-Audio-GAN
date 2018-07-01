@@ -1,9 +1,9 @@
 import librosa as lb
 
 
-TRAIN_DATA = []
-TRAIN_LABELS = []
-LABEL_LOOKUP = []
+TRAIN_DATA = None
+TRAIN_LABELS = None
+LABEL_LOOKUP = None
 
 
 def loadData(inFilePath, folderNames):

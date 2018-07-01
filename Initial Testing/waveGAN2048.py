@@ -8,24 +8,24 @@ STRIDE = 4
 WAV_LENGTH = 2048
 
 
-def waveGANdiscriminator(features, labels, mode):
+def estimator(features, labels, mode):
     """ A waveGAN discriminator """
 
-    input_layer = tf.reshape(
+    inputLayer = tf.reshape(
         tensor=tf.cast(features['x'], tf.float32),
         shape=[BATCH_SIZE, WAV_LENGTH, CHANNELS],
-        name='Input Layer'
+        name='InputLayer'
     )
 
     convolution1 = tf.layers.conv1d(
-        inputs=input_layer,
+        inputs=inputLayer,
         filters=MODEL_SIZE,
         kernel_size=25,
         strides=STRIDE,
         padding='same',
         use_bias=True,
         activation=tf.nn.leaky_relu,
-        name="Convolution 1"
+        name="Convolution1"
     )
 
     convolution2 = tf.layers.conv1d(
@@ -36,7 +36,7 @@ def waveGANdiscriminator(features, labels, mode):
         padding='same',
         use_bias=True,
         activation=tf.nn.leaky_relu,
-        name="Convolution 2"
+        name="Convolution2"
     )
 
     convolution3 = tf.layers.conv1d(
@@ -47,7 +47,7 @@ def waveGANdiscriminator(features, labels, mode):
         padding='same',
         use_bias=True,
         activation=tf.nn.leaky_relu,
-        name="Convolution 3"
+        name="Convolution3"
     )
 
     convolution4 = tf.layers.conv1d(
@@ -58,7 +58,7 @@ def waveGANdiscriminator(features, labels, mode):
         padding='same',
         use_bias=True,
         activation=tf.nn.leaky_relu,
-        name="Convolution 4"
+        name="Convolution4"
     )
 
     convolution5 = tf.layers.conv1d(
@@ -69,7 +69,7 @@ def waveGANdiscriminator(features, labels, mode):
         padding='same',
         use_bias=True,
         activation=tf.nn.leaky_relu,
-        name="Convolution 5"
+        name="Convolution5"
     )
 
     reshape = tf.reshape(
@@ -109,7 +109,6 @@ def waveGANdiscriminator(features, labels, mode):
     estimator = tf.estimator.EstimatorSpec(
         eval_metric_ops=eval_metrics,
         loss=loss,
-        mode=mode,
         train_op=train_op_param
     )
 

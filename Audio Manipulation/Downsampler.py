@@ -9,7 +9,7 @@ import soundfile as sf
 IN_PATH = '/home/zhanmusi/Documents/Data/Speech Commands Dataset/'
 OUT_PATH = '/home/zhanmusi/Documents/Data/Speech Commands Dataset Downsampled/'
 WAV_LENGTH = 16384
-SAMP_RATE = 16384
+SAMP_RATE = None
 
 
 def main(args):
@@ -44,7 +44,7 @@ def _resampleFile(wav):
     newSeries = _standardizeLength(series)
     resampled = lb.core.resample(
         y=newSeries,
-        orig_sr=sampRate,
+        orig_sr=WAV_LENGTH,
         target_sr=SAMP_RATE)
     return resampled
 
