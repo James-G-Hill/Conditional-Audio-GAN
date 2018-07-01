@@ -106,9 +106,11 @@ def waveGANdiscriminator(features, labels, mode):
             predictions=predictions['classes'])
     }
 
-    return tf.estimator.EstimatorSpec(
+    estimator = tf.estimator.EstimatorSpec(
         eval_metric_ops=eval_metrics,
         loss=loss,
         mode=mode,
         train_op=train_op_param
     )
+
+    return estimator
