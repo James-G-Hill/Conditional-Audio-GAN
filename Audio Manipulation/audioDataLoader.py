@@ -1,16 +1,27 @@
+import hashlib as hl
 import librosa as lb
+import re
 
 
-DATA = None
-LABELS = None
+MAX_NUM_WAVS_PER_CLASS = 2**27 - 1
+
 LOOKUP = None
 
+TEST_DATA = None
+TEST_LABELS = None
+
+TRAIN_DATA = None
+TRAIN_LABELS = None
+
+VALID_DATA = None
+VALID_LABELS = None
+
 TEST_PER = 20
-EVAL_PER = 5
+VALID_PER = 5
 
 
-def loadData(inFilePath, folderNames):
-    """ Loads the audio data & labels into list form & returns """
+def prepareData(inFilePath, folderNames):
+    """ Loads the audio data & labels into list form """
     _resetGlobalVariables()
     label = 0
     for folder in folderNames:
@@ -18,29 +29,70 @@ def loadData(inFilePath, folderNames):
         _appendInfo(files, label)
         LOOKUP.append((label, folder))
         label = label + 1
-    return DATA, LABELS, LOOKUP
+    return
+
+
+def loadTrainData():
+    """ Returns the training data only """
+    return TRAIN_DATA, TRAIN_LABELS
+
+
+def loadTestData():
+    """ Returns the evaluation data only """
+    return TEST_DATA, TEST_LABELS
+
+
+def loadValidData():
+    """ Returns the validation data only """
+    return VALID_DATA, VALID_LABELS
+
+
+def getLookup():
+    """ Returns the lookup data for the categories """
+    return LOOKUP
 
 
 def _resetGlobalVariables():
     """ Resets the variables if the module has already been used """
-    global DATA
-    global LABELS
+    global TEST_DATA
+    global TEST_LABELS
+    global TRAIN_DATA
+    global TRAIN_LABELS
+    global VALID_DATA
+    global VALID_LABELS
     global LOOKUP
-    DATA = []
-    LABELS = []
+    TEST_DATA = []
+    TEST_LABELS = []
+    TRAIN_DATA = []
+    TRAIN_LABELS = []
+    VALID_DATA = []
+    VALID_LABELS = []
     LOOKUP = []
     return
 
 
-def _appendInfo(files, label):
-    """ Appends file data series and label to the lists """
+def _appendInfo(files, labels):
+    """ Appends file data series & label to the lists """
     for eachFile in files:
         series, sampRate = lb.core.load(eachFile, sr=None)
-        DATA.append(series)
-        LABELS.append(label)
+        hashPercent = _getPercHash(eachFile.name)
+        if hashPercent < VALID_PER:
+            VALID_DATA.append(series)
+            VALID_LABELS.append(labels)
+        elif hashPercent < (TEST_PER + VALID_PER):
+            TEST_DATA.append(series)
+            TEST_LABELS.append(labels)
+        else:
+            TRAIN_DATA.append(series)
+            TRAIN_LABELS.append(labels)
     return
 
 
-def _splitForTesting():
-    """ Splits the datasets into training, testing & evaluation sets """
-    return
+def _getPercHash(name):
+    """ Calculates & returns the percentage from the hash """
+    hash_name = re.sub('_nohash_.*$', '', name)
+    hash_name_hashed = hl.sha1(hash_name).hexdigest()
+    percent_hash = (
+        (int(hash_name_hashed, 16) % (MAX_NUM_WAVS_PER_CLASS + 1))
+        * (100.0 / MAX_NUM_WAVS_PER_CLASS))
+    return percent_hash
