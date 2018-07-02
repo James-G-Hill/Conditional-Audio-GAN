@@ -18,7 +18,7 @@ def createDiscriminator(modelFile):
         'Project/Code/Initial Testing/' + modelFile)
     global DISCRIMINATOR
     DISCRIMINATOR = tf.estimator.Estimator(
-        model_fn=model.estimator,
+        model_fn=model.network,
         model_dir='tmp/testWaveGANDiscriminator')
     return
 

@@ -8,7 +8,7 @@ STRIDE = 4
 WAV_LENGTH = 2048
 
 
-def estimator(features, labels, mode):
+def network(features, labels, mode):
     """ A waveGAN discriminator """
 
     inputLayer = tf.reshape(
