@@ -1,9 +1,12 @@
 import librosa as lb
 
 
-TRAIN_DATA = None
-TRAIN_LABELS = None
-LABEL_LOOKUP = None
+DATA = None
+LABELS = None
+LOOKUP = None
+
+TEST_PER = 20
+EVAL_PER = 5
 
 
 def loadData(inFilePath, folderNames):
@@ -13,19 +16,19 @@ def loadData(inFilePath, folderNames):
     for folder in folderNames:
         files = lb.util.find_files(inFilePath + folder + '/', ext='wav')
         _appendInfo(files, label)
-        LABEL_LOOKUP.append((label, folder))
+        LOOKUP.append((label, folder))
         label = label + 1
-    return TRAIN_DATA, TRAIN_LABELS, LABEL_LOOKUP
+    return DATA, LABELS, LOOKUP
 
 
 def _resetGlobalVariables():
     """ Resets the variables if the module has already been used """
-    global TRAIN_DATA
-    global TRAIN_LABELS
-    global LABEL_LOOKUP
-    TRAIN_DATA = []
-    TRAIN_LABELS = []
-    LABEL_LOOKUP = []
+    global DATA
+    global LABELS
+    global LOOKUP
+    DATA = []
+    LABELS = []
+    LOOKUP = []
     return
 
 
@@ -33,6 +36,11 @@ def _appendInfo(files, label):
     """ Appends file data series and label to the lists """
     for eachFile in files:
         series, sampRate = lb.core.load(eachFile, sr=None)
-        TRAIN_DATA.append(series)
-        TRAIN_LABELS.append(label)
+        DATA.append(series)
+        LABELS.append(label)
+    return
+
+
+def _splitForTesting():
+    """ Splits the datasets into training, testing & evaluation sets """
     return
