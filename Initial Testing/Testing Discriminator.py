@@ -3,10 +3,14 @@ import numpy as np
 import tensorflow as tf
 import types
 
+from tensorboard import main as tb
+
 
 BATCH_SIZE = 64
 EPOCHS = None
 DISCRIMINATOR = None
+
+MODEL_DIR = 'tmp/testWaveGANDiscriminator'
 
 
 def createDiscriminator(modelFile):
@@ -19,7 +23,7 @@ def createDiscriminator(modelFile):
     global DISCRIMINATOR
     DISCRIMINATOR = tf.estimator.Estimator(
         model_fn=model.network,
-        model_dir='tmp/testWaveGANDiscriminator')
+        model_dir=MODEL_DIR)
     return
 
 
@@ -34,6 +38,12 @@ def trainDiscriminator(inPath, folders, stepCount):
     DISCRIMINATOR.train(
         input_fn=_train_input_fn(data, labels),
         steps=stepCount)
+    return
+
+
+def runTensorBoard():
+    tf.flags.FLAGS.logdir = MODEL_DIR
+    tb.main()
     return
 
 
