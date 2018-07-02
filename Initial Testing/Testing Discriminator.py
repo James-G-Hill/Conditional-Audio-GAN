@@ -40,19 +40,17 @@ def trainDiscriminator(stepCount):
     data, labels = AUDIO_LOADER.loadTrainData()
     DISCRIMINATOR.train(
         input_fn=_train_input_fn(data, labels),
-        steps=stepCount
-    )
+        steps=stepCount)
     return
 
 
-def evalDiscriminator(data, labels, stepCount, name):
+def testDiscriminator(data, labels, stepCount, name):
     """ Evaluates the discriminator """
-    data, labels = AUDIO_LOADER.loadEvalData()
+    data, labels = AUDIO_LOADER.loadTestData()
     DISCRIMINATOR.evaluate(
         input_fn=_train_input_fn(data, labels),
         steps=stepCount,
-        name=name
-    )
+        name=name)
     return
 
 
