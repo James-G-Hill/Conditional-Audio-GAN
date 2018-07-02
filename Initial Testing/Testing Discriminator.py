@@ -12,14 +12,22 @@ DISCRIMINATOR = None
 
 MODEL_DIR = 'tmp/testWaveGANDiscriminator'
 
+AUDIO_LOADER = None
 
-def createDiscriminator(modelFile):
+
+def createDiscriminator(inPath, folders, modelFile):
     """ Creates a discriminator """
     model = _loadModule(
         modelFile,
         '/home/zhanmusi/Dropbox/Birkbeck/' +
         'Advanced Computing Technologies MSc/' +
         'Project/Code/Initial Testing/' + modelFile)
+    AUDIO_LOADER = _loadModule(
+        'audioDataLoader.py',
+        '/home/zhanmusi/Dropbox/Birkbeck/' +
+        'Advanced Computing Technologies MSc/' +
+        'Project/Code/Audio Manipulation/' + 'audioDataLoader.py')
+    AUDIO_LOADER.prepareData(inPath, folders)
     global DISCRIMINATOR
     DISCRIMINATOR = tf.estimator.Estimator(
         model_fn=model.network,
@@ -27,21 +35,29 @@ def createDiscriminator(modelFile):
     return
 
 
-def trainDiscriminator(inPath, folders, stepCount):
+def trainDiscriminator(stepCount):
     """ Trains the discriminator """
-    audioLoader = _loadModule(
-        'audioDataLoader.py',
-        '/home/zhanmusi/Dropbox/Birkbeck/' +
-        'Advanced Computing Technologies MSc/' +
-        'Project/Code/Audio Manipulation/' + 'audioDataLoader.py')
-    data, labels, lookup = audioLoader.loadData(inPath, folders)
+    data, labels = AUDIO_LOADER.loadTrainData()
     DISCRIMINATOR.train(
         input_fn=_train_input_fn(data, labels),
-        steps=stepCount)
+        steps=stepCount
+    )
+    return
+
+
+def evalDiscriminator(data, labels, stepCount, name):
+    """ Evaluates the discriminator """
+    data, labels = AUDIO_LOADER.loadEvalData()
+    DISCRIMINATOR.evaluate(
+        input_fn=_train_input_fn(data, labels),
+        steps=stepCount,
+        name=name
+    )
     return
 
 
 def runTensorBoard():
+    """ Runs TensorBoard for the given directory """
     tf.flags.FLAGS.logdir = MODEL_DIR
     tb.main()
     return
