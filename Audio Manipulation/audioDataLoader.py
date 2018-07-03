@@ -1,5 +1,6 @@
 import hashlib as hl
 import librosa as lb
+import os
 import re
 
 
@@ -75,7 +76,8 @@ def _appendInfo(files, labels):
     """ Appends file data series & label to the lists """
     for eachFile in files:
         series, sampRate = lb.core.load(eachFile, sr=None)
-        hashPercent = _getPercHash(eachFile.name)
+        path, fileName = os.path.split(eachFile)
+        hashPercent = _getPercHash(fileName)
         if hashPercent < VALID_PER:
             VALID_DATA.append(series)
             VALID_LABELS.append(labels)
@@ -91,7 +93,8 @@ def _appendInfo(files, labels):
 def _getPercHash(name):
     """ Calculates & returns the percentage from the hash """
     hash_name = re.sub('_nohash_.*$', '', name)
-    hash_name_hashed = hl.sha1(hash_name).hexdigest()
+    hash_name_encode = hash_name.encode('utf-8')
+    hash_name_hashed = hl.sha1(hash_name_encode).hexdigest()
     percent_hash = (
         (int(hash_name_hashed, 16) % (MAX_NUM_WAVS_PER_CLASS + 1))
         * (100.0 / MAX_NUM_WAVS_PER_CLASS))
