@@ -22,6 +22,7 @@ def createDiscriminator(inPath, folders, modelFile):
         '/home/zhanmusi/Dropbox/Birkbeck/' +
         'Advanced Computing Technologies MSc/' +
         'Project/Code/Initial Testing/' + modelFile)
+    global AUDIO_LOADER
     AUDIO_LOADER = _loadModule(
         'audioDataLoader.py',
         '/home/zhanmusi/Dropbox/Birkbeck/' +
@@ -44,7 +45,7 @@ def trainDiscriminator(stepCount):
     return
 
 
-def testDiscriminator(data, labels, stepCount, name):
+def testDiscriminator(stepCount, name):
     """ Evaluates the discriminator """
     data, labels = AUDIO_LOADER.loadTestData()
     DISCRIMINATOR.evaluate(
