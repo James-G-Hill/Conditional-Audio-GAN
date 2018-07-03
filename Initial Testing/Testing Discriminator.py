@@ -10,29 +10,34 @@ BATCH_SIZE = 64
 EPOCHS = None
 DISCRIMINATOR = None
 
-MODEL_DIR = 'tmp/testWaveGANDiscriminator'
+MODEL_DIR = None
 
 AUDIO_LOADER = None
 
 
-def createDiscriminator(inPath, folders, modelFile):
+def createDiscriminator(inPath, folders, modelFile, runName):
     """ Creates a discriminator """
     model = _loadModule(
         modelFile,
         '/home/zhanmusi/Dropbox/Birkbeck/' +
         'Advanced Computing Technologies MSc/' +
-        'Project/Code/Initial Testing/' + modelFile)
+        'Project/Code/Initial Testing/' + modelFile
+    )
     global AUDIO_LOADER
     AUDIO_LOADER = _loadModule(
         'audioDataLoader.py',
         '/home/zhanmusi/Dropbox/Birkbeck/' +
         'Advanced Computing Technologies MSc/' +
-        'Project/Code/Audio Manipulation/' + 'audioDataLoader.py')
+        'Project/Code/Audio Manipulation/' + 'audioDataLoader.py'
+    )
     AUDIO_LOADER.prepareData(inPath, folders)
+    global MODEL_DIR
+    MODEL_DIR = 'tmp/testWaveGANDiscriminator_' + str(runName)
     global DISCRIMINATOR
     DISCRIMINATOR = tf.estimator.Estimator(
         model_fn=model.network,
-        model_dir=MODEL_DIR)
+        model_dir=MODEL_DIR
+    )
     return
 
 
@@ -41,7 +46,8 @@ def trainDiscriminator(stepCount):
     data, labels = AUDIO_LOADER.loadTrainData()
     DISCRIMINATOR.train(
         input_fn=_train_input_fn(data, labels),
-        steps=stepCount)
+        steps=stepCount
+    )
     return
 
 
@@ -51,7 +57,8 @@ def testDiscriminator(stepCount, name):
     DISCRIMINATOR.evaluate(
         input_fn=_train_input_fn(data, labels),
         steps=stepCount,
-        name=name)
+        name=name
+    )
     return
 
 
@@ -77,5 +84,6 @@ def _train_input_fn(data, labels):
         y=np.array(labels),
         batch_size=BATCH_SIZE,
         num_epochs=EPOCHS,
-        shuffle=True)
+        shuffle=True
+    )
     return train_input
