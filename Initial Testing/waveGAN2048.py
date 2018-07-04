@@ -1,10 +1,13 @@
 import tensorflow as tf
 
 BATCH_SIZE = 64
+BETA1 = 0.5
+BETA2 = 0.9
 CHANNELS = 1
-LEARN_RATE = 0.001
+LEARN_RATE = 0.0001
 MODEL_SIZE = 64
-STRIDE = 4
+PHASE_SHUFFLE = 2
+STRIDE = [BATCH_SIZE, 4, CHANNELS]
 WAV_LENGTH = 2048
 
 
@@ -17,6 +20,7 @@ def network(features, labels, mode):
         name='InputLayer'
     )
 
+    # Input: 64, 2048, 1
     convolution1 = tf.layers.conv1d(
         inputs=inputLayer,
         filters=MODEL_SIZE,
@@ -28,6 +32,7 @@ def network(features, labels, mode):
         name="Convolution1"
     )
 
+    # Input: 64, 512, 64
     convolution2 = tf.layers.conv1d(
         inputs=convolution1,
         filters=MODEL_SIZE * 2,
@@ -39,6 +44,7 @@ def network(features, labels, mode):
         name="Convolution2"
     )
 
+    # Input: 64, 128, 128
     convolution3 = tf.layers.conv1d(
         inputs=convolution2,
         filters=MODEL_SIZE * 4,
@@ -50,37 +56,17 @@ def network(features, labels, mode):
         name="Convolution3"
     )
 
-    convolution4 = tf.layers.conv1d(
-        inputs=convolution3,
-        filters=MODEL_SIZE * 8,
-        kernel_size=25,
-        strides=STRIDE,
-        padding='same',
-        use_bias=True,
-        activation=tf.nn.leaky_relu,
-        name="Convolution4"
-    )
-
-    convolution5 = tf.layers.conv1d(
-        inputs=convolution4,
-        filters=MODEL_SIZE * 16,
-        kernel_size=25,
-        strides=STRIDE,
-        padding='same',
-        use_bias=True,
-        activation=tf.nn.leaky_relu,
-        name="Convolution5"
-    )
-
+    # Input: 64, 32,
     reshape = tf.reshape(
-        tensor=convolution5,
+        tensor=convolution3,
         shape=[BATCH_SIZE, 32 * MODEL_SIZE],
         name="Reshape"
     )
 
+    # Input: 64,
     result = tf.layers.dense(
         inputs=reshape,
-        units=64 * MODEL_SIZE,
+        units=BATCH_SIZE * 1,
         name='dense')
 
     loss = tf.losses.sparse_softmax_cross_entropy(
@@ -88,7 +74,11 @@ def network(features, labels, mode):
         logits=result
     )
 
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate=LEARN_RATE)
+    optimizer = tf.train.AdamOptimizer(
+        learning_rate=LEARN_RATE,
+        beta1=BETA1,
+        beta2=BETA2
+    )
 
     train_op_param = optimizer.minimize(
         loss=loss,
@@ -114,3 +104,8 @@ def network(features, labels, mode):
     )
 
     return estimator
+
+
+def _phaseShuffle(layers):
+    """ Shuffles the phase of each layer """
+    return
