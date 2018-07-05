@@ -5,9 +5,9 @@ BETA1 = 0.5
 BETA2 = 0.9
 CHANNELS = 1
 LEARN_RATE = 0.0001
-MODEL_SIZE = 64
+MODEL_SIZE = 32
 PHASE_SHUFFLE = 2
-STRIDE = [BATCH_SIZE, 4, CHANNELS]
+STRIDE = 4
 WAV_LENGTH = 2048
 
 
@@ -20,7 +20,7 @@ def network(features, labels, mode):
         name='InputLayer'
     )
 
-    # Input: 64, 2048, 1
+    # Input: [64, 2048, 1] > [64, 512, 32]
     convolution1 = tf.layers.conv1d(
         inputs=inputLayer,
         filters=MODEL_SIZE,
@@ -32,7 +32,7 @@ def network(features, labels, mode):
         name="Convolution1"
     )
 
-    # Input: 64, 512, 64
+    # Input: [64, 512, 32] > [64, 128, 64]
     convolution2 = tf.layers.conv1d(
         inputs=convolution1,
         filters=MODEL_SIZE * 2,
@@ -44,7 +44,7 @@ def network(features, labels, mode):
         name="Convolution2"
     )
 
-    # Input: 64, 128, 128
+    # Input: [64, 128, 64] > [64, 32, 128]
     convolution3 = tf.layers.conv1d(
         inputs=convolution2,
         filters=MODEL_SIZE * 4,
@@ -56,20 +56,32 @@ def network(features, labels, mode):
         name="Convolution3"
     )
 
-    # Input: 64, 32,
-    reshape = tf.reshape(
-        tensor=convolution3,
-        shape=[BATCH_SIZE, 32 * MODEL_SIZE],
-        name="Reshape"
+    # Input: [64, 32, 128] > [64, 8, 256]
+    convolution4 = tf.layers.conv1d(
+        inputs=convolution3,
+        filters=MODEL_SIZE * 8,
+        kernel_size=25,
+        strides=STRIDE,
+        padding='same',
+        use_bias=True,
+        activation=tf.nn.leaky_relu,
+        name="Convolution4"
     )
 
-    # Input: 64,
-    result = tf.layers.dense(
-        inputs=reshape,
-        units=BATCH_SIZE * 1,
-        name='dense')
+    # Input: [64, 8, 256] > [64, 2048]
+    flatten = tf.reshape(
+        tensor=convolution4,
+        shape=[BATCH_SIZE, WAV_LENGTH],
+        name="Output"
+    )
 
-    loss = tf.losses.sparse_softmax_cross_entropy(
+    # Input: [64, 2048] > [64, 1]
+    result = tf.layers.dense(
+        inputs=flatten,
+        units=1,
+        name='dense')  # [:, 0]
+
+    loss = tf.losses.sigmoid_cross_entropy(
         labels=labels,
         logits=result
     )
