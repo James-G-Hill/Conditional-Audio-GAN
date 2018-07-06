@@ -1,5 +1,6 @@
 import hashlib as hl
 import librosa as lb
+import numpy as np
 import os
 import re
 
@@ -72,7 +73,7 @@ def _resetGlobalVariables():
     return
 
 
-def _appendInfo(files, labels):
+def _appendInfo(files, label):
     """ Appends file data series & label to the lists """
     for eachFile in files:
         series, sampRate = lb.core.load(eachFile, sr=None)
@@ -80,13 +81,13 @@ def _appendInfo(files, labels):
         hashPercent = _getPercHash(fileName)
         if hashPercent < VALID_PER:
             VALID_DATA.append(series)
-            VALID_LABELS.append(labels)
+            VALID_LABELS.append(label)
         elif hashPercent < (TEST_PER + VALID_PER):
             TEST_DATA.append(series)
-            TEST_LABELS.append(labels)
+            TEST_LABELS.append(label)
         else:
             TRAIN_DATA.append(series)
-            TRAIN_LABELS.append(labels)
+            TRAIN_LABELS.append(label)
     return
 
 
