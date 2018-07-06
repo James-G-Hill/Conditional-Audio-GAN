@@ -14,6 +14,12 @@ WAV_LENGTH = 2048
 def network(features, labels, mode):
     """ A waveGAN discriminator """
 
+    labels = tf.reshape(
+        tensor=tf.cast(labels['y'], tf.float32),
+        shape=[BATCH_SIZE, 1],
+        name='Labels'
+    )
+
     inputLayer = tf.reshape(
         tensor=tf.cast(features['x'], tf.float32),
         shape=[BATCH_SIZE, WAV_LENGTH, CHANNELS],
@@ -82,7 +88,7 @@ def network(features, labels, mode):
         name='dense')  # [:, 0]
 
     loss = tf.losses.sigmoid_cross_entropy(
-        labels=labels,
+        multi_class_labels=labels,
         logits=result
     )
 
