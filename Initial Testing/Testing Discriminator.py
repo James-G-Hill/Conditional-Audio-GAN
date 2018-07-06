@@ -81,7 +81,7 @@ def _train_input_fn(data, labels):
     """ Input function for the custom estimator """
     train_input = tf.estimator.inputs.numpy_input_fn(
         x={'x': np.array(data)},
-        y=np.array(labels),
+        y={'y': np.array(labels)},
         batch_size=BATCH_SIZE,
         num_epochs=EPOCHS,
         shuffle=True
