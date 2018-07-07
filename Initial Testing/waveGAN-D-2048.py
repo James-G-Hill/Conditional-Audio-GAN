@@ -4,6 +4,7 @@ BATCH_SIZE = 64
 BETA1 = 0.5
 BETA2 = 0.9
 CHANNELS = 1
+KERNEL_SIZE = 25
 LEARN_RATE = 0.0001
 MODEL_SIZE = 32
 PHASE_SHUFFLE = 2
@@ -30,7 +31,7 @@ def network(features, labels, mode):
     convolution1 = tf.layers.conv1d(
         inputs=inputLayer,
         filters=MODEL_SIZE,
-        kernel_size=25,
+        kernel_size=KERNEL_SIZE,
         strides=STRIDE,
         padding='same',
         use_bias=True,
@@ -42,7 +43,7 @@ def network(features, labels, mode):
     convolution2 = tf.layers.conv1d(
         inputs=convolution1,
         filters=MODEL_SIZE * 2,
-        kernel_size=25,
+        kernel_size=KERNEL_SIZE,
         strides=STRIDE,
         padding='same',
         use_bias=True,
@@ -54,7 +55,7 @@ def network(features, labels, mode):
     convolution3 = tf.layers.conv1d(
         inputs=convolution2,
         filters=MODEL_SIZE * 4,
-        kernel_size=25,
+        kernel_size=KERNEL_SIZE,
         strides=STRIDE,
         padding='same',
         use_bias=True,
@@ -66,7 +67,7 @@ def network(features, labels, mode):
     convolution4 = tf.layers.conv1d(
         inputs=convolution3,
         filters=MODEL_SIZE * 8,
-        kernel_size=25,
+        kernel_size=KERNEL_SIZE,
         strides=STRIDE,
         padding='same',
         use_bias=True,
