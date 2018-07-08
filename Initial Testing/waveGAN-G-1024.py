@@ -12,11 +12,9 @@ Z_LENGTH = 100
 def generate(z):
     """ A waveGAN generator """
 
-    tens = tf.convert_to_tensor(z)
-
     # Input: [64, 100] > [64, 1024]
     densify = tf.layers.dense(
-        inputs=tens,
+        inputs=z,
         units=WAV_LENGTH,
         name="Input_Dense"
     )
@@ -73,9 +71,9 @@ def generate(z):
     )
 
     # Input: [64, 1024, 1]
-    activation_tanh = tf.tanh(
+    tanh = tf.tanh(
         x=trans_conv_3,
         name="Final_Tanh"
     )
 
-    return activation_tanh
+    return tanh
