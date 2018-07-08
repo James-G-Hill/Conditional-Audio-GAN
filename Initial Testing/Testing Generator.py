@@ -1,5 +1,5 @@
 import importlib.machinery as im
-import numpy as np
+import random
 import soundfile as sf
 import tensorflow as tf
 import types
@@ -33,11 +33,12 @@ def createGenerator(modelFile, wave_length):
 def generateSamples(batches):
     """ Generates samples """
     for _ in range(0, batches):
-        z = tf.placeholder(tf.float16, shape=[BATCH_SIZE, 100])
+        z = tf.placeholder(tf.float32, shape=[BATCH_SIZE, 100])
         G = GENERATOR.generate(z)
         sess = tf.InteractiveSession()
         tf.global_variables_initializer().run()
         z_samples = _createZs()
+        print(z_samples)
         samples = sess.run(
             G,
             feed_dict={z: z_samples}
@@ -51,12 +52,14 @@ def _createZs():
     """ Creates randomly sampled z inputs for generator """
     lst = []
     for i in range(0, BATCH_SIZE):
-        sample = np.ndarray.tolist(np.random.rand(100))
+        sample = [random.uniform(-1., 1.) for i in range(0, 100)]
         lst.append(sample)
+    print(lst)
     return lst
 
 
 def _writeSamples(samples):
+    """ Writes the generated samples to disk """
     for i in range(0, samples.shape[0]):
         sf.write(
             file=OUTPUT_DIR + str(i) + '.wav',
