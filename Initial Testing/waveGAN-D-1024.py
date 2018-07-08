@@ -39,7 +39,7 @@ def network(features, labels, mode):
         name="Convolution1"
     )
 
-    # Input: [64, 256, 64] > [64, 64, 32]
+    # Input: [64, 256, 16] > [64, 64, 32]
     convolution2 = tf.layers.conv1d(
         inputs=convolution1,
         filters=MODEL_SIZE * 2,
@@ -51,7 +51,7 @@ def network(features, labels, mode):
         name="Convolution2"
     )
 
-    # Input: [64, 64, 256] > [64, 16, 64]
+    # Input: [64, 64, 32] > [64, 16, 64]
     convolution3 = tf.layers.conv1d(
         inputs=convolution2,
         filters=MODEL_SIZE * 4,
@@ -63,7 +63,7 @@ def network(features, labels, mode):
         name="Convolution3"
     )
 
-    # Input: [64, 16, 256] > [64, 1024]
+    # Input: [64, 16, 64] > [64, 1024]
     flatten = tf.reshape(
         tensor=convolution3,
         shape=[BATCH_SIZE, WAV_LENGTH],
