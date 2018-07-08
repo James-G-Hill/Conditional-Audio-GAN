@@ -21,7 +21,7 @@ def generate(z):
 
     # Input: [64, 1024] > [64, 16, 64]
     shape = tf.reshape(
-        tensor=dxsensify,
+        tensor=densify,
         shape=[BATCH_SIZE, MODEL_SIZE, MODEL_SIZE * 4]
     )
 
