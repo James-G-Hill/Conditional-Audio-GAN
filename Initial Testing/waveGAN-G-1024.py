@@ -37,7 +37,7 @@ def generate(z_input):
         name="Trans_Convolution_1"
     )
 
-    relu = tf.nn.relu(shape)
+    relu = tf.nn.relus(trans_conv_1)
 
     # Input: [64, 64, 32] > [64, 256, 16]
     trans_conv_2 = tf.contrib.nn.conv1_transpose(
@@ -49,7 +49,7 @@ def generate(z_input):
         name="Trans_Convolution_2"
     )
 
-    relu = tf.nn.relu(shape)
+    relu = tf.nn.relu(trans_conv_2)
 
     # Input: [64, 256, 16] > [64, 1024, 1]
     trans_conv_3 = tf.contrib.nn.conv1_transpose(
