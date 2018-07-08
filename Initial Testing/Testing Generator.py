@@ -1,6 +1,7 @@
 import importlib.machinery as im
-import random
+import numpy as np
 import soundfile as sf
+import tensorflow as tf
 import types
 
 BATCH_SIZE = 64
@@ -21,36 +22,45 @@ def createGenerator(modelFile, wave_length):
     )
     global WAV_LENGTH
     WAV_LENGTH = wave_length
-    global DISCRIMINATOR
-    DISCRIMINATOR = model
+    global GENERATOR
+    GENERATOR = model
     global OUTPUT_DIR
     OUTPUT_DIR = '/home/zhanmusi/Documents/Data/Generated Samples/' \
-                 + str(WAV_LENGTH)
+                 + str(WAV_LENGTH) + '/'
     return
 
 
-def generatorSamples():
+def generateSamples(batches):
     """ Generates samples """
-    z_samples = _createZs()
-    samples = GENERATOR.generate(z_samples)
-    _writeSamples(samples)
+    for _ in range(0, batches):
+        z = tf.placeholder(tf.float16, shape=[BATCH_SIZE, 100])
+        G = GENERATOR.generate(z)
+        sess = tf.InteractiveSession()
+        tf.global_variables_initializer().run()
+        z_samples = _createZs()
+        samples = sess.run(
+            G,
+            feed_dict={z: z_samples}
+        )
+        sess.close()
+        _writeSamples(samples)
     return
 
 
 def _createZs():
     """ Creates randomly sampled z inputs for generator """
     lst = []
-    for i in range(1, BATCH_SIZE):
-        sample = random.sample(range(-16000, 16000), WAV_LENGTH)
+    for i in range(0, BATCH_SIZE):
+        sample = np.ndarray.tolist(np.random.rand(100))
         lst.append(sample)
     return lst
 
 
 def _writeSamples(samples):
-    for i in range(1, len(samples)):
+    for i in range(0, samples.shape[0]):
         sf.write(
-            file=OUTPUT_DIR + i + '.wav',
-            data=samples(i, ),
+            file=OUTPUT_DIR + str(i) + '.wav',
+            data=samples[i, :, :],
             samplerate=WAV_LENGTH,
             subtype='PCM_16'
         )
