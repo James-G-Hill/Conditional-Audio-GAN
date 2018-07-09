@@ -30,10 +30,7 @@ def generate(z):
     # Input: [64, 16, 64] > [64, 64, 32]
     trans_conv_1 = tf.contrib.nn.conv1d_transpose(
         value=relu,
-        filter=tf.constant(
-            0,
-            dtype=tf.float32,
-            shape=[KERNEL_SIZE, MODEL_SIZE * 2, MODEL_SIZE * 4]),
+        filter=tf.zeros([MODEL_SIZE, MODEL_SIZE * 2, MODEL_SIZE * 4]),
         output_shape=[BATCH_SIZE, MODEL_SIZE * 4, MODEL_SIZE * 2],
         stride=STRIDE,
         padding='SAME',
@@ -45,10 +42,7 @@ def generate(z):
     # Input: [64, 64, 32] > [64, 256, 16]
     trans_conv_2 = tf.contrib.nn.conv1d_transpose(
         value=relu,
-        filter=tf.constant(
-            0,
-            dtype=tf.float32,
-            shape=[KERNEL_SIZE, MODEL_SIZE, MODEL_SIZE * 2]),
+        filter=tf.zeros([MODEL_SIZE, MODEL_SIZE, MODEL_SIZE * 2]),
         output_shape=[BATCH_SIZE, MODEL_SIZE * 16, MODEL_SIZE],
         stride=STRIDE,
         padding='SAME',
@@ -60,10 +54,7 @@ def generate(z):
     # Input: [64, 256, 16] > [64, 1024, 1]
     trans_conv_3 = tf.contrib.nn.conv1d_transpose(
         value=relu,
-        filter=tf.constant(
-            0,
-            dtype=tf.float32,
-            shape=[KERNEL_SIZE, CHANNELS, MODEL_SIZE * 1]),
+        filter=tf.zeros([MODEL_SIZE, CHANNELS, MODEL_SIZE * 1]),
         output_shape=[BATCH_SIZE, MODEL_SIZE * 64, CHANNELS],
         stride=STRIDE,
         padding='SAME',
