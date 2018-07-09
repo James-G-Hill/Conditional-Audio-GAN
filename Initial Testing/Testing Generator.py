@@ -1,9 +1,12 @@
+import ctypes
 import importlib.machinery as im
+import numpy as np
 import random
 import soundfile as sf
 import tensorflow as tf
 import types
 
+ABS_INT16 = 32767.
 BATCH_SIZE = 64
 GENERATOR = None
 WAV_LENGTH = None
@@ -53,12 +56,12 @@ def _createZs():
     for i in range(0, BATCH_SIZE):
         sample = [random.uniform(-1., 1.) for i in range(0, 100)]
         lst.append(sample)
-    print(lst)
     return lst
 
 
 def _writeSamples(samples):
     """ Writes the generated samples to disk """
+    samples = _convert_to_int(samples)
     for i in range(0, samples.shape[0]):
         sf.write(
             file=OUTPUT_DIR + str(i) + '.wav',
@@ -75,5 +78,13 @@ def _loadModule(modName, modPath):
     mod = types.ModuleType(loader.name)
     loader.exec_module(mod)
     return mod
+
+
+def _convert_to_int(samples):
+    """ Converts floats to integers """
+    ints = samples * ABS_INT16
+    ints = np.clip(ints, -ABS_INT16, ABS_INT16)
+    ints = ints.astype(ctypes.c_int16)
+    return ints
 
     return
