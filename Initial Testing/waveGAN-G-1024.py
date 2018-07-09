@@ -25,11 +25,13 @@ def generate(z):
         shape=[BATCH_SIZE, MODEL_SIZE, MODEL_SIZE * 4]
     )
 
-    relu = tf.nn.relu(shape)
+    # shape = tf.layers.batch_normalization(shape)
+
+    relu1 = tf.nn.relu(shape)
 
     # Input: [64, 16, 64] > [64, 64, 32]
     trans_conv_1 = tf.contrib.nn.conv1d_transpose(
-        value=relu,
+        value=relu1,
         filter=tf.zeros([MODEL_SIZE, MODEL_SIZE * 2, MODEL_SIZE * 4]),
         output_shape=[BATCH_SIZE, MODEL_SIZE * 4, MODEL_SIZE * 2],
         stride=STRIDE,
@@ -37,11 +39,13 @@ def generate(z):
         name="Trans_Convolution_1"
     )
 
-    relu = tf.nn.relu(trans_conv_1)
+    # trans_conv_1 = tf.layers.batch_normalization(trans_conv_1)
+
+    relu2 = tf.nn.relu(trans_conv_1)
 
     # Input: [64, 64, 32] > [64, 256, 16]
     trans_conv_2 = tf.contrib.nn.conv1d_transpose(
-        value=relu,
+        value=relu2,
         filter=tf.zeros([MODEL_SIZE, MODEL_SIZE, MODEL_SIZE * 2]),
         output_shape=[BATCH_SIZE, MODEL_SIZE * 16, MODEL_SIZE],
         stride=STRIDE,
@@ -49,11 +53,11 @@ def generate(z):
         name="Trans_Convolution_2"
     )
 
-    relu = tf.nn.relu(trans_conv_2)
+    relu3 = tf.nn.relu(trans_conv_2)
 
     # Input: [64, 256, 16] > [64, 1024, 1]
     trans_conv_3 = tf.contrib.nn.conv1d_transpose(
-        value=relu,
+        value=relu3,
         filter=tf.zeros([MODEL_SIZE, CHANNELS, MODEL_SIZE * 1]),
         output_shape=[BATCH_SIZE, MODEL_SIZE * 64, CHANNELS],
         stride=STRIDE,
@@ -67,4 +71,6 @@ def generate(z):
         name="Final_Tanh"
     )
 
-    return tanh
+    p = tf.Print(trans_conv_1, [trans_conv_1])
+
+    return tanh, p
