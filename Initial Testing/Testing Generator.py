@@ -24,10 +24,10 @@ def createGenerator(modelFile, wave_length):
         'Project/Code/Initial Testing/' + modelFile
     )
     global WAV_LENGTH
-    WAV_LENGTH = wave_length
     global GENERATOR
-    GENERATOR = model
     global OUTPUT_DIR
+    WAV_LENGTH = wave_length
+    GENERATOR = model
     OUTPUT_DIR = '/home/zhanmusi/Documents/Data/Generated Samples/' \
                  + str(WAV_LENGTH) + '/'
     return
@@ -41,11 +41,10 @@ def generateSamples(batches):
         sess = tf.InteractiveSession()
         tf.global_variables_initializer().run()
         z_samples = _createZs()
-        samples, p = sess.run(
+        samples = sess.run(
             G,
             feed_dict={z: z_samples}
         )
-        sess.run(p)
         sess.close()
         _writeSamples(samples)
     return
