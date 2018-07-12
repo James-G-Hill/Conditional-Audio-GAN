@@ -41,11 +41,10 @@ def generateSamples(batches):
         sess = tf.InteractiveSession()
         tf.global_variables_initializer().run()
         z_samples = _createZs()
-        samples, p = sess.run(
+        samples = sess.run(
             G,
             feed_dict={z: z_samples}
         )
-        sess.run(p)
         sess.close()
         _writeSamples(samples)
     return
