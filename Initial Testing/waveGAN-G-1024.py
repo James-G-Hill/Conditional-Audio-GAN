@@ -53,6 +53,8 @@ def generate(z):
         name="Trans_Convolution_2"
     )[:, 0]
 
+    # trans_conv_2 = tf.layers.batch_normalization(trans_conv_2)
+
     relu3 = tf.nn.relu(trans_conv_2)
 
     trans_conv_3 = tf.layers.conv2d_transpose(
