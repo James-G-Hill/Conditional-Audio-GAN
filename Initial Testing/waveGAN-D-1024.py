@@ -1,3 +1,4 @@
+import random as rd
 import tensorflow as tf
 
 BATCH_SIZE = 64
@@ -39,6 +40,8 @@ def network(features, labels, mode):
         name="Convolution1"
     )
 
+    convolution1 = _phaseShuffle(convolution1)
+
     # Input: [64, 256, 16] > [64, 64, 32]
     convolution2 = tf.layers.conv1d(
         inputs=convolution1,
@@ -50,6 +53,8 @@ def network(features, labels, mode):
         activation=tf.nn.leaky_relu,
         name="Convolution2"
     )
+
+    convolution2 = _phaseShuffle(convolution2)
 
     # Input: [64, 64, 32] > [64, 16, 64]
     convolution3 = tf.layers.conv1d(
@@ -74,11 +79,14 @@ def network(features, labels, mode):
     result = tf.layers.dense(
         inputs=flatten,
         units=1,
-        name='dense')  # [:, 0]
+        name='dense'
+    )[:, 0]
 
-    loss = tf.losses.sigmoid_cross_entropy(
-        multi_class_labels=labels,
-        logits=result
+    loss = tf.reduce_mean(
+        tf.nn.sigmoid_cross_entropy_with_logits(
+            logits=result,
+            labels=labels[:, 0]
+        )
     )
 
     optimizer = tf.train.AdamOptimizer(
@@ -93,14 +101,14 @@ def network(features, labels, mode):
     )
 
     predictions = {
-        'classes': tf.argmax(input=result, axis=1),
-        'probabilities': tf.nn.softmax(result, name='softmax_tensor')
+        'probabilities': tf.nn.softmax(result)
     }
 
     eval_metrics = {
         'accuracy': tf.metrics.accuracy(
             labels=labels,
-            predictions=predictions['classes'])
+            predictions=predictions['probabilities']
+        )
     }
 
     estimator = tf.estimator.EstimatorSpec(
@@ -113,6 +121,22 @@ def network(features, labels, mode):
     return estimator
 
 
-def _phaseShuffle(layers):
+def _phaseShuffle(layer):
     """ Shuffles the phase of each layer """
-    return
+    batch, length, channel = layer.get_shape().as_list()
+    shuffle = _returnPhaseShuffleValue()
+    lft = max(0, shuffle)
+    rgt = max(0, -shuffle)
+    layer = tf.pad(
+        tensor=layer,
+        paddings=[[0, 0], [lft, rgt], [0, 0]],
+        mode='REFLECT'
+    )
+    layer = layer[:, rgt:rgt+length]
+    layer.set_shape([batch, length, channel])
+    return layer
+
+
+def _returnPhaseShuffleValue():
+    """ Returns a a ranom integer in the range decided for phase shuffle"""
+    return rd.randint(-PHASE_SHUFFLE, PHASE_SHUFFLE)
