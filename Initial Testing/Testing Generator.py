@@ -82,9 +82,11 @@ def _loadModule(modName, modPath):
 
 def _convert_to_int(samples):
     """ Converts floats to integers """
+    print(samples)
     ints = samples * ABS_INT16
     ints = np.clip(ints, -ABS_INT16, ABS_INT16)
     ints = ints.astype(ctypes.c_int16)
+    print(ints)
     return ints
 
     return
