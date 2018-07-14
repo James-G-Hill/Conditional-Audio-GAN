@@ -6,13 +6,11 @@ import types
 from tensorboard import main as tb
 
 
+AUDIO_LOADER = None
 BATCH_SIZE = 64
 EPOCHS = None
 DISCRIMINATOR = None
-
 MODEL_DIR = None
-
-AUDIO_LOADER = None
 
 
 def createDiscriminator(inPath, folders, modelFile, runName):
@@ -24,6 +22,8 @@ def createDiscriminator(inPath, folders, modelFile, runName):
         'Project/Code/Initial Testing/' + modelFile
     )
     global AUDIO_LOADER
+    global MODEL_DIR
+    global DISCRIMINATOR
     AUDIO_LOADER = _loadModule(
         'audioDataLoader.py',
         '/home/zhanmusi/Dropbox/Birkbeck/' +
@@ -31,9 +31,7 @@ def createDiscriminator(inPath, folders, modelFile, runName):
         'Project/Code/Audio Manipulation/' + 'audioDataLoader.py'
     )
     AUDIO_LOADER.prepareData(inPath, folders)
-    global MODEL_DIR
     MODEL_DIR = 'tmp/testWaveGANDiscriminator_' + str(runName)
-    global DISCRIMINATOR
     DISCRIMINATOR = tf.estimator.Estimator(
         model_fn=model.network,
         model_dir=MODEL_DIR
@@ -57,7 +55,7 @@ def testDiscriminator(stepCount, name):
     DISCRIMINATOR.evaluate(
         input_fn=_train_input_fn(data, labels),
         steps=stepCount,
-        name=name
+        name=str(name)
     )
     return
 
