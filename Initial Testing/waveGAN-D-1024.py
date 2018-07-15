@@ -1,7 +1,7 @@
 import random as rd
 import tensorflow as tf
 
-BATCH_SIZE = 64
+BATCH_SIZE = -1
 BETA1 = 0.5
 BETA2 = 0.9
 CHANNELS = 1
@@ -17,7 +17,7 @@ def network(features, labels, mode):
     """ A waveGAN discriminator """
 
     labels = tf.reshape(
-        tensor=tf.cast(labels['y'], tf.float32),
+        tensor=tf.cast(labels, tf.float32),
         shape=[BATCH_SIZE, 1],
         name='Labels'
     )
@@ -76,15 +76,15 @@ def network(features, labels, mode):
     )
 
     # Input: [64, 1024] > [64, 1]
-    result = tf.layers.dense(
+    logits = tf.layers.dense(
         inputs=flatten,
-        units=1,
-        name='dense'
-    )[:, 0]
+        units=2,
+        name='Logits'
+    )[:, :]
 
     loss = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
-            logits=result,
+            logits=logits,
             labels=labels[:, 0]
         )
     )
@@ -101,13 +101,14 @@ def network(features, labels, mode):
     )
 
     predictions = {
-        'probabilities': tf.nn.softmax(result)
+        'classes': tf.argmax(logits, axis=1),
+        'probabilities': tf.nn.softmax(logits)
     }
 
     eval_metrics = {
         'accuracy': tf.metrics.accuracy(
             labels=labels,
-            predictions=predictions['probabilities']
+            predictions=predictions['classes']
         )
     }
 
