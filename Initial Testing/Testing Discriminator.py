@@ -49,14 +49,14 @@ def trainDiscriminator(stepCount):
     return
 
 
-def testDiscriminator(stepCount, name):
+def testDiscriminator(name):
     """ Evaluates the discriminator """
     data, labels = AUDIO_LOADER.loadTestData()
-    DISCRIMINATOR.evaluate(
-        input_fn=_train_input_fn(data, labels),
-        steps=stepCount,
+    results = DISCRIMINATOR.evaluate(
+        input_fn=_eval_input_fn(data, labels),
         name=str(name)
     )
+    print(results)
     return
 
 
@@ -79,9 +79,20 @@ def _train_input_fn(data, labels):
     """ Input function for the custom estimator """
     train_input = tf.estimator.inputs.numpy_input_fn(
         x={'x': np.array(data)},
-        y={'y': np.array(labels)},
+        y=np.array(labels),
         batch_size=BATCH_SIZE,
         num_epochs=EPOCHS,
         shuffle=True
     )
     return train_input
+
+
+def _eval_input_fn(data, labels):
+    """ Input function for the custom estimator """
+    eval_input = tf.estimator.inputs.numpy_input_fn(
+        x={'x': np.array(data)},
+        y=np.array(labels),
+        num_epochs=1,
+        shuffle=False
+    )
+    return eval_input
