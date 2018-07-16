@@ -5,6 +5,7 @@ BATCH_SIZE = -1
 BETA1 = 0.5
 BETA2 = 0.9
 CHANNELS = 1
+CLASSES = 2
 KERNEL_SIZE = 25
 LEARN_RATE = 0.0001
 MODEL_SIZE = 16
@@ -17,7 +18,7 @@ def network(features, labels, mode):
     """ A waveGAN discriminator """
 
     labels = tf.reshape(
-        tensor=tf.cast(labels, tf.float32),
+        tensor=tf.cast(labels, tf.int32),
         shape=[BATCH_SIZE, 1],
         name='Labels'
     )
@@ -78,14 +79,14 @@ def network(features, labels, mode):
     # Input: [64, 1024] > [64, 1]
     logits = tf.layers.dense(
         inputs=flatten,
-        units=2,
+        units=CLASSES,
         name='Logits'
     )[:, :]
 
     loss = tf.reduce_mean(
-        tf.nn.sigmoid_cross_entropy_with_logits(
+        tf.losses.sparse_softmax_cross_entropy(
             logits=logits,
-            labels=labels[:, 0]
+            labels=labels[:, :]
         )
     )
 
