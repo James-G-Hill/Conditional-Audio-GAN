@@ -16,7 +16,7 @@ WAV_LENGTH = 1024
 Z_LENGTH = 100
 
 
-def generate(z):
+def generator(z):
     """ A waveGAN generator """
 
     # Input: [64, 100] > [64, 1024]
