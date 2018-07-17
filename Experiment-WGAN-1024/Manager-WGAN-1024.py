@@ -8,140 +8,133 @@ import types
 
 from tensorboard import main as tb
 
-
 ABS_INT16 = 32767.
-AUDIO_LOADER = None
 BATCH_SIZE = 64
+BETA1 = 0.5
+BETA2 = 0.9
 EPOCHS = None
-DISCRIMINATOR = None
-GENERATOR = None
-MODEL_DIR = None
+LAMBDA = 10
+LEARN_RATE = 0.0001
 OUTPUT_DIR = None
-WAV_LENGTH = None
+STEPS = 1
+WAV_LENGTH = 1024
+Z_LENGTH = 100
 
 
-def main():
-    return
+def main(inPath, folders, modelFile, runName):  # are parameters needed here?
+    """ Trains the WaveGAN model """
 
-
-def createDiscriminator(inPath, folders, modelFile, runName):
-    """ Creates a discriminator """
-    model = _loadModule(
-        modelFile,
-        '/home/zhanmusi/Dropbox/Birkbeck/' +
-        'Advanced Computing Technologies MSc/' +
-        'Project/Code/Initial Testing/' + modelFile
-    )
-    global AUDIO_LOADER
-    global MODEL_DIR
-    global DISCRIMINATOR
-    AUDIO_LOADER = _loadModule(
+    # Prepare the data
+    audio_loader = _loadNetworksModule(
         'audioDataLoader.py',
         '/home/zhanmusi/Dropbox/Birkbeck/' +
         'Advanced Computing Technologies MSc/' +
         'Project/Code/Audio Manipulation/' + 'audioDataLoader.py'
     )
-    AUDIO_LOADER.prepareData(inPath, folders)
-    MODEL_DIR = 'tmp/testWaveGANDiscriminator_' + str(runName)
-    DISCRIMINATOR = tf.estimator.Estimator(
-        model_fn=model.network,
-        model_dir=MODEL_DIR
+    audio_loader.prepareData(inPath, folders)
+
+    # Prepare link to the NNs
+    networks = _loadNetworksModule(
+        modelFile,
+        '/home/zhanmusi/Dropbox/Birkbeck/' +
+        'Advanced Computing Technologies MSc/' +
+        'Project/Code/Initial Testing/' + modelFile
     )
-    return
 
+    # Create folder for results
+    model_dir = 'tmp/testWaveGAN_' + str(runName)
 
-def trainDiscriminator(stepCount):
-    """ Trains the discriminator """
-    data, labels = AUDIO_LOADER.loadTrainData()
-    DISCRIMINATOR.train(
-        input_fn=_train_input_fn(data, labels),
-        steps=stepCount
+    # Create input placeholder
+    G_input = tf.placeholder(
+        tf.float32,
+        shape=[None, Z_LENGTH],
+        name='Noise'
     )
-    return
-
-
-def testDiscriminator(name):
-    """ Evaluates the discriminator """
-    data, labels = AUDIO_LOADER.loadTestData()
-    results = DISCRIMINATOR.evaluate(
-        input_fn=_eval_input_fn(data, labels),
-        name=str(name)
+    D_input = tf.placeholder(
+        tf.float32,
+        shape=[None, WAV_LENGTH],
+        name='Waves'
     )
-    print(results)
+
+    # Create data
+    X = _getTrainBatch()
+    Z = _createZs()
+
+    # Create variables
+    G_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+    D_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+
+    # Create networks
+    G = networks.generator(G_input)
+    R = networks.discriminator(D_input)
+    F = networks.discriminator(G)
+
+    # Build loss
+    G_loss, D_loss = _loss(G, R, F, X, Z)
+
+    # Build optimizers
+    G_opt = tf.train.AdamOptimizer(
+        learning_rate=LEARN_RATE,
+        beta1=BETA1,
+        beta2=BETA2
+    )
+    D_opt = tf.train.AdamOptimizer(
+        learning_rate=LEARN_RATE,
+        beta1=BETA1,
+        beta2=BETA2
+    )
+
+    # Build training operations
+    G_train = G_opt.minimize(G_loss)
+    D_train = D_opt.minimize(D_loss)
+
+    # Run session
+    sess = tf.train.MonitoredTrainingSession()
+    for i in xrange():
+
+        # Data preparation
+
+        # Training
+
     return
 
 
-def runTensorBoard():
-    """ Runs TensorBoard for the given directory """
-    tf.flags.FLAGS.logdir = MODEL_DIR
-    tb.main()
-    return
-
-
-def _loadModule(modName, modPath):
-    """ Loads a module from file location """
+def _loadNetworksModule(modName, modPath):
+    """ Loads the module containing the relevant networks """
     loader = im.SourceFileLoader(modName, modPath)
     mod = types.ModuleType(loader.name)
     loader.exec_module(mod)
     return mod
 
 
-def _train_input_fn(data, labels):
-    """ Input function for the custom estimator """
-    train_input = tf.estimator.inputs.numpy_input_fn(
-        x={'x': np.array(data)},
-        y=np.array(labels),
-        batch_size=BATCH_SIZE,
-        num_epochs=EPOCHS,
-        shuffle=True
-    )
-    return train_input
-
-
-def _eval_input_fn(data, labels):
-    """ Input function for the custom estimator """
-    eval_input = tf.estimator.inputs.numpy_input_fn(
-        x={'x': np.array(data)},
-        y=np.array(labels),
-        num_epochs=1,
-        shuffle=False
-    )
-    return eval_input
-
-
-def createGenerator(modelFile, wave_length):
-    """ Creates a generator """
-    model = _loadModule(
-        modelFile,
-        '/home/zhanmusi/Dropbox/Birkbeck/' +
-        'Advanced Computing Technologies MSc/' +
-        'Project/Code/Initial Testing/' + modelFile
-    )
-    global WAV_LENGTH
-    global GENERATOR
-    global OUTPUT_DIR
-    WAV_LENGTH = wave_length
-    GENERATOR = model
-    OUTPUT_DIR = '/home/zhanmusi/Documents/Data/Generated Samples/' \
-                 + str(WAV_LENGTH) + '/'
+def _getTrainBatch():
+    """ Returns a subset of data from the training set """
     return
 
 
-def generateSamples(batches):
-    """ Generates samples """
-    for _ in range(0, batches):
-        z = tf.placeholder(tf.float32, shape=[BATCH_SIZE, 100])
-        G = GENERATOR.generate(z)
-        sess = tf.InteractiveSession()
-        tf.global_variables_initializer().run()
-        z_samples = _createZs()
-        samples = sess.run(
-            G,
-            feed_dict={z: z_samples}
+def _loss(G, R, F, X, Z):
+    """ Calculates the loss """
+    G_loss = -tf.reduce_mean(F)
+    D_loss = tf.reduce_mean(F) - tf.reduce_mean(R)
+    alpha = tf.random_uniform(
+        shape=[BATCH_SIZE, 1, 1],
+        minval=0.,
+        maxval=1.
+    )
+    differences = G - X
+    interpolates = X + (alpha - differences)
+    # Add some namescope here
+    D_interp = networks.discriminator(interpolates)
+    gradients = tf.gradients(D_interp, [interpolates])[0]
+    slopes = tf.sqrt(
+        tf.reduce_sum(
+            tf.square(gradients),
+            reduction_indices=[1, 2]
         )
-        sess.close()
-        _writeSamples(samples)
-    return
+    )
+    gradient_penalty = tf.reduce_mean((slopes - 1.) ** 2.)
+    D_loss += LAMBDA * gradient_penalty
+    return G_loss, D_loss
 
 
 def _createZs():
@@ -151,6 +144,18 @@ def _createZs():
         sample = [random.uniform(-1., 1.) for i in range(0, 100)]
         lst.append(sample)
     return lst
+
+
+if __name__ == "__main__":
+    main()
+
+
+# Everything below this is old
+def runTensorBoard():
+    """ Runs TensorBoard for the given directory """
+    tf.flags.FLAGS.logdir = MODEL_DIR
+    tb.main()
+    return
 
 
 def _writeSamples(samples):
@@ -172,7 +177,3 @@ def _convert_to_int(samples):
     ints = np.clip(ints, -ABS_INT16, ABS_INT16)
     ints = ints.astype(ctypes.c_int16)
     return ints
-
-
-if __name__ == "__main__":
-    main()
