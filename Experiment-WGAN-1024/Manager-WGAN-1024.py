@@ -21,6 +21,12 @@ STEPS = 1
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
+DATA_PATH = "/home/zhanmusi/Documents/Data/"
+DOWN_PATH = "Speech Commands Dataset Downsampled/"
+TRAIN_DATA_FOLDER = DATA_PATH + DOWN_PATH + str(WAV_LENGTH) + "/"
+
+MODEL_DIR = None
+
 
 def main(mode):
     """ Runs the relevant command passed through arguments """
@@ -29,7 +35,7 @@ def main(mode):
     return
 
 
-def train(inPath, folders, modelFile, runName):  # are parameters needed here?
+def train(folders, runName):
     """ Trains the WaveGAN model """
 
     # Prepare the data
@@ -37,20 +43,22 @@ def train(inPath, folders, modelFile, runName):  # are parameters needed here?
         'audioDataLoader.py',
         '/home/zhanmusi/Dropbox/Birkbeck/' +
         'Advanced Computing Technologies MSc/' +
-        'Project/Code/Audio Manipulation/' + 'audioDataLoader.py'
+        'Project/Code/Audio Manipulation/' +
+        'audioDataLoader.py'
     )
-    audio_loader.prepareData(inPath, folders)
+    audio_loader.prepareData(TRAIN_DATA_FOLDER, folders)
 
     # Prepare link to the NNs
     networks = _loadNetworksModule(
         modelFile,
         '/home/zhanmusi/Dropbox/Birkbeck/' +
         'Advanced Computing Technologies MSc/' +
-        'Project/Code/Initial Testing/' + modelFile
+        'Project/Code/Experiment-WGAN' + str(WAV_LENGTH) + '/' +
+        'Networks-WGAN-' + str(WAV_LENGTH) + '.py'
     )
 
     # Create folder for results
-    model_dir = 'tmp/testWaveGAN_' + str(runName)
+    MODEL_DIR = 'tmp/testWaveGAN_' + str(runName)
 
     # Create input placeholder
     G_input = tf.placeholder(
@@ -106,6 +114,8 @@ def train(inPath, folders, modelFile, runName):  # are parameters needed here?
     # Summary
     tf.summary.audio('X', X, WAV_LENGTH)
     tf.summary.audio('G', G, WAV_LENGTH)
+    tf.summary.scalar('G_loss', G_loss)
+    tf.summary.scalar('D_loss', D_loss)
 
     # Run session
     sess = tf.train.MonitoredTrainingSession()
