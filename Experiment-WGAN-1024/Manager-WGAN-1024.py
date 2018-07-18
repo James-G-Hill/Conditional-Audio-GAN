@@ -1,7 +1,6 @@
 import ctypes
 import importlib.machinery as im
 import numpy as np
-import random
 import soundfile as sf
 import tensorflow as tf
 import types
@@ -12,16 +11,25 @@ ABS_INT16 = 32767.
 BATCH_SIZE = 64
 BETA1 = 0.5
 BETA2 = 0.9
+D_UPDATES_PER_G_UPDATES = 1
 EPOCHS = None
 LAMBDA = 10
 LEARN_RATE = 0.0001
 OUTPUT_DIR = None
+RUNS = 20
 STEPS = 1
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
 
-def main(inPath, folders, modelFile, runName):  # are parameters needed here?
+def main(mode):
+    """ Runs the relevant command passed through arguments """
+    if mode == "train":
+        train()
+    return
+
+
+def train(inPath, folders, modelFile, runName):  # are parameters needed here?
     """ Trains the WaveGAN model """
 
     # Prepare the data
@@ -57,8 +65,8 @@ def main(inPath, folders, modelFile, runName):  # are parameters needed here?
     )
 
     # Create data
-    X = _getTrainBatch()
-    Z = _createZs()
+    Z = tf.random_uniform([BATCH_SIZE, Z_LENGTH], -1., 1., dtype=tf.float32)
+    X = audio_loader.loadTestData()
 
     # Create variables
     G_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
@@ -85,16 +93,26 @@ def main(inPath, folders, modelFile, runName):  # are parameters needed here?
     )
 
     # Build training operations
-    G_train = G_opt.minimize(G_loss)
-    D_train = D_opt.minimize(D_loss)
+    G_train_op = G_opt.minimize(
+        G_loss,
+        var_list=G_variables,
+        global_step=tf.train.get_or_create_global_step()
+    )
+    D_train_op = D_opt.minimize(
+        D_loss,
+        var_list=D_variables
+    )
+
+    # Summary
+    tf.summary.audio('X', X, WAV_LENGTH)
+    tf.summary.audio('G', G, WAV_LENGTH)
 
     # Run session
     sess = tf.train.MonitoredTrainingSession()
-    for i in xrange():
-
-        # Data preparation
-
-        # Training
+    for _ in range(RUNS):
+        for _ in range(D_UPDATES_PER_G_UPDATES):
+            sess.run(D_train_op)
+        sess.run(G_train_op)
 
     return
 
@@ -105,11 +123,6 @@ def _loadNetworksModule(modName, modPath):
     mod = types.ModuleType(loader.name)
     loader.exec_module(mod)
     return mod
-
-
-def _getTrainBatch():
-    """ Returns a subset of data from the training set """
-    return
 
 
 def _loss(G, R, F, X, Z):
@@ -137,17 +150,9 @@ def _loss(G, R, F, X, Z):
     return G_loss, D_loss
 
 
-def _createZs():
-    """ Creates randomly sampled z inputs for generator """
-    lst = []
-    for i in range(0, BATCH_SIZE):
-        sample = [random.uniform(-1., 1.) for i in range(0, 100)]
-        lst.append(sample)
-    return lst
-
-
 if __name__ == "__main__":
     main()
+    return
 
 
 # Everything below this is old
