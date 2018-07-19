@@ -27,11 +27,8 @@ MODEL_DIR = None
 
 def main(args):
     """ Runs the relevant command passed through arguments """
-    mode = args.mode
-    folders = args.words
-    runName = args.runName
-    if mode == "train":
-        _train(folders, runName)
+    if args.mode == "train":
+        _train(args.words, args.runName)
     return
 
 
@@ -54,12 +51,13 @@ def _train(folders, runName):
         'Networks-WGAN-' + str(WAV_LENGTH) + '.py',
         '/home/zhanmusi/Dropbox/Birkbeck/' +
         'Advanced Computing Technologies MSc/' +
-        'Project/Code/Experiment-WGAN' + str(WAV_LENGTH) + '/'
+        'Project/Code/Experiment-WGAN-' + str(WAV_LENGTH) + '/' +
+        'Networks-WGAN-' + str(WAV_LENGTH) + '.py'
     )
 
     # Create folder for results
     global MODEL_DIR
-    MODEL_DIR = 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName
+    MODEL_DIR = 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName[0]
 
     # Create input placeholder
     G_input = tf.placeholder(
@@ -172,18 +170,17 @@ def _loss(G, R, F, X, Z):
 if __name__ == "__main__":
     parser = ag.ArgumentParser()
     parser.add_argument(
-        dest='mode',
-        nargs=1,
-        type=str,
-        default='train',
-        choices=['train'],
-        help="How do you wish to use the model?"
-    )
-    parser.add_argument(
         dest='runName',
         nargs=1,
         type=str,
         help="A name for this run of the experiment."
+    )
+    parser.add_argument(
+        dest='mode',
+        nargs='?',
+        type=str,
+        default='train',
+        help="How wish to use the model."
     )
     parser.add_argument(
         dest='words',
