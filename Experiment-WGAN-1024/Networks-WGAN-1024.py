@@ -77,7 +77,7 @@ def generator(z):
     return tanh
 
 
-def discriminator(features, labels, mode):
+def discriminator(features):
     """ A waveGAN discriminator """
 
     inputLayer = tf.reshape(
