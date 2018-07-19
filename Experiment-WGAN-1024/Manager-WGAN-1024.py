@@ -15,6 +15,7 @@ D_UPDATES_PER_G_UPDATES = 1
 EPOCHS = None
 LAMBDA = 10
 LEARN_RATE = 0.0001
+NETWORKS = None
 OUTPUT_DIR = None
 RUNS = 20
 STEPS = 1
@@ -28,10 +29,13 @@ TRAIN_DATA_FOLDER = DATA_PATH + DOWN_PATH + str(WAV_LENGTH) + "/"
 MODEL_DIR = None
 
 
-def main(mode):
+def main(args):
     """ Runs the relevant command passed through arguments """
+    mode = args.mode
+    folders = args.words
+    runName = args.runName
     if mode == "train":
-        train()
+        train(folders, runName)
     return
 
 
@@ -49,15 +53,16 @@ def train(folders, runName):
     audio_loader.prepareData(TRAIN_DATA_FOLDER, folders)
 
     # Prepare link to the NNs
-    networks = _loadNetworksModule(
-        modelFile,
+    global NETWORKS
+    NETWORKS = _loadNetworksModule(
+        'Networks-WGAN-' + str(WAV_LENGTH) + '.py',
         '/home/zhanmusi/Dropbox/Birkbeck/' +
         'Advanced Computing Technologies MSc/' +
-        'Project/Code/Experiment-WGAN' + str(WAV_LENGTH) + '/' +
-        'Networks-WGAN-' + str(WAV_LENGTH) + '.py'
+        'Project/Code/Experiment-WGAN' + str(WAV_LENGTH) + '/'
     )
 
     # Create folder for results
+    global MODEL_DIR
     MODEL_DIR = 'tmp/testWaveGAN_' + str(runName)
 
     # Create input placeholder
@@ -81,9 +86,9 @@ def train(folders, runName):
     D_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
 
     # Create networks
-    G = networks.generator(G_input)
-    R = networks.discriminator(D_input)
-    F = networks.discriminator(G)
+    G = NETWORKS.generator(G_input)
+    R = NETWORKS.discriminator(D_input)
+    F = NETWORKS.discriminator(G)
 
     # Build loss
     G_loss, D_loss = _loss(G, R, F, X, Z)
@@ -111,9 +116,15 @@ def train(folders, runName):
         var_list=D_variables
     )
 
+    # Root Mean Square
+    Z_rms = tf.sqrt(tf.reduce_mean(tf.square(G[:, :, 0]), axis=1))
+    X_rms = tf.sqrt(tf.reduce_mean(tf.square(X[:, :, 0]), axis=1))
+
     # Summary
     tf.summary.audio('X', X, WAV_LENGTH)
     tf.summary.audio('G', G, WAV_LENGTH)
+    tf.summary.histogram('Z_rms', Z_rms)
+    tf.summary.histogram('X_rms', X_rms)
     tf.summary.scalar('G_loss', G_loss)
     tf.summary.scalar('D_loss', D_loss)
 
@@ -147,7 +158,7 @@ def _loss(G, R, F, X, Z):
     differences = G - X
     interpolates = X + (alpha - differences)
     # Add some namescope here
-    D_interp = networks.discriminator(interpolates)
+    D_interp = NETWORKS.discriminator(interpolates)
     gradients = tf.gradients(D_interp, [interpolates])[0]
     slopes = tf.sqrt(
         tf.reduce_sum(
@@ -161,8 +172,29 @@ def _loss(G, R, F, X, Z):
 
 
 if __name__ == "__main__":
-    main()
-    return
+    parser = ag.ArgumentParser()
+    parser.add_argument(
+        dest='mode',
+        nargs=1,
+        type=str,
+        default='train',
+        choices=['train'],
+        help="How do you wish to use the model?"
+    )
+    parser.add_argument(
+        dest='runName',
+        nargs=1,
+        type=str,
+        help="A name for this run of the experiment."
+    )
+    parser.add_argument(
+        dest='words',
+        nargs='*',
+        type=str,
+        default=['zero', 'one'],
+        help="The words for sounds you want to train with."
+    )
+    main(parser.parse_args())
 
 
 # Everything below this is old
