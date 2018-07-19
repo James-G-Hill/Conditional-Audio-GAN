@@ -1,11 +1,7 @@
-import ctypes
+import argparse as ag
 import importlib.machinery as im
-import numpy as np
-import soundfile as sf
 import tensorflow as tf
 import types
-
-from tensorboard import main as tb
 
 ABS_INT16 = 32767.
 BATCH_SIZE = 64
@@ -35,11 +31,11 @@ def main(args):
     folders = args.words
     runName = args.runName
     if mode == "train":
-        train(folders, runName)
+        _train(folders, runName)
     return
 
 
-def train(folders, runName):
+def _train(folders, runName):
     """ Trains the WaveGAN model """
 
     # Prepare the data
@@ -63,7 +59,7 @@ def train(folders, runName):
 
     # Create folder for results
     global MODEL_DIR
-    MODEL_DIR = 'tmp/testWaveGAN_' + str(runName)
+    MODEL_DIR = 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName
 
     # Create input placeholder
     G_input = tf.placeholder(
@@ -129,7 +125,10 @@ def train(folders, runName):
     tf.summary.scalar('D_loss', D_loss)
 
     # Run session
-    sess = tf.train.MonitoredTrainingSession()
+    sess = tf.train.MonitoredTrainingSession(
+        checkpoint_dir=MODEL_DIR + '/Checkpoint',
+        save_checkpoint_secs=300,
+        save_summaries_secs=120)
     for _ in range(RUNS):
         for _ in range(D_UPDATES_PER_G_UPDATES):
             sess.run(D_train_op)
@@ -156,8 +155,7 @@ def _loss(G, R, F, X, Z):
         maxval=1.
     )
     differences = G - X
-    interpolates = X + (alpha - differences)
-    # Add some namescope here
+    interpolates = X + (alpha * differences)
     D_interp = NETWORKS.discriminator(interpolates)
     gradients = tf.gradients(D_interp, [interpolates])[0]
     slopes = tf.sqrt(
@@ -195,32 +193,3 @@ if __name__ == "__main__":
         help="The words for sounds you want to train with."
     )
     main(parser.parse_args())
-
-
-# Everything below this is old
-def runTensorBoard():
-    """ Runs TensorBoard for the given directory """
-    tf.flags.FLAGS.logdir = MODEL_DIR
-    tb.main()
-    return
-
-
-def _writeSamples(samples):
-    """ Writes the generated samples to disk """
-    samples = _convert_to_int(samples)
-    for i in range(0, samples.shape[0]):
-        sf.write(
-            file=OUTPUT_DIR + str(i) + '.wav',
-            data=samples[i, :, :],
-            samplerate=WAV_LENGTH,
-            subtype='PCM_16'
-        )
-    return
-
-
-def _convert_to_int(samples):
-    """ Converts floats to integers """
-    ints = samples * ABS_INT16
-    ints = np.clip(ints, -ABS_INT16, ABS_INT16)
-    ints = ints.astype(ctypes.c_int16)
-    return ints
