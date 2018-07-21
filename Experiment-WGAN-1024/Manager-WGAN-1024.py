@@ -1,5 +1,6 @@
 import argparse as ag
 import importlib.machinery as im
+import numpy as np
 import tensorflow as tf
 import types
 
@@ -59,29 +60,29 @@ def _train(folders, runName):
     global MODEL_DIR
     MODEL_DIR = 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName[0]
 
-    # Create input placeholder
-    G_input = tf.placeholder(
-        tf.float32,
-        shape=[None, Z_LENGTH],
-        name='Noise'
-    )
-    D_input = tf.placeholder(
-        tf.float32,
-        shape=[None, WAV_LENGTH],
-        name='Waves'
-    )
-
     # Create data
     Z = tf.random_uniform([BATCH_SIZE, Z_LENGTH], -1., 1., dtype=tf.float32)
-    X = audio_loader.loadTestData()
+    X, X_labels = audio_loader.loadTestData()
+    X_length = len(X)
+    X = np.vstack(X)
+    X = tf.reshape(
+        tensor=tf.cast(X, tf.float32),
+        shape=[X_length, WAV_LENGTH, 1]
+    )
+    X = tf.data.Dataset.from_tensor_slices(X)
+    X = X.shuffle(buffer_size=X_length)
+    X = X.apply(tf.contrib.data.batch_and_drop_remainder(BATCH_SIZE))
+    X = X.repeat()
+    X = X.make_one_shot_iterator()
+    X = X.get_next()
 
     # Create variables
     G_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
     D_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
 
     # Create networks
-    G = NETWORKS.generator(G_input)
-    R = NETWORKS.discriminator(D_input)
+    G = NETWORKS.generator(Z)
+    R = NETWORKS.discriminator(X)
     F = NETWORKS.discriminator(G)
 
     # Build loss
