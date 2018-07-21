@@ -88,8 +88,7 @@ def discriminator(features):
         strides=STRIDE,
         padding='same',
         use_bias=True,
-        activation=tf.nn.leaky_relu,
-        # name="Convolution1"
+        activation=tf.nn.leaky_relu
     )
 
     convolution1 = _phaseShuffle(convolution1)
@@ -102,8 +101,7 @@ def discriminator(features):
         strides=STRIDE,
         padding='same',
         use_bias=True,
-        activation=tf.nn.leaky_relu,
-        # name="Convolution2"
+        activation=tf.nn.leaky_relu
     )
 
     convolution2 = _phaseShuffle(convolution2)
@@ -116,22 +114,19 @@ def discriminator(features):
         strides=STRIDE,
         padding='same',
         use_bias=True,
-        activation=tf.nn.leaky_relu,
-        # name="Convolution3"
+        activation=tf.nn.leaky_relu
     )
 
     # Input: [64, 16, 64] > [64, 1024]
     flatten = tf.reshape(
         tensor=convolution3,
-        shape=[BATCH_SIZE, WAV_LENGTH],
-        # name="DiscriminatorFlatten"
+        shape=[BATCH_SIZE, WAV_LENGTH]
     )
 
     # Input: [64, 1024] > [64, 1]
     logits = tf.layers.dense(
         inputs=flatten,
-        units=CLASSES,
-        # name='Logits'
+        units=CLASSES
     )
 
     return logits
