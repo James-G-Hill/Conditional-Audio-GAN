@@ -80,22 +80,16 @@ def generator(z):
 def discriminator(features):
     """ A waveGAN discriminator """
 
-    inputLayer = tf.reshape(
-        tensor=tf.cast(features['x'], tf.float32),
-        shape=[BATCH_SIZE, WAV_LENGTH, CHANNELS],
-        name='InputLayer'
-    )
-
     # Input: [64, 1024, 1] > [64, 256, 16]
     convolution1 = tf.layers.conv1d(
-        inputs=inputLayer,
+        inputs=features,
         filters=MODEL_SIZE,
         kernel_size=KERNEL_SIZE,
         strides=STRIDE,
         padding='same',
         use_bias=True,
         activation=tf.nn.leaky_relu,
-        name="Convolution1"
+        # name="Convolution1"
     )
 
     convolution1 = _phaseShuffle(convolution1)
@@ -109,7 +103,7 @@ def discriminator(features):
         padding='same',
         use_bias=True,
         activation=tf.nn.leaky_relu,
-        name="Convolution2"
+        # name="Convolution2"
     )
 
     convolution2 = _phaseShuffle(convolution2)
@@ -123,21 +117,21 @@ def discriminator(features):
         padding='same',
         use_bias=True,
         activation=tf.nn.leaky_relu,
-        name="Convolution3"
+        # name="Convolution3"
     )
 
     # Input: [64, 16, 64] > [64, 1024]
     flatten = tf.reshape(
         tensor=convolution3,
         shape=[BATCH_SIZE, WAV_LENGTH],
-        name="DiscriminatorFlatten"
+        # name="DiscriminatorFlatten"
     )
 
     # Input: [64, 1024] > [64, 1]
     logits = tf.layers.dense(
         inputs=flatten,
         units=CLASSES,
-        name='Logits'
+        # name='Logits'
     )
 
     return logits
