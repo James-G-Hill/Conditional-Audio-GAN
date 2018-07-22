@@ -14,8 +14,7 @@ LAMBDA = 10
 LEARN_RATE = 0.0001
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 20
-STEPS = 1
+RUNS = 200000
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
@@ -76,14 +75,23 @@ def _train(folders, runName):
     X = X.make_one_shot_iterator()
     X = X.get_next()
 
-    # Create variables
-    G_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-    D_variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-
     # Create networks
-    G = NETWORKS.generator(Z)
-    R = NETWORKS.discriminator(X)
-    F = NETWORKS.discriminator(G)
+    with tf.variable_scope('G'):
+        G = NETWORKS.generator(Z)
+    with tf.variable_scope('D'):
+        R = NETWORKS.discriminator(X)
+    with tf.variable_scope('D', reuse=True):
+        F = NETWORKS.discriminator(G)
+
+    # Create variables
+    G_variables = tf.get_collection(
+        tf.GraphKeys.TRAINABLE_VARIABLES,
+        scope='G'
+    )
+    D_variables = tf.get_collection(
+        tf.GraphKeys.TRAINABLE_VARIABLES,
+        scope='D'
+    )
 
     # Build loss
     G_loss, D_loss = _loss(G, R, F, X, Z)
@@ -126,6 +134,7 @@ def _train(folders, runName):
     # Run session
     sess = tf.train.MonitoredTrainingSession(
         checkpoint_dir=MODEL_DIR + '/Checkpoint',
+        config=tf.ConfigProto(log_device_placement=False),
         save_checkpoint_secs=300,
         save_summaries_secs=120)
     for _ in range(RUNS):
