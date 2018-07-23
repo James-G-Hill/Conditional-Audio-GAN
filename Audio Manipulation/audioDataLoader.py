@@ -8,6 +8,9 @@ MAX_NUM_WAVS_PER_CLASS = 2**27 - 1
 
 LOOKUP = None
 
+ALL_DATA = None
+ALL_LABELS = None
+
 TEST_DATA = None
 TEST_LABELS = None
 
@@ -28,11 +31,19 @@ def prepareData(inFilePath, folderNames):
     for folder in folderNames:
         files = lb.util.find_files(
             inFilePath + '/' + folder + '/',
-            ext='wav')
+            ext='wav'
+        )
         _appendInfo(files, label)
         LOOKUP.append((label, folder))
         label = label + 1
     return
+
+
+def loadAllData():
+    """ Returns all of the data """
+    ALL_DATA = TRAIN_DATA + TEST_DATA + VALID_DATA
+    ALL_LABELS = TRAIN_LABELS + TEST_LABELS + VALID_LABELS
+    return ALL_DATA, ALL_LABELS
 
 
 def loadTrainData():
@@ -57,6 +68,8 @@ def getLookup():
 
 def _resetGlobalVariables():
     """ Resets the variables if the module has already been used """
+    global ALL_DATA
+    global ALL_LABELS
     global TEST_DATA
     global TEST_LABELS
     global TRAIN_DATA
@@ -64,6 +77,8 @@ def _resetGlobalVariables():
     global VALID_DATA
     global VALID_LABELS
     global LOOKUP
+    ALL_DATA = []
+    ALL_LABELS = []
     TEST_DATA = []
     TEST_LABELS = []
     TRAIN_DATA = []
