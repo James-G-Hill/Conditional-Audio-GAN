@@ -14,7 +14,7 @@ LAMBDA = 10
 LEARN_RATE = 0.0001
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 20
+RUNS = 200000
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
@@ -49,7 +49,6 @@ def _train(folders, runName):
             str(WAV_LENGTH)
         )
     )
-    print(training_data_path)
     audio_loader.prepareData(training_data_path, folders)
 
     # Prepare link to the NNs
@@ -64,7 +63,7 @@ def _train(folders, runName):
 
     # Create data
     Z = tf.random_uniform([BATCH_SIZE, Z_LENGTH], -1., 1., dtype=tf.float32)
-    X, X_labels = audio_loader.loadTestData()
+    X, X_labels = audio_loader.loadAllData()
     X_length = len(X)
     X = np.vstack(X)
     X = tf.reshape(
@@ -167,7 +166,8 @@ def _loss(G, R, F, X, Z):
     )
     differences = G - X
     interpolates = X + (alpha * differences)
-    D_interp = NETWORKS.discriminator(interpolates)
+    with tf.name_scope('D_interp'), tf.variable_scope('D', reuse=True):
+        D_interp = NETWORKS.discriminator(interpolates)
     gradients = tf.gradients(D_interp, [interpolates])[0]
     slopes = tf.sqrt(
         tf.reduce_sum(
@@ -199,7 +199,7 @@ if __name__ == "__main__":
         dest='words',
         nargs='*',
         type=str,
-        default=['zero', 'one'],
+        default=['zero'],
         help="The words for sounds you want to train with."
     )
     main(parser.parse_args())
