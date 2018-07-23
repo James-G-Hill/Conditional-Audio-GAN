@@ -26,7 +26,9 @@ def prepareData(inFilePath, folderNames):
     _resetGlobalVariables()
     label = 0
     for folder in folderNames:
-        files = lb.util.find_files(inFilePath + folder + '/', ext='wav')
+        files = lb.util.find_files(
+            inFilePath + '/' + folder + '/',
+            ext='wav')
         _appendInfo(files, label)
         LOOKUP.append((label, folder))
         label = label + 1
