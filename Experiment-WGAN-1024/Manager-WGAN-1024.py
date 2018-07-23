@@ -14,7 +14,7 @@ LAMBDA = 10
 LEARN_RATE = 0.0001
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 200000
+RUNS = 20000
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
@@ -139,7 +139,8 @@ def _train(folders, runName):
         config=tf.ConfigProto(log_device_placement=False),
         save_checkpoint_secs=300,
         save_summaries_secs=120)
-    for _ in range(RUNS):
+    for i in range(RUNS):
+        print('Completed Run Number: ' + str(i + 1))
         for _ in range(D_UPDATES_PER_G_UPDATES):
             sess.run(D_train_op)
         sess.run(G_train_op)
