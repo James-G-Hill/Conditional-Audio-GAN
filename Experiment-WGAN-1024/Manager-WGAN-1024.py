@@ -1,5 +1,6 @@
 import argparse as ag
 import importlib.machinery as im
+import os
 import numpy as np
 import tensorflow as tf
 import types
@@ -9,20 +10,13 @@ BATCH_SIZE = 64
 BETA1 = 0.5
 BETA2 = 0.9
 D_UPDATES_PER_G_UPDATES = 1
-EPOCHS = None
 LAMBDA = 10
 LEARN_RATE = 0.0001
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 200000
+RUNS = 20
 WAV_LENGTH = 1024
 Z_LENGTH = 100
-
-DATA_PATH = "/home/zhanmusi/Documents/Data/"
-DOWN_PATH = "Speech Commands Dataset Downsampled/"
-TRAIN_DATA_FOLDER = DATA_PATH + DOWN_PATH + str(WAV_LENGTH) + "/"
-
-MODEL_DIR = None
 
 
 def main(args):
@@ -38,26 +32,35 @@ def _train(folders, runName):
     # Prepare the data
     audio_loader = _loadNetworksModule(
         'audioDataLoader.py',
-        '/home/zhanmusi/Dropbox/Birkbeck/' +
-        'Advanced Computing Technologies MSc/' +
-        'Project/Code/Audio Manipulation/' +
-        'audioDataLoader.py'
+        os.path.abspath(
+            os.path.join(
+                os.path.dirname((__file__)),
+                os.pardir,
+                'Audio Manipulation/',
+                'audioDataLoader.py'
+            )
+        )
     )
-    audio_loader.prepareData(TRAIN_DATA_FOLDER, folders)
+    training_data_path = os.path.abspath(
+        os.path.join(
+            os.path.dirname((__file__)),
+            os.pardir,
+            "Speech Commands Dataset Downsampled/",
+            str(WAV_LENGTH)
+        )
+    )
+    print(training_data_path)
+    audio_loader.prepareData(training_data_path, folders)
 
     # Prepare link to the NNs
     global NETWORKS
     NETWORKS = _loadNetworksModule(
         'Networks-WGAN-' + str(WAV_LENGTH) + '.py',
-        '/home/zhanmusi/Dropbox/Birkbeck/' +
-        'Advanced Computing Technologies MSc/' +
-        'Project/Code/Experiment-WGAN-' + str(WAV_LENGTH) + '/' +
         'Networks-WGAN-' + str(WAV_LENGTH) + '.py'
     )
 
     # Create folder for results
-    global MODEL_DIR
-    MODEL_DIR = 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName[0]
+    model_dir = 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName[0]
 
     # Create data
     Z = tf.random_uniform([BATCH_SIZE, Z_LENGTH], -1., 1., dtype=tf.float32)
@@ -133,7 +136,7 @@ def _train(folders, runName):
 
     # Run session
     sess = tf.train.MonitoredTrainingSession(
-        checkpoint_dir=MODEL_DIR + '/Checkpoint',
+        checkpoint_dir=model_dir + '/Checkpoint',
         config=tf.ConfigProto(log_device_placement=False),
         save_checkpoint_secs=300,
         save_summaries_secs=120)
