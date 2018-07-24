@@ -138,7 +138,8 @@ def _train(folders, runName):
         checkpoint_dir=model_dir + '/Checkpoint',
         config=tf.ConfigProto(log_device_placement=False),
         save_checkpoint_secs=300,
-        save_summaries_secs=120)
+        save_summaries_secs=120
+    )
     for i in range(RUNS):
         if i % 1000 == 0:
             print('Completed Run Number: ' + str(i + 1))
