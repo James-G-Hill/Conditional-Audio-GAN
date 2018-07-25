@@ -2,6 +2,7 @@ import argparse as ag
 import importlib.machinery as im
 import os
 import numpy as np
+import soundfile as sf
 import tensorflow as tf
 import types
 
@@ -10,6 +11,7 @@ BATCH_SIZE = 64
 BETA1 = 0.5
 BETA2 = 0.9
 D_UPDATES_PER_G_UPDATES = 1
+GEN_SIZE = 100
 LAMBDA = 10
 LEARN_RATE = 0.0001
 NETWORKS = None
@@ -23,6 +25,8 @@ def main(args):
     """ Runs the relevant command passed through arguments """
     if args.mode == "train":
         _train(args.words, args.runName)
+    elif args.mode == "gen":
+        _generate(args.runName)
     return
 
 
@@ -30,17 +34,7 @@ def _train(folders, runName):
     """ Trains the WaveGAN model """
 
     # Prepare the data
-    audio_loader = _loadNetworksModule(
-        'audioDataLoader.py',
-        os.path.abspath(
-            os.path.join(
-                os.path.dirname((__file__)),
-                os.pardir,
-                'Audio Manipulation/',
-                'audioDataLoader.py'
-            )
-        )
-    )
+    audio_loader = _loadAudioModule()
     training_data_path = os.path.abspath(
         os.path.join(
             os.path.dirname((__file__)),
@@ -59,7 +53,7 @@ def _train(folders, runName):
     )
 
     # Create folder for results
-    model_dir = 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName[0]
+    model_dir = _modelDirectory(runName)
 
     # Create data
     Z = tf.random_uniform([BATCH_SIZE, Z_LENGTH], -1., 1., dtype=tf.float32)
@@ -181,6 +175,79 @@ def _loss(G, R, F, X, Z):
     gradient_penalty = tf.reduce_mean((slopes - 1.) ** 2.)
     D_loss += LAMBDA * gradient_penalty
     return G_loss, D_loss
+
+
+def _modelDirectory(runName):
+    """ Creates / obtains the name of the model directory """
+    model_dir = 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName[0]
+    return model_dir
+
+
+def _loadAudioModule():
+    """ Loads the audio module & returns it as objects """
+    audio_loader = _loadNetworksModule(
+        'audioDataLoader.py',
+        os.path.abspath(
+            os.path.join(
+                os.path.dirname((__file__)),
+                os.pardir,
+                'Audio Manipulation/',
+                'audioDataLoader.py'
+            )
+        )
+    )
+    return audio_loader
+
+
+def _generate(runName):
+    """ Generates 100 samples from the generator """
+
+    # Load the graph
+    model_dir = _modelDirectory(runName)
+    tf.reset_default_graph()
+    graph = tf.get_default_graph()
+    sess = tf.InteractiveSession()
+    tf.train.import_meta_graph().restore(sess, model_dir)
+
+    # Generate sounds
+    Z = tf.random_uniform([GEN_SIZE, Z_LENGTH], -1., 1., dtype=tf.float32)
+    Z_input = graph.get_tensor_by_name('Z-Input:0')
+    G = graph.get_tensor_by_name('G:0')
+    samples = sess.run(G, {Z_input: Z})
+
+    # Write samples to file
+    _saveGenerated(samples, runName)
+
+    return
+
+
+def _saveGenerated(samples, runName):
+    """ Saves the generated samples to folder as .wav """
+
+    # Create the output path
+    path = os.path.abspath(
+        os.path.join(
+            os.path.dirname((__file__)),
+            os.pardir,
+            'Generated/',
+            str(WAV_LENGTH) + '/',
+            'ModelRun' + str(runName) + '/'
+        )
+    )
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    # Save the samples
+    i = 0
+    for sample in samples:
+        i = i + 1
+        sf.write(
+            file=path + 'Sample_' + i + '.py',
+            data=sample,
+            samplerate=WAV_LENGTH,
+            subtype='PCM_16'
+        )
+    return
 
 
 if __name__ == "__main__":
