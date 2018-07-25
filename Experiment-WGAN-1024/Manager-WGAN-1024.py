@@ -207,7 +207,9 @@ def _generate(runName):
     tf.reset_default_graph()
     graph = tf.get_default_graph()
     sess = tf.InteractiveSession()
-    tf.train.import_meta_graph().restore(sess, model_dir)
+    tf.train.import_meta_graph(
+        'model.ckpt-' + str(runName) + ' .meta'
+    ).restore(sess, model_dir)
 
     # Generate sounds
     Z = tf.random_uniform([GEN_SIZE, Z_LENGTH], -1., 1., dtype=tf.float32)
@@ -231,7 +233,7 @@ def _saveGenerated(samples, runName):
             os.pardir,
             'Generated/',
             str(WAV_LENGTH) + '/',
-            'ModelRun' + str(runName) + '/'
+            'ModelRun_' + str(runName) + '/'
         )
     )
     if not os.path.exists(path):
@@ -263,7 +265,13 @@ if __name__ == "__main__":
         nargs='?',
         type=str,
         default='train',
-        help="How wish to use the model."
+        help="How you wish to use the model."
+    )
+    parser.add_argument(
+        dest='checkpointNum',
+        nargs='?',
+        type=str,
+        help="The checkpoint number you wish to examine."
     )
     parser.add_argument(
         dest='words',
