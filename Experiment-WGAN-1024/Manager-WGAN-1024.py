@@ -16,17 +16,17 @@ LAMBDA = 10
 LEARN_RATE = 0.0001
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 200000
+RUNS = 20
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
 
 def main(args):
     """ Runs the relevant command passed through arguments """
-    if args.mode == "train":
-        _train(args.words, args.runName)
-    elif args.mode == "gen":
-        _generate(args.runName)
+    if args.mode[0] == "train":
+        _train(args.words, args.runName[0])
+    elif args.mode[0] == "gen":
+        _generate(args.runName[0], args.checkpointNum)
     return
 
 
@@ -179,7 +179,7 @@ def _loss(G, R, F, X, Z):
 
 def _modelDirectory(runName):
     """ Creates / obtains the name of the model directory """
-    model_dir = 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName[0]
+    model_dir = 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName
     return model_dir
 
 
@@ -199,7 +199,7 @@ def _loadAudioModule():
     return audio_loader
 
 
-def _generate(runName):
+def _generate(runName, checkpointNum):
     """ Generates 100 samples from the generator """
 
     # Load the graph
@@ -208,14 +208,17 @@ def _generate(runName):
     graph = tf.get_default_graph()
     sess = tf.InteractiveSession()
     tf.train.import_meta_graph(
-        'model.ckpt-' + str(runName) + ' .meta'
-    ).restore(sess, model_dir)
+        model_dir + '/Checkpoint/model.ckpt-' + str(checkpointNum) + '.meta'
+    ).restore(
+        sess,
+        model_dir + '/Checkpoint/model.ckpt-' + str(checkpointNum)
+    )
 
     # Generate sounds
     Z = tf.random_uniform([GEN_SIZE, Z_LENGTH], -1., 1., dtype=tf.float32)
-    Z_input = graph.get_tensor_by_name('Z-Input:0')
+    # Z_input = graph.get_tensor_by_name('random_uniform:0')
     G = graph.get_tensor_by_name('G:0')
-    samples = sess.run(G, {Z_input: Z})
+    samples = sess.run(G(Z))
 
     # Write samples to file
     _saveGenerated(samples, runName)
@@ -255,26 +258,26 @@ def _saveGenerated(samples, runName):
 if __name__ == "__main__":
     parser = ag.ArgumentParser()
     parser.add_argument(
-        dest='runName',
+        '-mode',
         nargs=1,
-        type=str,
-        help="A name for this run of the experiment."
-    )
-    parser.add_argument(
-        dest='mode',
-        nargs='?',
         type=str,
         default='train',
         help="How you wish to use the model."
     )
     parser.add_argument(
-        dest='checkpointNum',
-        nargs='?',
+        '-runName',
+        nargs=1,
         type=str,
+        help="A name for this run of the experiment."
+    )
+    parser.add_argument(
+        '-checkpointNum',
+        nargs='?',
+        type=int,
         help="The checkpoint number you wish to examine."
     )
     parser.add_argument(
-        dest='words',
+        '-words',
         nargs='*',
         type=str,
         default=['zero'],
