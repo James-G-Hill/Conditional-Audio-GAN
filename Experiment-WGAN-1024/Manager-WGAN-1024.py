@@ -11,26 +11,42 @@ BATCH_SIZE = 64
 BETA1 = 0.5
 BETA2 = 0.9
 D_UPDATES_PER_G_UPDATES = 1
-GEN_SIZE = 100
+GEN_LENGTH = 100
 LAMBDA = 10
 LEARN_RATE = 0.0001
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 20
+RUNS = 200000
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
 
 def main(args):
     """ Runs the relevant command passed through arguments """
+
+    # Training mode
     if args.mode[0] == "train":
-        _train(args.words, args.runName[0])
+
+        # Prepare link to the NNs
+        global NETWORKS
+        NETWORKS = _loadNetworksModule(
+            'Networks-WGAN-' + str(WAV_LENGTH) + '.py',
+            'Networks-WGAN-' + str(WAV_LENGTH) + '.py'
+        )
+
+        # Train model
+        model_dir = _modelDirectory(args.runName[0])
+        _createGenGraph(model_dir)
+        _train(args.words, args.runName[0], model_dir)
+
+    # Generator mode
     elif args.mode[0] == "gen":
         _generate(args.runName[0], args.checkpointNum)
+
     return
 
 
-def _train(folders, runName):
+def _train(folders, runName, model_dir):
     """ Trains the WaveGAN model """
 
     # Prepare the data
@@ -44,16 +60,6 @@ def _train(folders, runName):
         )
     )
     audio_loader.prepareData(training_data_path, folders)
-
-    # Prepare link to the NNs
-    global NETWORKS
-    NETWORKS = _loadNetworksModule(
-        'Networks-WGAN-' + str(WAV_LENGTH) + '.py',
-        'Networks-WGAN-' + str(WAV_LENGTH) + '.py'
-    )
-
-    # Create folder for results
-    model_dir = _modelDirectory(runName)
 
     # Create data
     Z = tf.random_uniform([BATCH_SIZE, Z_LENGTH], -1., 1., dtype=tf.float32)
@@ -129,7 +135,7 @@ def _train(folders, runName):
 
     # Run session
     sess = tf.train.MonitoredTrainingSession(
-        checkpoint_dir=model_dir + '/Checkpoint',
+        checkpoint_dir=model_dir,
         config=tf.ConfigProto(log_device_placement=False),
         save_checkpoint_secs=300,
         save_summaries_secs=120
@@ -179,8 +185,7 @@ def _loss(G, R, F, X, Z):
 
 def _modelDirectory(runName):
     """ Creates / obtains the name of the model directory """
-    model_dir = 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName
-    return model_dir
+    return 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName + '/'
 
 
 def _loadAudioModule():
@@ -199,8 +204,46 @@ def _loadAudioModule():
     return audio_loader
 
 
+def _createGenGraph(model_dir):
+    """ Creates a copy of the generator graph """
+
+    # Create directory
+    graphDir = os.path.join(model_dir + 'Generator/')
+    if not os.path.isdir(graphDir):
+        os.makedirs(graphDir)
+
+    # Create graph
+    Z_Input = tf.placeholder(tf.float32, [None, Z_LENGTH], name='Z_Input')
+    with tf.variable_scope('G'):
+        G = NETWORKS.generator(Z_Input)
+    G = tf.identity(G, name='Generator')
+
+    # Save graph
+    G_variables = tf.get_collection(
+        tf.GraphKeys.TRAINABLE_VARIABLES,
+        scope='G'
+    )
+    global_step = tf.train.get_or_create_global_step()
+    saver = tf.train.Saver(G_variables + [global_step])
+
+    # Export All
+    tf.train.write_graph(
+        tf.get_default_graph(),
+        graphDir,
+        'generator.pbtxt'
+    )
+    tf.train.export_meta_graph(
+        filename=os.path.join(graphDir, 'generator.meta'),
+        clear_devices=True,
+        saver_def=saver.as_saver_def()
+    )
+    tf.reset_default_graph()
+
+    return
+
+
 def _generate(runName, checkpointNum):
-    """ Generates 100 samples from the generator """
+    """ Generates samples from the generator """
 
     # Load the graph
     model_dir = _modelDirectory(runName)
@@ -208,17 +251,17 @@ def _generate(runName, checkpointNum):
     graph = tf.get_default_graph()
     sess = tf.InteractiveSession()
     tf.train.import_meta_graph(
-        model_dir + '/Checkpoint/model.ckpt-' + str(checkpointNum) + '.meta'
+        model_dir + 'Generator/generator.meta'
     ).restore(
         sess,
-        model_dir + '/Checkpoint/model.ckpt-' + str(checkpointNum)
+        model_dir + 'model.ckpt-' + str(checkpointNum)
     )
 
     # Generate sounds
-    Z = tf.random_uniform([GEN_SIZE, Z_LENGTH], -1., 1., dtype=tf.float32)
-    # Z_input = graph.get_tensor_by_name('random_uniform:0')
-    G = graph.get_tensor_by_name('G:0')
-    samples = sess.run(G(Z))
+    Z = np.random.uniform(-1., 1., [GEN_LENGTH, Z_LENGTH])
+    Z_input = graph.get_tensor_by_name('Z_Input:0')
+    G = graph.get_tensor_by_name('Generator:0')
+    samples = sess.run(G, {Z_input: Z})
 
     # Write samples to file
     _saveGenerated(samples, runName)
@@ -236,7 +279,7 @@ def _saveGenerated(samples, runName):
             os.pardir,
             'Generated/',
             str(WAV_LENGTH) + '/',
-            'ModelRun_' + str(runName) + '/'
+            'ModelRun_' + str(runName)
         )
     )
     if not os.path.exists(path):
@@ -245,9 +288,10 @@ def _saveGenerated(samples, runName):
     # Save the samples
     i = 0
     for sample in samples:
+        print(type(sample))
         i = i + 1
         sf.write(
-            file=path + 'Sample_' + i + '.py',
+            file=path + '/' + 'Sample_' + str(i) + '.wav',
             data=sample,
             samplerate=WAV_LENGTH,
             subtype='PCM_16'
