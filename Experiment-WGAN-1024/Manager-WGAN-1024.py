@@ -16,7 +16,7 @@ LAMBDA = 10
 LEARN_RATE = 0.0001
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 200000
+RUNS = 2000
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
@@ -288,7 +288,6 @@ def _saveGenerated(samples, runName):
     # Save the samples
     i = 0
     for sample in samples:
-        print(type(sample))
         i = i + 1
         sf.write(
             file=path + '/' + 'Sample_' + str(i) + '.wav',
