@@ -77,7 +77,7 @@ if __name__ == "__main__":
         dest='divider',
         nargs=1,
         type=int,
-        choices=[2, 4, 8, 16],
+        choices=[2, 8, 16],
         help="A divider for downsampling."
     )
     parser.add_argument(
