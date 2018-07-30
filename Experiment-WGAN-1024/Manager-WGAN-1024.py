@@ -16,7 +16,7 @@ LAMBDA = 10
 LEARN_RATE = 0.0001
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 2000
+RUNS = 200000
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
@@ -26,14 +26,6 @@ def main(args):
 
     # Training mode
     if args.mode[0] == "train":
-
-        # Prepare link to the NNs
-        global NETWORKS
-        NETWORKS = _loadNetworksModule(
-            'Networks-WGAN-' + str(WAV_LENGTH) + '.py',
-            'Networks-WGAN-' + str(WAV_LENGTH) + '.py'
-        )
-
         # Train model
         model_dir = _modelDirectory(args.runName[0])
         _createGenGraph(model_dir)
@@ -76,6 +68,13 @@ def _train(folders, runName, model_dir):
     X = X.repeat()
     X = X.make_one_shot_iterator()
     X = X.get_next()
+
+    # Prepare link to the NNs
+    global NETWORKS
+    NETWORKS = _loadNetworksModule(
+        'Networks-WGAN-' + str(WAV_LENGTH) + '.py',
+        'Networks-WGAN-' + str(WAV_LENGTH) + '.py'
+    )
 
     # Create networks
     with tf.variable_scope('G'):
@@ -137,12 +136,12 @@ def _train(folders, runName, model_dir):
     sess = tf.train.MonitoredTrainingSession(
         checkpoint_dir=model_dir,
         config=tf.ConfigProto(log_device_placement=False),
-        save_checkpoint_secs=300,
-        save_summaries_secs=120
+        save_checkpoint_steps=10000,
+        save_summaries_steps=100
     )
     for i in range(RUNS):
         if i % 1000 == 0:
-            print('Completed Run Number: ' + str(i + 1))
+            print('Completed Run Number: ' + str(i))
         for _ in range(D_UPDATES_PER_G_UPDATES):
             sess.run(D_train_op)
         sess.run(G_train_op)
@@ -206,6 +205,13 @@ def _loadAudioModule():
 
 def _createGenGraph(model_dir):
     """ Creates a copy of the generator graph """
+
+    # Prepare link to the NNs
+    global NETWORKS
+    NETWORKS = _loadNetworksModule(
+        'Networks-WGAN-' + str(WAV_LENGTH) + '.py',
+        'Networks-WGAN-' + str(WAV_LENGTH) + '.py'
+    )
 
     # Create directory
     graphDir = os.path.join(model_dir + 'Generator/')
