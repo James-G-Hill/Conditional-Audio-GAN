@@ -14,9 +14,10 @@ D_UPDATES_PER_G_UPDATES = 1
 GEN_LENGTH = 100
 LAMBDA = 10
 LEARN_RATE = 0.0001
+LOSS_MAX = 100
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 200000
+RUNS = 100000
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
@@ -139,12 +140,18 @@ def _train(folders, runName, model_dir):
         save_checkpoint_steps=10000,
         save_summaries_steps=100
     )
-    for i in range(RUNS):
-        if i % 1000 == 0:
-            print('Completed Run Number: ' + str(i))
-        for _ in range(D_UPDATES_PER_G_UPDATES):
-            sess.run(D_train_op)
-        sess.run(G_train_op)
+    for epoch in range(RUNS):
+        if epoch % 1000 == 0:
+            print('Completed Run Number: ' + str(epoch))
+        for D_update in range(D_UPDATES_PER_G_UPDATES):
+            _, run_D_loss = sess.run([D_train_op, D_loss])
+        _, run_G_loss = sess.run([G_train_op, G_loss])
+        if abs(run_D_loss) > LOSS_MAX:
+            print("Ending: D loss = " + str(run_D_loss))
+            break
+        if abs(run_G_loss) > LOSS_MAX:
+            print("Ending: G Loss = " + str(run_G_loss))
+            break
 
     return
 
@@ -170,7 +177,7 @@ def _loss(G, R, F, X, Z):
     interpolates = X + (alpha * differences)
     with tf.name_scope('D_interp'), tf.variable_scope('D', reuse=True):
         D_interp = NETWORKS.discriminator(interpolates)
-    gradients = tf.gradients(D_interp, [interpolates])[0]
+    gradients = tf.gradients(D_interp, [interpolates], name='grads')[0]
     slopes = tf.sqrt(
         tf.reduce_sum(
             tf.square(gradients),
@@ -179,6 +186,13 @@ def _loss(G, R, F, X, Z):
     )
     gradient_penalty = tf.reduce_mean((slopes - 1.) ** 2.)
     D_loss += LAMBDA * gradient_penalty
+    # for index, grad in enumerate(gradients):
+    #    tf.summary.histogram(
+    #        "{}-grad".format(gradients[index][1].name),
+    #        gradients[index]
+    #    )
+    tf.summary.scalar('norm', tf.norm(gradients))
+    tf.summary.scalar('grad_penalty', gradient_penalty)
     return G_loss, D_loss
 
 
