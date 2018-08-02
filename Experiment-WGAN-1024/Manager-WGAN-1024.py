@@ -17,7 +17,7 @@ LEARN_RATE = 0.0001
 LOSS_MAX = 100
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 100000
+RUNS = 10000
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
@@ -186,11 +186,6 @@ def _loss(G, R, F, X, Z):
     )
     gradient_penalty = tf.reduce_mean((slopes - 1.) ** 2.)
     D_loss += LAMBDA * gradient_penalty
-    # for index, grad in enumerate(gradients):
-    #    tf.summary.histogram(
-    #        "{}-grad".format(gradients[index][1].name),
-    #        gradients[index]
-    #    )
     tf.summary.scalar('norm', tf.norm(gradients))
     tf.summary.scalar('grad_penalty', gradient_penalty)
     return G_loss, D_loss
