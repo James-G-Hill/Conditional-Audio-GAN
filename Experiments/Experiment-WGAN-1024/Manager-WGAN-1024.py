@@ -17,7 +17,7 @@ LEARN_RATE = 0.0001
 LOSS_MAX = 100
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 10000
+RUNS = 100000
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
@@ -44,14 +44,7 @@ def _train(folders, runName, model_dir):
 
     # Prepare the data
     audio_loader = _loadAudioModule()
-    training_data_path = os.path.abspath(
-        os.path.join(
-            os.path.dirname((__file__)),
-            os.pardir,
-            "Speech Commands Dataset Downsampled/",
-            str(WAV_LENGTH)
-        )
-    )
+    training_data_path = "Data/"
     audio_loader.prepareData(training_data_path, folders)
 
     # Create data
@@ -200,14 +193,7 @@ def _loadAudioModule():
     """ Loads the audio module & returns it as objects """
     audio_loader = _loadNetworksModule(
         'audioDataLoader.py',
-        os.path.abspath(
-            os.path.join(
-                os.path.dirname((__file__)),
-                os.pardir,
-                'Audio Manipulation/',
-                'audioDataLoader.py'
-            )
-        )
+        'audioDataLoader.py'
     )
     return audio_loader
 
@@ -291,6 +277,7 @@ def _saveGenerated(samples, runName):
     path = os.path.abspath(
         os.path.join(
             os.path.dirname((__file__)),
+            os.pardir,
             os.pardir,
             'Generated/',
             str(WAV_LENGTH) + '/',
