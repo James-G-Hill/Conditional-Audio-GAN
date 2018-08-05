@@ -17,7 +17,7 @@ LEARN_RATE = 0.0001
 LOSS_MAX = 100
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 100000
+RUNS = 10
 WAV_LENGTH = 1024
 Z_LENGTH = 100
 
@@ -130,7 +130,7 @@ def _train(folders, runName, model_dir):
     sess = tf.train.MonitoredTrainingSession(
         checkpoint_dir=model_dir,
         config=tf.ConfigProto(log_device_placement=False),
-        save_checkpoint_steps=10000,
+        save_checkpoint_steps=5000,
         save_summaries_steps=100
     )
     for epoch in range(RUNS):
