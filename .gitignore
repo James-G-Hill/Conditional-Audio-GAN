@@ -13,3 +13,4 @@ Experiments/Experiment-WGAN-1024/__pycache__/*
 /Testing/Initial Testing/__pycache__/waveGAN-G-1024.cpython-36.pyc
 /Testing/Initial Testing/__pycache__/waveGAN2048.cpython-36.pyc
 /.#CommandPad.py
+Experiments/Experiment-CWGAN-1024/Data/*
