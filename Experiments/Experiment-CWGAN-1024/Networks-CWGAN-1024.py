@@ -19,7 +19,7 @@ Z_LENGTH = 100
 def generator(z, y):
     """ A waveGAN generator """
 
-    concat = tf.concat(values=[z, y], concat_dim=1)
+    concat = tf.concat(values=[z, y], axis=1)
 
     # Input: [64, 100] > [64, 1024]
     densify = tf.layers.dense(
@@ -82,7 +82,7 @@ def generator(z, y):
 def discriminator(x, y):
     """ A waveGAN discriminator """
 
-    concat = tf.concat(values=[x, y], concat_dim=2)
+    concat = tf.concat(values=[x, y], axis=2)
 
     # Input: [64, 1024, 1] > [64, 256, 16]
     convolution1 = tf.layers.conv1d(

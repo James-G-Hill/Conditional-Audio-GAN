@@ -88,8 +88,8 @@ def _train(folders, runName, model_dir):
     # Prepare link to the NNs
     global NETWORKS
     NETWORKS = _loadNetworksModule(
-        'Networks-WGAN-' + str(WAV_LENGTH) + '.py',
-        'Networks-WGAN-' + str(WAV_LENGTH) + '.py'
+        'Networks-CWGAN-' + str(WAV_LENGTH) + '.py',
+        'Networks-CWGAN-' + str(WAV_LENGTH) + '.py'
     )
 
     # Create networks
@@ -229,8 +229,8 @@ def _createGenGraph(model_dir):
     # Prepare link to the NNs
     global NETWORKS
     NETWORKS = _loadNetworksModule(
-        'Networks-WGAN-' + str(WAV_LENGTH) + '.py',
-        'Networks-WGAN-' + str(WAV_LENGTH) + '.py'
+        'Networks-CWGAN-' + str(WAV_LENGTH) + '.py',
+        'Networks-CWGAN-' + str(WAV_LENGTH) + '.py'
     )
 
     # Create directory
@@ -240,8 +240,9 @@ def _createGenGraph(model_dir):
 
     # Create graph
     Z_Input = tf.placeholder(tf.float32, [None, Z_LENGTH], name='Z_Input')
+    Z_Labels = tf.placeholder(tf.float32, [None, MODES], name='Z_Labels')
     with tf.variable_scope('G'):
-        G = NETWORKS.generator(Z_Input)
+        G = NETWORKS.generator(Z_Input, Z_Labels)
     G = tf.identity(G, name='Generator')
 
     # Save graph
@@ -350,7 +351,7 @@ if __name__ == "__main__":
         '-words',
         nargs='*',
         type=str,
-        default=['zero'],
+        default=['zero', 'one'],
         help="The words for sounds you want to train with."
     )
     main(parser.parse_args())
