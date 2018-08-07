@@ -50,10 +50,10 @@ def _train(folders, runName, model_dir):
 
     # Create generated data
     Z = tf.random_uniform([BATCH_SIZE, Z_LENGTH], -1., 1., dtype=tf.float32)
-    Z_y = np.random.randint(0, MODES-1, (BATCH_SIZE, 1))
-    zOneHotLabels = np.zeros((BATCH_SIZE, max(Z_y)))[
-        np.arrange(BATCH_SIZE), Z_y] = 1
-    Z_y = zOneHotLabels * np.ones([BATCH_SIZE, MODES])
+    Z_y = np.random.randint(0, MODES, (BATCH_SIZE))
+    zOneHotLabels = np.zeros((BATCH_SIZE, MODES), dtype=np.int8)
+    zOneHotLabels[np.arange(BATCH_SIZE), Z_y] = 1
+    Z_y = tf.convert_to_tensor(zOneHotLabels, dtype=tf.float32)
 
     # Prepare real data
     X, X_labels = audio_loader.loadAllData()
@@ -75,9 +75,9 @@ def _train(folders, runName, model_dir):
         tf.float32,
         shape=[X_length, WAV_LENGTH, MODES]
     )
-    oneHotLabels = np.zeros((X_length, max(X_labels)))[
-        np.arrange(X_length), X_labels] = 1
-    X_y = oneHotLabels * np.ones([X_length, WAV_LENGTH, MODES])
+    xOneHotLabels = np.zeros((X_length, MODES), dtype=np.int8)
+    xOneHotLabels[np.arange(X_length), X_labels] = 1
+    X_y = xOneHotLabels  # * np.ones([X_length, MODES])
     X_y = tf.data.Dataset.from_tensor_slices(X_y)
     X_y = X_y.shuffle(buffer_size=X_length)
     X_y = X_y.apply(tf.contrib.data.batch_and_drop_remainder(BATCH_SIZE))
