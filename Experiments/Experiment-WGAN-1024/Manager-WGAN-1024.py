@@ -133,12 +133,17 @@ def _train(folders, runName, model_dir):
         save_checkpoint_steps=5000,
         save_summaries_steps=100
     )
-    for epoch in range(RUNS):
-        if epoch % 1000 == 0:
-            print('Completed Run Number: ' + str(epoch))
+
+    for iteration in range(RUNS):
+
+        if iteration % 1000 == 0:
+            print('Completed Run Number: ' + str(iteration))
+
         for D_update in range(D_UPDATES_PER_G_UPDATES):
             _, run_D_loss = sess.run([D_train_op, D_loss])
+
         _, run_G_loss = sess.run([G_train_op, G_loss])
+
         if abs(run_D_loss) > LOSS_MAX:
             print("Ending: D loss = " + str(run_D_loss))
             break
