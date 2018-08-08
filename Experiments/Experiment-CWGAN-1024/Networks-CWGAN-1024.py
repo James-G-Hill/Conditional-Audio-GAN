@@ -21,7 +21,7 @@ def generator(z, y):
 
     concat = tf.concat(values=[z, y], axis=1)
 
-    # Input: [64, 100] > [64, 1024]
+    # Input: [64, 100 + MODES] > [64, 1024]
     densify = tf.layers.dense(
         inputs=concat,
         units=WAV_LENGTH,
