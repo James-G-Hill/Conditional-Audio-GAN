@@ -49,41 +49,26 @@ def _train(folders, runName, model_dir):
     audio_loader.prepareData(training_data_path, folders)
 
     # Create generated data
-    Z = tf.random_uniform([BATCH_SIZE, Z_LENGTH], -1., 1., dtype=tf.float32)
-    Z_y = np.random.randint(0, MODES, (BATCH_SIZE))
-    zOneHotLabels = np.zeros((BATCH_SIZE, MODES), dtype=np.float32)
-    zOneHotLabels[np.arange(BATCH_SIZE), Z_y] = 1.0
-    Z_y = tf.convert_to_tensor(zOneHotLabels, dtype=tf.float32)
+    Z = _makeIterators(
+        np.random.uniform(
+            -1., 1., [BATCH_SIZE, 1, Z_LENGTH]
+        ),
+        np.random.randint(0, MODES, (BATCH_SIZE, 1)),
+        BATCH_SIZE,
+        Z_LENGTH
+    )
 
     # Prepare real data
-    X, X_labels = audio_loader.loadAllData()
-    X_length = len(X)
-    X = np.vstack(X)
-    X = tf.reshape(
-        tensor=tf.cast(X, tf.float32),
-        shape=[X_length, WAV_LENGTH, 1]
+    X, X_y = audio_loader.loadAllData()
+    X = _makeIterators(
+        tf.reshape(
+            tf.convert_to_tensor(np.vstack(X), dtype=tf.float32),
+            [len(X), WAV_LENGTH, 1]
+        ),
+        X_y,
+        len(X),
+        WAV_LENGTH
     )
-    X = tf.data.Dataset.from_tensor_slices(X)
-    X = X.shuffle(buffer_size=X_length)
-    X = X.apply(tf.contrib.data.batch_and_drop_remainder(BATCH_SIZE))
-    X = X.repeat()
-    X = X.make_one_shot_iterator()
-    X = X.get_next()
-
-    # Prepare real data labels
-    X_y = tf.placeholder(
-        tf.float32,
-        shape=[X_length, WAV_LENGTH, MODES]
-    )
-    xOneHotLabels = np.zeros((X_length, MODES), dtype=np.float32)
-    xOneHotLabels[np.arange(X_length), X_labels] = 1
-    X_y = xOneHotLabels
-    X_y = tf.data.Dataset.from_tensor_slices(X_y)
-    X_y = X_y.shuffle(buffer_size=X_length)
-    X_y = X_y.apply(tf.contrib.data.batch_and_drop_remainder(BATCH_SIZE))
-    X_y = X_y.repeat()
-    X_y = X_y.make_one_shot_iterator()
-    X_y = X_y.get_next()
 
     # Prepare link to the NNs
     global NETWORKS
@@ -94,11 +79,11 @@ def _train(folders, runName, model_dir):
 
     # Create networks
     with tf.variable_scope('G'):
-        G = NETWORKS.generator(Z, Z_y)
+        G = NETWORKS.generator(Z["x"], Z["y"])
     with tf.variable_scope('D'):
-        R, R_logits = NETWORKS.discriminator(X, X_y)
+        R, R_logits = NETWORKS.discriminator(X["x"], X["yFill"])
     with tf.variable_scope('D', reuse=True):
-        F, F_logits = NETWORKS.discriminator(G, X_y)
+        F, F_logits = NETWORKS.discriminator(G, Z["yFill"])
 
     # Create variables
     G_variables = tf.get_collection(
@@ -138,10 +123,10 @@ def _train(folders, runName, model_dir):
 
     # Root Mean Square
     Z_rms = tf.sqrt(tf.reduce_mean(tf.square(G[:, :, 0]), axis=1))
-    X_rms = tf.sqrt(tf.reduce_mean(tf.square(X[:, :, 0]), axis=1))
+    X_rms = tf.sqrt(tf.reduce_mean(tf.square(X["x"][:, :, 0]), axis=1))
 
     # Summary
-    tf.summary.audio('X', X, WAV_LENGTH)
+    tf.summary.audio('X', X["x"], WAV_LENGTH)
     tf.summary.audio('G', G, WAV_LENGTH)
     tf.summary.histogram('Z_rms', Z_rms)
     tf.summary.histogram('X_rms', X_rms)
@@ -190,19 +175,19 @@ def _loss(R_logits, F_logits):
     G_loss = -tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
             logits=F_logits,
-            labels=tf.ones(BATCH_SIZE, 1, 1)
+            labels=tf.ones([BATCH_SIZE, MODES])
         )
     )
     D_loss_real = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
             logits=R_logits,
-            labels=tf.ones(BATCH_SIZE, 1, 1)
+            labels=tf.ones([BATCH_SIZE, MODES])
         )
     )
     D_loss_fake = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
             logits=F_logits,
-            labels=tf.zeros(BATCH_SIZE, 1, 1)
+            labels=tf.zeros([BATCH_SIZE, MODES])
         )
     )
     D_loss = D_loss_real + D_loss_fake
@@ -212,6 +197,37 @@ def _loss(R_logits, F_logits):
 def _modelDirectory(runName):
     """ Creates / obtains the name of the model directory """
     return 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName + '/'
+
+
+def _makeIterators(data, labels, data_size, data_length):
+    """ Creates iterators for the data """
+    oneHot = np.zeros((data_size, 1, MODES), dtype=np.float32)
+    oneHot[np.arange(data_size), 0, labels] = 1.0
+    oneHotFill = oneHot * \
+        np.ones((data_size, WAV_LENGTH, MODES), dtype=np.float32)
+    oneHot = tf.convert_to_tensor(oneHot, dtype=tf.float32)
+    oneHotFill = tf.reshape(
+        tensor=tf.cast(oneHotFill, tf.float32),
+        shape=[data_size, WAV_LENGTH, MODES]
+    )
+
+    dSet = tf.data.Dataset.from_tensor_slices(
+        {
+            "x": data,
+            "y": oneHot,
+            "yFill": oneHotFill
+        }
+    )
+    dSet = dSet.shuffle(buffer_size=data_size)
+    dSet = dSet.apply(
+        tf.contrib.data.batch_and_drop_remainder(BATCH_SIZE)
+    )
+    dSet = dSet.repeat()
+
+    iterator = dSet.make_one_shot_iterator()
+    iterator = iterator.get_next()
+
+    return iterator
 
 
 def _loadAudioModule():
@@ -239,8 +255,8 @@ def _createGenGraph(model_dir):
         os.makedirs(graphDir)
 
     # Create graph
-    Z_Input = tf.placeholder(tf.float32, [None, Z_LENGTH], name='Z_Input')
-    Z_Labels = tf.placeholder(tf.float32, [None, MODES], name='Z_Labels')
+    Z_Input = tf.placeholder(tf.float32, [None, 1, Z_LENGTH], name='Z_Input')
+    Z_Labels = tf.placeholder(tf.float32, [None, 1, MODES], name='Z_Labels')
     with tf.variable_scope('G'):
         G = NETWORKS.generator(Z_Input, Z_Labels)
     G = tf.identity(G, name='Generator')
@@ -269,7 +285,7 @@ def _createGenGraph(model_dir):
     return
 
 
-def _generate(runName, checkpointNum):
+def _generate(runName, checkpointNum, mode):
     """ Generates samples from the generator """
 
     # Load the graph
@@ -285,10 +301,16 @@ def _generate(runName, checkpointNum):
     )
 
     # Generate sounds
-    Z = np.random.uniform(-1., 1., [GEN_LENGTH, Z_LENGTH])
+    Z = np.random.uniform(-1., 1., [GEN_LENGTH, 1, Z_LENGTH])
+    oneHot = np.zeros((GEN_LENGTH, 1, MODES), dtype=np.float32)
+    oneHot[np.arange(GEN_LENGTH), 0, mode] = 1.0
+    Z = tf.cast(Z, tf.float32)
+
+    # Enter into graph
     Z_input = graph.get_tensor_by_name('Z_Input:0')
+    Z_labels = graph.get_tensor_by_name('Z_Labels:0')
     G = graph.get_tensor_by_name('Generator:0')
-    samples = sess.run(G, {Z_input: Z})
+    samples = sess.run(G, {Z_input: Z, Z_labels: oneHot})
 
     # Write samples to file
     _saveGenerated(samples, runName)

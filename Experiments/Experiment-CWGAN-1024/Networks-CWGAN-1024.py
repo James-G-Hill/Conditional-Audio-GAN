@@ -16,10 +16,12 @@ WAV_LENGTH = 1024
 Z_LENGTH = 100
 
 
-def generator(z, y):
+def generator(x, y):
     """ A waveGAN generator """
 
-    concat = tf.concat(values=[z, y], axis=1)
+    x = tf.cast(x, tf.float32)
+    y = tf.cast(y, tf.float32)
+    concat = tf.concat(values=[x, y], axis=2)
 
     # Input: [64, 100 + MODES] > [64, 1024]
     densify = tf.layers.dense(
@@ -127,7 +129,7 @@ def discriminator(x, y):
         shape=[BATCH_SIZE, WAV_LENGTH]
     )
 
-    # Input: [64, 1024] > [64, 1]
+    # Input: [64, 1024] > [64, CLASSES]
     logits = tf.layers.dense(
         inputs=flatten,
         units=CLASSES
