@@ -19,12 +19,15 @@ MODES = 2
 NETWORKS = None
 OUTPUT_DIR = None
 RUNS = 10
-WAV_LENGTH = 1024
+WAV_LENGTH = None
 Z_LENGTH = 100
 
 
 def main(args):
     """ Runs the relevant command passed through arguments """
+
+    global WAV_LENGTH
+    WAV_LENGTH = args.wave[0]
 
     # Training mode
     if args.mode[0] == "train":
@@ -356,6 +359,13 @@ if __name__ == "__main__":
         type=str,
         default='train',
         help="How you wish to use the model."
+    )
+    parser.add_argument(
+        '-wave',
+        nargs=1,
+        type=int,
+        default=1024,
+        help="The wave length of files for this experiment"
     )
     parser.add_argument(
         '-runName',
