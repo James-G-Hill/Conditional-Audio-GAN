@@ -17,3 +17,5 @@ Experiments/Experiment-CWGAN-1024/Data/*
 Experiments/Experiment-CWGAN/__pycache__/*
 Experiments/Experiment-CWGAN-1024/tmp/testWaveGAN_1024_Test1/Generator/*
 Experiments/Experiment-CWGAN-1024/__pycache__/*
+Experiments/Experiment-CWGAN/Data/*
+Experiments/Experiment-CWGAN/tmp/*
