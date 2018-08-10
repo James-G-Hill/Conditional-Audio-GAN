@@ -27,7 +27,7 @@ def main(args):
     """ Runs the relevant command passed through arguments """
 
     global WAV_LENGTH
-    WAV_LENGTH = args.wave[0]
+    WAV_LENGTH = args.wave
 
     # Training mode
     if args.mode[0] == "train":
@@ -38,7 +38,11 @@ def main(args):
 
     # Generator mode
     elif args.mode[0] == "gen":
-        _generate(args.runName[0], args.checkpointNum)
+        _generate(
+            args.runName[0],
+            args.checkpointNum[0],
+            args.genMode[0]
+        )
 
     return
 
@@ -288,7 +292,7 @@ def _createGenGraph(model_dir):
     return
 
 
-def _generate(runName, checkpointNum, mode):
+def _generate(runName, checkpointNum, genMode):
     """ Generates samples from the generator """
 
     # Load the graph
@@ -306,8 +310,8 @@ def _generate(runName, checkpointNum, mode):
     # Generate sounds
     Z = np.random.uniform(-1., 1., [GEN_LENGTH, 1, Z_LENGTH])
     oneHot = np.zeros((GEN_LENGTH, 1, MODES), dtype=np.float32)
-    oneHot[np.arange(GEN_LENGTH), 0, mode] = 1.0
-    Z = tf.cast(Z, tf.float32)
+    oneHot[np.arange(GEN_LENGTH), 0, genMode] = 1.0
+    # Z = tf.cast(Z, tf.float32)
 
     # Enter into graph
     Z_input = graph.get_tensor_by_name('Z_Input:0')
@@ -316,12 +320,12 @@ def _generate(runName, checkpointNum, mode):
     samples = sess.run(G, {Z_input: Z, Z_labels: oneHot})
 
     # Write samples to file
-    _saveGenerated(samples, runName)
+    _saveGenerated(samples, runName, genMode)
 
     return
 
 
-def _saveGenerated(samples, runName):
+def _saveGenerated(samples, runName, genMode):
     """ Saves the generated samples to folder as .wav """
 
     # Create the output path
@@ -331,7 +335,7 @@ def _saveGenerated(samples, runName):
             os.pardir,
             os.pardir,
             'Generated/',
-            str(WAV_LENGTH) + '/',
+            'CWGAN_' + str(WAV_LENGTH) + '/',
             'ModelRun_' + str(runName)
         )
     )
@@ -343,7 +347,7 @@ def _saveGenerated(samples, runName):
     for sample in samples:
         i = i + 1
         sf.write(
-            file=path + '/' + 'Sample_' + str(i) + '.wav',
+            file=path + '/' + 'Mode_' + str(genMode) + '_' + str(i) + '.wav',
             data=sample,
             samplerate=WAV_LENGTH,
             subtype='PCM_16'
@@ -375,9 +379,16 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '-checkpointNum',
-        nargs='?',
+        nargs=1,
         type=int,
         help="The checkpoint number you wish to examine."
+    )
+    parser.add_argument(
+        '-genMode',
+        nargs=1,
+        type=int,
+        default=0,
+        help="The number of the mode to be generated."
     )
     parser.add_argument(
         '-words',
