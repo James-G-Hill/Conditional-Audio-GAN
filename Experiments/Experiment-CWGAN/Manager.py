@@ -35,7 +35,7 @@ def main(args):
     if args.mode[0] == "train":
         # Train model
         model_dir = _modelDirectory(args.runName[0], args.model[0])
-        _createGenGraph(model_dir)
+        _createGenGraph(model_dir, args.model[0])
         _train(args.words, args.runName[0], model_dir, args.model[0])
 
     # Generator mode
@@ -43,7 +43,7 @@ def main(args):
         _generate(
             args.runName[0],
             args.checkpointNum[0],
-            args.genMode[0],
+            args.genMode,
             args.model[0]
         )
 
@@ -89,18 +89,18 @@ def _train(folders, runName, model_dir, model):
     # Create networks
     if model == 'WGAN':
         with tf.variable_scope('G'):
+            G = NETWORKS.generator(Z["x"])
+        with tf.variable_scope('D'):
+            R = NETWORKS.discriminator(X["x"])
+        with tf.variable_scope('D', reuse=True):
+            F = NETWORKS.discriminator(G)
+    elif model == 'CWGAN':
+        with tf.variable_scope('G'):
             G = NETWORKS.generator(Z["x"], Z["y"])
         with tf.variable_scope('D'):
             R, R_logits = NETWORKS.discriminator(X["x"], X["yFill"])
         with tf.variable_scope('D', reuse=True):
             F, F_logits = NETWORKS.discriminator(G, Z["yFill"])
-    elif model == 'CWGAN':
-        with tf.variable_scope('G'):
-            G = NETWORKS.generator(Z["x"])
-        with tf.variable_scope('D'):
-            R, R_logits = NETWORKS.discriminator(X["x"])
-        with tf.variable_scope('D', reuse=True):
-            F, F_logits = NETWORKS.discriminator(G)
 
     # Create variables
     G_variables = tf.get_collection(
@@ -161,6 +161,7 @@ def _train(folders, runName, model_dir, model):
         save_summaries_steps=STEPS
     )
 
+    print("Starting experiment . . .")
     for iteration in range(1, ITERATIONS + 1):
 
         # Run Discriminator
@@ -245,8 +246,7 @@ def _conditioned_loss(R_logits, F_logits):
 
 def _modelDirectory(runName, model):
     """ Creates / obtains the name of the model directory """
-    directory = 'tmp/testWaveGAN_' + model + \
-        '_' + str(WAV_LENGTH) + '_' + runName + '/'
+    directory = 'tmp/' + model + '_' + str(WAV_LENGTH) + '_' + runName + '/'
     return directory
 
 
@@ -308,9 +308,15 @@ def _createGenGraph(model_dir, model):
     # Create graph
     Z_Input = tf.placeholder(tf.float32, [None, 1, Z_LENGTH], name='Z_Input')
     Z_Labels = tf.placeholder(tf.float32, [None, 1, MODES], name='Z_Labels')
-    with tf.variable_scope('G'):
-        G = NETWORKS.generator(Z_Input, Z_Labels)
-    G = tf.identity(G, name='Generator')
+
+    if model == 'WGAN':
+        with tf.variable_scope('G'):
+            G = NETWORKS.generator(Z_Input)
+        G = tf.identity(G, name='Generator')
+    elif model == 'CWGAN':
+        with tf.variable_scope('G'):
+            G = NETWORKS.generator(Z_Input, Z_Labels)
+        G = tf.identity(G, name='Generator')
 
     # Save graph
     G_variables = tf.get_collection(
@@ -353,14 +359,21 @@ def _generate(runName, checkpointNum, genMode, model):
 
     # Generate sounds
     Z = np.random.uniform(-1., 1., [GEN_LENGTH, 1, Z_LENGTH])
-    oneHot = np.zeros((GEN_LENGTH, 1, MODES), dtype=np.float32)
-    oneHot[np.arange(GEN_LENGTH), 0, genMode] = 1.0
+
+    # Get tensors
+    Z_input = graph.get_tensor_by_name('Z_Input:0')
+    G = graph.get_tensor_by_name('Generator:0')
 
     # Enter into graph
-    Z_input = graph.get_tensor_by_name('Z_Input:0')
-    Z_labels = graph.get_tensor_by_name('Z_Labels:0')
-    G = graph.get_tensor_by_name('Generator:0')
-    samples = sess.run(G, {Z_input: Z, Z_labels: oneHot})
+    if model == 'WGAN':
+        samples = sess.run(G, {Z_input: Z})
+    elif model == 'CWGAN':
+        # Prepare labels
+        oneHot = np.zeros((GEN_LENGTH, 1, MODES), dtype=np.float32)
+        oneHot[np.arange(GEN_LENGTH), 0, genMode] = 1.0
+        Z_labels = graph.get_tensor_by_name('Z_Labels:0')
+        # Computex
+        samples = sess.run(G, {Z_input: Z, Z_labels: oneHot})
 
     # Create the output path
     path = os.path.abspath(
