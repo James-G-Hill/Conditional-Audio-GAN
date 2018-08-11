@@ -20,6 +20,7 @@ LOSS_MAX = 100
 MODES = 2
 NETWORKS = None
 OUTPUT_DIR = None
+SAMPLE_SAVE_RATE = 10000
 STEPS = 100
 WAV_LENGTH = None
 Z_LENGTH = 100
@@ -177,7 +178,7 @@ def _train(folders, runName, model_dir, model):
             print("Ending: G Loss = " + str(run_G_loss))
             break
 
-        if iteration % 1000 == 0:
+        if iteration % SAMPLE_SAVE_RATE == 0:
             fileName = 'Run_' + str(iteration)
             _saveGenerated(gen_path, G_data, fileName)
             print('Completed Iteration: ' + str(iteration))
@@ -288,6 +289,11 @@ def _loadAudioModule():
         'audioDataLoader.py'
     )
     return audio_loader
+
+
+def _createConfigFile():
+    """ Creates a config file for the training session """
+    return
 
 
 def _createGenGraph(model_dir, model):
