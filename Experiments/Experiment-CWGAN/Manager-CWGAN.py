@@ -10,15 +10,17 @@ ABS_INT16 = 32767.
 BATCH_SIZE = 64
 BETA1 = 0.5
 BETA2 = 0.9
+CHECKPOINTS = 10000
 D_UPDATES_PER_G_UPDATES = 1
 GEN_LENGTH = 100
+ITERATIONS = 200000
 LAMBDA = 10
 LEARN_RATE = 0.0001
 LOSS_MAX = 100
 MODES = 2
 NETWORKS = None
 OUTPUT_DIR = None
-RUNS = 10
+STEPS = 100
 WAV_LENGTH = None
 Z_LENGTH = 100
 
@@ -54,6 +56,7 @@ def _train(folders, runName, model_dir):
     audio_loader = _loadAudioModule()
     training_data_path = "Data/"
     audio_loader.prepareData(training_data_path, folders)
+    gen_path = model_dir + 'Checkpoint_Samples/'
 
     # Create generated data
     Z = _makeIterators(
@@ -66,9 +69,7 @@ def _train(folders, runName, model_dir):
     )
 
     # Prepare real data
-    X, X_y = audio_loader.loadAllData()
-    print(len(X))
-    print(len(X_y))
+    X, X_y = audio_loader.loadTrainData()
     X = _makeIterators(
         tf.reshape(
             tf.convert_to_tensor(np.vstack(X), dtype=tf.float32),
@@ -146,14 +147,11 @@ def _train(folders, runName, model_dir):
     sess = tf.train.MonitoredTrainingSession(
         checkpoint_dir=model_dir,
         config=tf.ConfigProto(log_device_placement=False),
-        save_checkpoint_steps=10000,
-        save_summaries_steps=100
+        save_checkpoint_steps=CHECKPOINTS,
+        save_summaries_steps=STEPS
     )
 
-    for iteration in range(RUNS):
-
-        if iteration % 1000 == 0:
-            print('Completed Iteration: ' + str(iteration))
+    for iteration in range(ITERATIONS):
 
         # Run Discriminator
         for D_update in range(D_UPDATES_PER_G_UPDATES):
@@ -163,10 +161,15 @@ def _train(folders, runName, model_dir):
                 break
 
         # Run Generator
-        _, run_G_loss = sess.run([G_train_op, G_loss])
+        _, run_G_loss, G_data = sess.run([G_train_op, G_loss, G])
         if abs(run_G_loss) > LOSS_MAX:
             print("Ending: G Loss = " + str(run_G_loss))
             break
+
+        if iteration % 1000 == 0:
+            fileName = 'Run_' + str(iteration)
+            _saveGenerated(gen_path, G_data, fileName)
+            print('Completed Iteration: ' + str(iteration))
 
     return
 
@@ -313,22 +316,12 @@ def _generate(runName, checkpointNum, genMode):
     Z = np.random.uniform(-1., 1., [GEN_LENGTH, 1, Z_LENGTH])
     oneHot = np.zeros((GEN_LENGTH, 1, MODES), dtype=np.float32)
     oneHot[np.arange(GEN_LENGTH), 0, genMode] = 1.0
-    # Z = tf.cast(Z, tf.float32)
 
     # Enter into graph
     Z_input = graph.get_tensor_by_name('Z_Input:0')
     Z_labels = graph.get_tensor_by_name('Z_Labels:0')
     G = graph.get_tensor_by_name('Generator:0')
     samples = sess.run(G, {Z_input: Z, Z_labels: oneHot})
-
-    # Write samples to file
-    _saveGenerated(samples, runName, genMode)
-
-    return
-
-
-def _saveGenerated(samples, runName, genMode):
-    """ Saves the generated samples to folder as .wav """
 
     # Create the output path
     path = os.path.abspath(
@@ -341,6 +334,18 @@ def _saveGenerated(samples, runName, genMode):
             'ModelRun_' + str(runName)
         )
     )
+
+    fileName = 'Mode_' + str(genMode)
+
+    # Write samples to file
+    _saveGenerated(path, samples, fileName)
+
+    return
+
+
+def _saveGenerated(path, samples, fileName):
+    """ Saves the generated samples to folder as .wav """
+
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -349,11 +354,12 @@ def _saveGenerated(samples, runName, genMode):
     for sample in samples:
         i = i + 1
         sf.write(
-            file=path + '/' + 'Mode_' + str(genMode) + '_' + str(i) + '.wav',
+            file=path + '/' + fileName + '_' + str(i) + '.wav',
             data=sample,
             samplerate=WAV_LENGTH,
             subtype='PCM_16'
         )
+
     return
 
 
