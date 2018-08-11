@@ -16,3 +16,6 @@ Experiments/Experiment-WGAN-1024/__pycache__/*
 Experiments/Experiment-CWGAN/__pycache__/*
 Experiments/Experiment-CWGAN/Data/*
 Experiments/Experiment-CWGAN/tmp/*
+Experiment/Data/*
+Experiment/__pycache__/
+Experiment/tmp/*

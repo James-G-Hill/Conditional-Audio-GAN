@@ -380,7 +380,6 @@ def _generate(runName, checkpointNum, genMode, model):
         os.path.join(
             os.path.dirname((__file__)),
             os.pardir,
-            os.pardir,
             'Generated/',
             model + '_' + str(WAV_LENGTH) + '/',
             'ModelRun_' + str(runName)
