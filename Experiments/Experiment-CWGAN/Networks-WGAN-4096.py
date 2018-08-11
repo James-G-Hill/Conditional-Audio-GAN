@@ -19,6 +19,8 @@ Z_LENGTH = 100
 def generator(z):
     """ A waveGAN generator """
 
+    z = tf.cast(z, tf.float32)
+
     # Input: [64, 100] > [64, 4096]
     densify = tf.layers.dense(
         inputs=z,
