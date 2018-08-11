@@ -34,22 +34,23 @@ def main(args):
     # Training mode
     if args.mode[0] == "train":
         # Train model
-        model_dir = _modelDirectory(args.runName[0])
+        model_dir = _modelDirectory(args.runName[0], args.model[0])
         _createGenGraph(model_dir)
-        _train(args.words, args.runName[0], model_dir)
+        _train(args.words, args.runName[0], model_dir, args.model[0])
 
     # Generator mode
     elif args.mode[0] == "gen":
         _generate(
             args.runName[0],
             args.checkpointNum[0],
-            args.genMode[0]
+            args.genMode[0],
+            args.model[0]
         )
 
     return
 
 
-def _train(folders, runName, model_dir):
+def _train(folders, runName, model_dir, model):
     """ Trains the WaveGAN model """
 
     # Prepare the data
@@ -60,9 +61,7 @@ def _train(folders, runName, model_dir):
 
     # Create generated data
     Z = _makeIterators(
-        np.random.uniform(
-            -1., 1., [BATCH_SIZE, 1, Z_LENGTH]
-        ),
+        np.random.uniform(-1., 1., [BATCH_SIZE, 1, Z_LENGTH]),
         np.random.randint(0, MODES, (BATCH_SIZE, 1)),
         BATCH_SIZE,
         Z_LENGTH
@@ -83,17 +82,25 @@ def _train(folders, runName, model_dir):
     # Prepare link to the NNs
     global NETWORKS
     NETWORKS = _loadNetworksModule(
-        'Networks-CWGAN-' + str(WAV_LENGTH) + '.py',
-        'Networks-CWGAN-' + str(WAV_LENGTH) + '.py'
+        'Networks-' + model + '-' + str(WAV_LENGTH) + '.py',
+        'Networks-' + model + '-' + str(WAV_LENGTH) + '.py'
     )
 
     # Create networks
-    with tf.variable_scope('G'):
-        G = NETWORKS.generator(Z["x"], Z["y"])
-    with tf.variable_scope('D'):
-        R, R_logits = NETWORKS.discriminator(X["x"], X["yFill"])
-    with tf.variable_scope('D', reuse=True):
-        F, F_logits = NETWORKS.discriminator(G, Z["yFill"])
+    if model == 'WGAN':
+        with tf.variable_scope('G'):
+            G = NETWORKS.generator(Z["x"], Z["y"])
+        with tf.variable_scope('D'):
+            R, R_logits = NETWORKS.discriminator(X["x"], X["yFill"])
+        with tf.variable_scope('D', reuse=True):
+            F, F_logits = NETWORKS.discriminator(G, Z["yFill"])
+    elif model == 'CWGAN':
+        with tf.variable_scope('G'):
+            G = NETWORKS.generator(Z["x"])
+        with tf.variable_scope('D'):
+            R, R_logits = NETWORKS.discriminator(X["x"])
+        with tf.variable_scope('D', reuse=True):
+            F, F_logits = NETWORKS.discriminator(G)
 
     # Create variables
     G_variables = tf.get_collection(
@@ -106,7 +113,10 @@ def _train(folders, runName, model_dir):
     )
 
     # Build loss
-    G_loss, D_loss = _loss(R_logits, F_logits)
+    if model == 'WGAN':
+        G_loss, D_loss = _base_loss(G, R, F, X["x"], Z["x"])
+    elif model == 'CWGAN':
+        G_loss, D_loss = _conditioned_loss(R_logits, F_logits)
 
     # Build optimizers
     G_opt = tf.train.AdamOptimizer(
@@ -151,7 +161,7 @@ def _train(folders, runName, model_dir):
         save_summaries_steps=STEPS
     )
 
-    for iteration in range(ITERATIONS):
+    for iteration in range(1, ITERATIONS + 1):
 
         # Run Discriminator
         for D_update in range(D_UPDATES_PER_G_UPDATES):
@@ -182,7 +192,34 @@ def _loadNetworksModule(modName, modPath):
     return mod
 
 
-def _loss(R_logits, F_logits):
+def _base_loss(G, R, F, X, Z):
+    """ Calculates the loss """
+    G_loss = -tf.reduce_mean(F)
+    D_loss = tf.reduce_mean(F) - tf.reduce_mean(R)
+    alpha = tf.random_uniform(
+        shape=[BATCH_SIZE, 1, 1],
+        minval=0.,
+        maxval=1.
+    )
+    differences = G - X
+    interpolates = X + (alpha * differences)
+    with tf.name_scope('D_interp'), tf.variable_scope('D', reuse=True):
+        D_interp = NETWORKS.discriminator(interpolates)
+    gradients = tf.gradients(D_interp, [interpolates], name='grads')[0]
+    slopes = tf.sqrt(
+        tf.reduce_sum(
+            tf.square(gradients),
+            reduction_indices=[1, 2]
+        )
+    )
+    gradient_penalty = tf.reduce_mean((slopes - 1.) ** 2.)
+    D_loss += LAMBDA * gradient_penalty
+    tf.summary.scalar('norm', tf.norm(gradients))
+    tf.summary.scalar('grad_penalty', gradient_penalty)
+    return G_loss, D_loss
+
+
+def _conditioned_loss(R_logits, F_logits):
     """ Calculates the loss """
     G_loss = -tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
@@ -206,9 +243,11 @@ def _loss(R_logits, F_logits):
     return G_loss, D_loss
 
 
-def _modelDirectory(runName):
+def _modelDirectory(runName, model):
     """ Creates / obtains the name of the model directory """
-    return 'tmp/testWaveGAN_' + str(WAV_LENGTH) + '_' + runName + '/'
+    directory = 'tmp/testWaveGAN_' + model + \
+        '_' + str(WAV_LENGTH) + '_' + runName + '/'
+    return directory
 
 
 def _makeIterators(data, labels, data_size, data_length):
@@ -251,14 +290,14 @@ def _loadAudioModule():
     return audio_loader
 
 
-def _createGenGraph(model_dir):
+def _createGenGraph(model_dir, model):
     """ Creates a copy of the generator graph """
 
     # Prepare link to the NNs
     global NETWORKS
     NETWORKS = _loadNetworksModule(
-        'Networks-CWGAN-' + str(WAV_LENGTH) + '.py',
-        'Networks-CWGAN-' + str(WAV_LENGTH) + '.py'
+        'Networks-' + model + '-' + str(WAV_LENGTH) + '.py',
+        'Networks-' + model + '-' + str(WAV_LENGTH) + '.py'
     )
 
     # Create directory
@@ -297,11 +336,11 @@ def _createGenGraph(model_dir):
     return
 
 
-def _generate(runName, checkpointNum, genMode):
+def _generate(runName, checkpointNum, genMode, model):
     """ Generates samples from the generator """
 
     # Load the graph
-    model_dir = _modelDirectory(runName)
+    model_dir = _modelDirectory(runName, model)
     tf.reset_default_graph()
     graph = tf.get_default_graph()
     sess = tf.InteractiveSession()
@@ -330,7 +369,7 @@ def _generate(runName, checkpointNum, genMode):
             os.pardir,
             os.pardir,
             'Generated/',
-            'CWGAN_' + str(WAV_LENGTH) + '/',
+            model + '_' + str(WAV_LENGTH) + '/',
             'ModelRun_' + str(runName)
         )
     )
@@ -371,6 +410,12 @@ if __name__ == "__main__":
         type=str,
         default='train',
         help="How you wish to use the model."
+    )
+    parser.add_argument(
+        '-model',
+        nargs=1,
+        type=str,
+        help="Which generator type do you want to use?"
     )
     parser.add_argument(
         '-wave',
