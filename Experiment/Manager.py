@@ -12,7 +12,6 @@ BETA1 = 0.5
 BETA2 = 0.9
 CHECKPOINTS = 10000  # 10000
 D_UPDATES_PER_G_UPDATES = 1
-GEN_LENGTH = 100
 ITERATIONS = 200000  # 200000
 LAMBDA = 10
 LEARN_RATE = 0.0001
@@ -44,8 +43,9 @@ def main(args):
         _generate(
             args.runName[0],
             args.checkpointNum[0],
-            args.genMode,
-            args.model[0]
+            args.genMode[0],
+            args.model[0],
+            args.genLength[0]
         )
 
     return
@@ -348,7 +348,7 @@ def _createGenGraph(model_dir, model):
     return
 
 
-def _generate(runName, checkpointNum, genMode, model):
+def _generate(runName, checkpointNum, genMode, model, genLength):
     """ Generates samples from the generator """
 
     # Load the graph
@@ -364,7 +364,7 @@ def _generate(runName, checkpointNum, genMode, model):
     )
 
     # Generate sounds
-    Z = np.random.uniform(-1., 1., [GEN_LENGTH, 1, Z_LENGTH])
+    Z = np.random.uniform(-1., 1., [genLength, 1, Z_LENGTH])
 
     # Get tensors
     Z_input = graph.get_tensor_by_name('Z_Input:0')
@@ -375,10 +375,10 @@ def _generate(runName, checkpointNum, genMode, model):
         samples = sess.run(G, {Z_input: Z})
     elif model == 'CWGAN':
         # Prepare labels
-        oneHot = np.zeros((GEN_LENGTH, 1, MODES), dtype=np.float32)
-        oneHot[np.arange(GEN_LENGTH), 0, genMode] = 1.0
+        oneHot = np.zeros((genLength, 1, MODES), dtype=np.float32)
+        oneHot[np.arange(genLength), 0, genMode] = 1.0
         Z_labels = graph.get_tensor_by_name('Z_Labels:0')
-        # Computex
+        # Compute
         samples = sess.run(G, {Z_input: Z, Z_labels: oneHot})
 
     # Create the output path
@@ -392,7 +392,10 @@ def _generate(runName, checkpointNum, genMode, model):
         )
     )
 
-    fileName = 'Mode_' + str(genMode)
+    if model == 'WGAN':
+        fileName = 'Random'
+    elif model == 'CWGAN':
+        fileName = 'Mode_' + str(genMode)
 
     # Write samples to file
     _saveGenerated(path, samples, fileName)
@@ -460,6 +463,13 @@ if __name__ == "__main__":
         type=int,
         default=0,
         help="The number of the mode to be generated."
+    )
+    parser.add_argument(
+        '-genLength',
+        nargs=1,
+        type=int,
+        default=100,
+        help="The count of samples you want generated."
     )
     parser.add_argument(
         '-words',
