@@ -6,34 +6,51 @@ import soundfile as sf
 import tensorflow as tf
 import types
 
+# Dimension
 ABS_INT16 = 32767.
 BATCH_SIZE = 64
-BETA1 = 0.5
-BETA2 = 0.9
-CHECKPOINTS = 10000  # 10000
-D_UPDATES_PER_G_UPDATES = 1
-ITERATIONS = 200000  # 200000
-LAMBDA = 10
-LEARN_RATE = 0.0001
-LOSS_MAX = 100
-MODES = 2
-NETWORKS = None
-OUTPUT_DIR = None
-SAMPLE_SAVE_RATE = 10000
-STEPS = 100
+MODES = None
 WAV_LENGTH = None
 Z_LENGTH = 100
+
+# Learning
+BETA1 = 0.5
+BETA2 = 0.9
+LEARN_RATE = 0.0001  # 0.0001
+
+# Loss Constants
+LAMBDA = None  # 10 for WGAN
+LOSS_MAX = 100
+
+# MinMax
+D_UPDATES_PER_G_UPDATES = 1  # 1 for WGAN
+G_UPDATES_PER_D_UPDATES = 1  # 1 for WGAN
+
+# Objects
+NETWORKS = None
+
+# Tensor Management
+CHECKPOINTS = 1000  # 10000
+ITERATIONS = 1000  # 40000
+OUTPUT_DIR = None
+SAMPLE_SAVE_RATE = 10  # 1000
+STEPS = 1  # 100
 
 
 def main(args):
     """ Runs the relevant command passed through arguments """
+
+    global LAMBDA
+    LAMBDA = args.lamb
+
+    global MODES
+    MODES = len(args.words)
 
     global WAV_LENGTH
     WAV_LENGTH = args.wave[0]
 
     # Training mode
     if args.mode[0] == "train":
-        # Train model
         model_dir = _modelDirectory(args.runName[0], args.model[0])
         _createGenGraph(model_dir, args.model[0])
         _train(args.words, args.runName[0], model_dir, args.model[0])
@@ -63,7 +80,7 @@ def _train(folders, runName, model_dir, model):
     # Create generated data
     Z = _makeIterators(
         np.random.uniform(-1., 1., [BATCH_SIZE, 1, Z_LENGTH]),
-        np.random.randint(0, MODES, (BATCH_SIZE, 1)),
+        np.random.randint(0, MODES, BATCH_SIZE),
         BATCH_SIZE,
         Z_LENGTH
     )
@@ -115,9 +132,10 @@ def _train(folders, runName, model_dir, model):
 
     # Build loss
     if model == 'WGAN':
-        G_loss, D_loss = _base_loss(G, R, F, X["x"], Z["x"])
+        G_loss, D_loss = _base_loss(G, R, F, X, Z["x"])
     elif model == 'CWGAN':
-        G_loss, D_loss = _conditioned_loss(R_logits, F_logits)
+        G_loss, D_loss = _conditioned_loss_2(G, R_logits, F_logits, X, Z["x"])
+        # G_loss, D_loss = _conditioned_loss(R_logits, F_logits)
 
     # Build optimizers
     G_opt = tf.train.AdamOptimizer(
@@ -162,6 +180,7 @@ def _train(folders, runName, model_dir, model):
         save_summaries_steps=STEPS
     )
 
+    runawayLoss = False
     print("Starting experiment . . .")
     for iteration in range(1, ITERATIONS + 1):
 
@@ -169,13 +188,24 @@ def _train(folders, runName, model_dir, model):
         for D_update in range(D_UPDATES_PER_G_UPDATES):
             _, run_D_loss = sess.run([D_train_op, D_loss])
             if abs(run_D_loss) > LOSS_MAX:
-                print("Ending: D loss = " + str(run_D_loss))
+                runawayLoss = True
+            if runawayLoss:
                 break
 
+        if runawayLoss:
+            print("Ending: D loss = " + str(run_D_loss))
+            break
+
         # Run Generator
-        _, run_G_loss, G_data = sess.run([G_train_op, G_loss, G])
-        if abs(run_G_loss) > LOSS_MAX:
-            print("Ending: G Loss = " + str(run_G_loss))
+        for G_update in range(G_UPDATES_PER_D_UPDATES):
+            _, run_G_loss, G_data = sess.run([G_train_op, G_loss, G])
+            if abs(run_G_loss) > LOSS_MAX:
+                runawayLoss = True
+            if runawayLoss:
+                break
+
+        if runawayLoss:
+            print("Ending: G loss = " + str(run_G_loss))
             break
 
         if iteration % SAMPLE_SAVE_RATE == 0:
@@ -203,8 +233,8 @@ def _base_loss(G, R, F, X, Z):
         minval=0.,
         maxval=1.
     )
-    differences = G - X
-    interpolates = X + (alpha * differences)
+    differences = G - X["x"]
+    interpolates = X["x"] + (alpha * differences)
     with tf.name_scope('D_interp'), tf.variable_scope('D', reuse=True):
         D_interp = NETWORKS.discriminator(interpolates)
     gradients = tf.gradients(D_interp, [interpolates], name='grads')[0]
@@ -223,25 +253,52 @@ def _base_loss(G, R, F, X, Z):
 
 def _conditioned_loss(R_logits, F_logits):
     """ Calculates the loss """
-    G_loss = -tf.reduce_mean(
+    G_loss = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
             logits=F_logits,
-            labels=tf.ones([BATCH_SIZE, MODES])
+            labels=tf.ones([BATCH_SIZE, 1])
         )
     )
     D_loss_real = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
             logits=R_logits,
-            labels=tf.ones([BATCH_SIZE, MODES])
+            labels=tf.ones([BATCH_SIZE, 1])
         )
     )
     D_loss_fake = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
             logits=F_logits,
-            labels=tf.zeros([BATCH_SIZE, MODES])
+            labels=tf.zeros([BATCH_SIZE, 1])
         )
     )
     D_loss = D_loss_real + D_loss_fake
+    return G_loss, D_loss
+
+
+def _conditioned_loss_2(G, R, F, X, Z):
+    """ Calculates the loss """
+    G_loss = -tf.reduce_mean(F)
+    D_loss = tf.reduce_mean(F) - tf.reduce_mean(R)
+    alpha = tf.random_uniform(
+        shape=[BATCH_SIZE, 1, 1],
+        minval=0.,
+        maxval=1.
+    )
+    differences = G - X["x"]
+    interpolates = X["x"] + (alpha * differences)
+    with tf.name_scope('D_interp'), tf.variable_scope('D', reuse=True):
+        D_interp = NETWORKS.discriminator(interpolates, X["yFill"])
+    gradients = tf.gradients(D_interp, [interpolates], name='grads')[0]
+    slopes = tf.sqrt(
+        tf.reduce_sum(
+            tf.square(gradients),
+            reduction_indices=[1, 2]
+        )
+    )
+    gradient_penalty = tf.reduce_mean((slopes - 1.) ** 2.)
+    D_loss += LAMBDA * gradient_penalty
+    tf.summary.scalar('norm', tf.norm(gradients))
+    tf.summary.scalar('grad_penalty', gradient_penalty)
     return G_loss, D_loss
 
 
@@ -253,6 +310,7 @@ def _modelDirectory(runName, model):
 
 def _makeIterators(data, labels, data_size, data_length):
     """ Creates iterators for the data """
+
     oneHot = np.zeros((data_size, 1, MODES), dtype=np.float32)
     oneHot[np.arange(data_size), 0, labels] = 1.0
     oneHotFill = oneHot * \
@@ -470,6 +528,13 @@ if __name__ == "__main__":
         type=int,
         default=100,
         help="The count of samples you want generated."
+    )
+    parser.add_argument(
+        '-lamb',
+        nargs=1,
+        type=int,
+        default=10,
+        help="The lambda to be applied to Wasserstein Loss."
     )
     parser.add_argument(
         '-words',
