@@ -19,3 +19,5 @@ Experiments/Experiment-CWGAN/tmp/*
 Experiment/Data/*
 Experiment/__pycache__/
 Experiment/tmp/*
+Generated/*
+Results/*
