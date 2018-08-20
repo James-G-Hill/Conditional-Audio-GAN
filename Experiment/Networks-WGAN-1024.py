@@ -128,7 +128,7 @@ def discriminator(features):
     # Input: [64, 1024] > [64, CLASSES]
     logits = tf.layers.dense(
         inputs=flatten,
-        units=CLASSES
+        units=1
     )
 
     return logits
