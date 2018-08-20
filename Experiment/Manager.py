@@ -31,14 +31,17 @@ NETWORKS = None
 
 # Tensor Management
 CHECKPOINTS = 1000  # 10000
-ITERATIONS = 1000  # 40000
+ITERATIONS = None  # 40000
 OUTPUT_DIR = None
-SAMPLE_SAVE_RATE = 10  # 1000
-STEPS = 1  # 100
+SAMPLE_SAVE_RATE = 100  # 1000
+STEPS = 10  # 100
 
 
 def main(args):
     """ Runs the relevant command passed through arguments """
+
+    global ITERATIONS
+    ITERATIONS = args.iterations
 
     global LAMBDA
     LAMBDA = args.lamb
@@ -47,25 +50,48 @@ def main(args):
     MODES = len(args.words)
 
     global WAV_LENGTH
-    WAV_LENGTH = args.wave[0]
+    WAV_LENGTH = args.wave
+
+    # Parameter Search
+    if args.mode[0] == 'search':
+        for lam in [1, 5, 10, 15, 20]:
+            for i in range(0, 10):
+                tf.reset_default_graph()
+                runName = args.runName[0] + '_lam' + str(lam) + '_' + str(i)
+                model_dir = _setup(runName, args.model[0])
+                print("Experiment:" + runName)
+                _train(args.words, runName, model_dir, args.model[0])
 
     # Training mode
-    if args.mode[0] == "train":
-        model_dir = _modelDirectory(args.runName[0], args.model[0])
-        _createGenGraph(model_dir, args.model[0])
+    elif args.mode[0] == "train":
+        model_dir = _setup(args.runName[0], args.model[0])
         _train(args.words, args.runName[0], model_dir, args.model[0])
+
+    # Restart Training
+    elif args.mode[0] == 'restart':
+        _restart(
+            args.runName[0],
+            args.model[0],
+            args.checkpointNum
+        )
 
     # Generator mode
     elif args.mode[0] == "gen":
         _generate(
             args.runName[0],
             args.checkpointNum[0],
-            args.genMode[0],
+            args.genMode,
             args.model[0],
-            args.genLength[0]
+            args.genLength
         )
 
     return
+
+
+def _setup(runName, model):
+    model_dir = _modelDirectory(runName, model)
+    _createGenGraph(model_dir, model)
+    return model_dir
 
 
 def _train(folders, runName, model_dir, model):
@@ -75,15 +101,9 @@ def _train(folders, runName, model_dir, model):
     audio_loader = _loadAudioModule()
     training_data_path = "Data/"
     audio_loader.prepareData(training_data_path, folders)
-    gen_path = model_dir + 'Checkpoint_Samples/'
 
     # Create generated data
-    Z = _makeIterators(
-        np.random.uniform(-1., 1., [BATCH_SIZE, 1, Z_LENGTH]),
-        np.random.randint(0, MODES, BATCH_SIZE),
-        BATCH_SIZE,
-        Z_LENGTH
-    )
+    Z_x, Z_y, Z_yFill = _makeGenerated()
 
     # Prepare real data
     X, X_y = audio_loader.loadTrainData()
@@ -107,18 +127,18 @@ def _train(folders, runName, model_dir, model):
     # Create networks
     if model == 'WGAN':
         with tf.variable_scope('G'):
-            G = NETWORKS.generator(Z["x"])
+            G = NETWORKS.generator(Z_x)
         with tf.variable_scope('D'):
             R = NETWORKS.discriminator(X["x"])
         with tf.variable_scope('D', reuse=True):
             F = NETWORKS.discriminator(G)
     elif model == 'CWGAN':
         with tf.variable_scope('G'):
-            G = NETWORKS.generator(Z["x"], Z["y"])
+            G = NETWORKS.generator(Z_x, Z_y)
         with tf.variable_scope('D'):
             R, R_logits = NETWORKS.discriminator(X["x"], X["yFill"])
         with tf.variable_scope('D', reuse=True):
-            F, F_logits = NETWORKS.discriminator(G, Z["yFill"])
+            F, F_logits = NETWORKS.discriminator(G, Z_yFill)
 
     # Create variables
     G_variables = tf.get_collection(
@@ -132,9 +152,9 @@ def _train(folders, runName, model_dir, model):
 
     # Build loss
     if model == 'WGAN':
-        G_loss, D_loss = _base_loss(G, R, F, X, Z["x"])
+        G_loss, D_loss = _base_loss(G, R, F, X, Z_x)
     elif model == 'CWGAN':
-        G_loss, D_loss = _conditioned_loss_2(G, R_logits, F_logits, X, Z["x"])
+        G_loss, D_loss = _conditioned_loss_2(G, R_logits, F_logits, X, Z_x)
         # G_loss, D_loss = _conditioned_loss(R_logits, F_logits)
 
     # Build optimizers
@@ -172,13 +192,33 @@ def _train(folders, runName, model_dir, model):
     tf.summary.scalar('G_loss', G_loss)
     tf.summary.scalar('D_loss', D_loss)
 
-    # Run session
     sess = tf.train.MonitoredTrainingSession(
         checkpoint_dir=model_dir,
         config=tf.ConfigProto(log_device_placement=False),
-        save_checkpoint_steps=CHECKPOINTS,
+        hooks=[
+            tf.train.CheckpointSaverHook(
+                checkpoint_dir=model_dir,
+                save_steps=CHECKPOINTS
+            )
+        ],
         save_summaries_steps=STEPS
     )
+
+    _runSession(
+        sess,
+        D_train_op,
+        D_loss,
+        G_train_op,
+        G_loss,
+        G,
+        model_dir
+    )
+
+    return
+
+
+def _runSession(sess, D_train_op, D_loss, G_train_op, G_loss, G, model_dir):
+    """ Runs a session """
 
     runawayLoss = False
     print("Starting experiment . . .")
@@ -210,9 +250,14 @@ def _train(folders, runName, model_dir, model):
 
         if iteration % SAMPLE_SAVE_RATE == 0:
             fileName = 'Run_' + str(iteration)
-            _saveGenerated(gen_path, G_data, fileName)
+            _saveGenerated(
+                model_dir + 'Checkpoint_Samples/',
+                G_data,
+                fileName
+            )
             print('Completed Iteration: ' + str(iteration))
 
+    print("Completed experiment.")
     return
 
 
@@ -299,6 +344,7 @@ def _conditioned_loss_2(G, R, F, X, Z):
     D_loss += LAMBDA * gradient_penalty
     tf.summary.scalar('norm', tf.norm(gradients))
     tf.summary.scalar('grad_penalty', gradient_penalty)
+
     return G_loss, D_loss
 
 
@@ -306,6 +352,36 @@ def _modelDirectory(runName, model):
     """ Creates / obtains the name of the model directory """
     directory = 'tmp/' + model + '_' + str(WAV_LENGTH) + '_' + runName + '/'
     return directory
+
+
+def _makeGenerated():
+    """ Makes the tensor generators """
+
+    Z_x = tf.random_uniform(
+        [BATCH_SIZE, 1, Z_LENGTH],
+        -1.,
+        1.,
+        dtype=tf.float32
+    )
+    one_hot = tf.random_uniform(
+        [BATCH_SIZE, 1, 1],
+        0,
+        MODES,
+        dtype=tf.int32
+    )
+    Z_y = tf.one_hot(
+        indices=one_hot[:, 0],
+        depth=MODES
+    )
+    Z_yFill = tf.multiply(
+        x=Z_y,
+        y=tf.ones(
+            [BATCH_SIZE, WAV_LENGTH, MODES],
+            dtype=tf.float32
+        )
+    )
+
+    return Z_x, Z_y, Z_yFill
 
 
 def _makeIterators(data, labels, data_size, data_length):
@@ -406,6 +482,33 @@ def _createGenGraph(model_dir, model):
     return
 
 
+def _restart(runName, model, ckptNum):
+    """ Restarts the training of the model """
+
+    model_dir = _modelDirectory(runName, model)
+
+    tf.reset_default_graph()
+    sess = tf.Session()
+    ckpt = tf.train.latest_checkpoint(model_dir)
+    saver = tf.train.import_meta_graph(
+        model_dir + 'model.ckpt-' + str(ckptNum) + '.meta'
+    )
+    saver.restore(sess, ckpt)
+    graph = tf.get_default_graph()
+
+    _runSession(
+        sess,
+        graph.get_operation_by_name('Adam_1'),
+        graph.get_tensor_by_name('add_1:0'),
+        graph.get_operation_by_name('Adam'),
+        graph.get_tensor_by_name('Neg:0'),
+        graph.get_collection('G'),
+        model_dir
+    )
+
+    return
+
+
 def _generate(runName, checkpointNum, genMode, model, genLength):
     """ Generates samples from the generator """
 
@@ -498,7 +601,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '-wave',
-        nargs=1,
         type=int,
         default=1024,
         help="The wave length of files for this experiment"
@@ -511,30 +613,32 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '-checkpointNum',
-        nargs=1,
         type=int,
         help="The checkpoint number you wish to examine."
     )
     parser.add_argument(
         '-genMode',
-        nargs=1,
         type=int,
         default=0,
         help="The number of the mode to be generated."
     )
     parser.add_argument(
         '-genLength',
-        nargs=1,
         type=int,
         default=100,
         help="The count of samples you want generated."
     )
     parser.add_argument(
         '-lamb',
-        nargs=1,
         type=int,
         default=10,
         help="The lambda to be applied to Wasserstein Loss."
+    )
+    parser.add_argument(
+        '-iterations',
+        type=int,
+        default=1000,
+        help="The number of times you want the model to run."
     )
     parser.add_argument(
         '-words',
