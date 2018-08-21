@@ -125,7 +125,7 @@ def discriminator(features):
         shape=[BATCH_SIZE, WAV_LENGTH]
     )
 
-    # Input: [64, 1024] > [64, CLASSES]
+    # Input: [64, 1024] > [64, 1]
     logits = tf.layers.dense(
         inputs=flatten,
         units=1
