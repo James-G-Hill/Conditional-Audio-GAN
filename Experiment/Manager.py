@@ -2,6 +2,7 @@ import argparse as ag
 import importlib.machinery as im
 import os
 import numpy as np
+import shutil
 import soundfile as sf
 import tensorflow as tf
 import types
@@ -54,7 +55,8 @@ def main(args):
 
     # Parameter Search
     if args.mode[0] == 'search':
-        for lam in [1, 5, 10, 15, 20]:
+        for lam in [4, 7, 10]:
+            LAMBDA = lam
             for i in range(0, 10):
                 tf.reset_default_graph()
                 runName = args.runName[0] + '_lam' + str(lam) + '_' + str(i)
@@ -68,7 +70,7 @@ def main(args):
         _train(args.words, args.runName[0], model_dir, args.model[0])
 
     # Restart Training
-    elif args.mode[0] == 'restart':
+    elif args.mode[0] == "restart":
         _restart(
             args.runName[0],
             args.model[0],
@@ -256,6 +258,10 @@ def _runSession(sess, D_train_op, D_loss, G_train_op, G_loss, G, model_dir):
                 fileName
             )
             print('Completed Iteration: ' + str(iteration))
+
+    sess.close()
+    if runawayLoss:
+        shutil.rmtree(model_dir)
 
     print("Completed experiment.")
     return
@@ -505,6 +511,8 @@ def _restart(runName, model, ckptNum):
         graph.get_collection('G'),
         model_dir
     )
+
+    sess.close()
 
     return
 
