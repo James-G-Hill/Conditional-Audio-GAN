@@ -20,48 +20,46 @@ def generator(x, y):
     """ A waveGAN generator """
 
     x = tf.cast(x, tf.float32)
-    print(x)
     y = tf.cast(y, tf.float32)
-    print(y)
-    # concat = tf.concat(values=[x, y], axis=2)
+    concat = tf.concat(values=[x, y], axis=2)
 
-    # Input: [64, 100 + MODES] > [64, 1024]
+    # Input: [64, 100] > [64, 1022]
     densify = tf.layers.dense(
-        inputs=x,
-        units=WAV_LENGTH - CLASSES,
+        inputs=concat,
+        units=WAV_LENGTH,  # - CLASSES,
         name="Z-Input"
     )
 
-    print(densify)
+    # print(densify)
 
-    concat = tf.concat(values=[densify, y], axis=2)
-    # Input: [64, 1024] > [64, 1, 16, 64]
-    # shape = tf.reshape(
-    #     tensor=densify,
-    #     shape=[BATCH_SIZE, 1, MODEL_SIZE, MODEL_SIZE * 4]
-    # )
+    # concat = tf.concat(values=[densify, y], axis=2)
+    # Input: [64, 1024] > [64, 16, 64]
+    shape = tf.reshape(
+        tensor=densify,
+        shape=[BATCH_SIZE, MODEL_SIZE, MODEL_SIZE * 4]
+    )
 
     # print(shape)
 
-    print(concat)
+    # print(concat)
 
     # Input: [64, 1, 1024] > [64, 16, 64]
-    trans_conv_0 = tf.layers.conv2d_transpose(
-        inputs=tf.expand_dims(concat, axis=1),
-        filters=MODEL_SIZE * 4,
-        kernel_size=(1, KERNEL_SIZE),
-        strides=(1, STRIDE),
-        padding='SAME',
-        name="TransConvolution0"
-    )[:, 0]
+    # trans_conv_0 = tf.layers.conv2d_transpose(
+    #     inputs=tf.expand_dims(concat, axis=1),
+    #     filters=MODEL_SIZE * 4,
+    #     kernel_size=(1, KERNEL_SIZE),
+    #     strides=(1, STRIDE),
+    #     padding='SAME',
+    #     name="TransConvolution0"
+    # )[:, 0]
 
-    print(trans_conv_0)
+    # print(trans_conv_0)
 
-    relu1 = tf.nn.relu(trans_conv_0)
+    # relu1 = tf.nn.relu(trans_conv_0)
 
     # Input: [64, 16, 64] > [64, 64, 32]
     trans_conv_1 = tf.layers.conv2d_transpose(
-        inputs=tf.expand_dims(relu1, axis=1),
+        inputs=tf.expand_dims(shape, axis=1),
         filters=MODEL_SIZE * 2,
         kernel_size=(1, KERNEL_SIZE),
         strides=(1, STRIDE),
@@ -69,7 +67,7 @@ def generator(x, y):
         name="TransConvolution1"
     )[:, 0]
 
-    print(trans_conv_1)
+    # print(trans_conv_1)
 
     relu2 = tf.nn.relu(trans_conv_1)
 
@@ -83,7 +81,7 @@ def generator(x, y):
         name="TransConvolution2"
     )[:, 0]
 
-    print(trans_conv_2)
+    # print(trans_conv_2)
 
     relu3 = tf.nn.relu(trans_conv_2)
 
@@ -92,12 +90,12 @@ def generator(x, y):
         inputs=tf.expand_dims(relu3, axis=1),
         filters=CHANNELS,
         kernel_size=(1, KERNEL_SIZE),
-        strides=(1, STRIDE * 4),
+        strides=(1, STRIDE),
         padding='SAME',
         name="TransConvolution3"
     )[:, 0]
 
-    print(trans_conv_3)
+    # print(trans_conv_3)
 
     # Input: [64, 1024, 1]
     tanh = tf.tanh(
@@ -105,7 +103,7 @@ def generator(x, y):
         name="GeneratedSamples"
     )
 
-    print(tanh)
+    # print(tanh)
 
     return tanh
 
@@ -115,7 +113,7 @@ def discriminator(x, y):
 
     concat = tf.concat(values=[x, y], axis=2)
 
-    print(concat)
+    # print(concat)
 
     # Input: [64, 1024, 3] > [64, 256, 16]
     convolution1 = tf.layers.conv1d(
@@ -128,7 +126,7 @@ def discriminator(x, y):
         activation=tf.nn.leaky_relu
     )
 
-    print(convolution1)
+    # print(convolution1)
 
     convolution1 = _phaseShuffle(convolution1)
 
@@ -143,7 +141,7 @@ def discriminator(x, y):
         activation=tf.nn.leaky_relu
     )
 
-    print(convolution2)
+    # print(convolution2)
 
     convolution2 = _phaseShuffle(convolution2)
 
@@ -158,7 +156,7 @@ def discriminator(x, y):
         activation=tf.nn.leaky_relu
     )
 
-    print(convolution3)
+    # print(convolution3)
 
     # Input: [64, 16, 256] > [64, 1, 1024]
     # convolution4 = tf.layers.conv1d(
@@ -179,7 +177,7 @@ def discriminator(x, y):
         shape=[BATCH_SIZE, WAV_LENGTH]
     )
 
-    print(flatten)
+    # print(flatten)
 
     # Input: [64, 1024] > [64, 1]
     logits = tf.layers.dense(
@@ -187,11 +185,11 @@ def discriminator(x, y):
         units=1
     )
 
-    print(logits)
+    # print(logits)
 
     output = tf.nn.sigmoid(logits)
 
-    print(output)
+    # print(output)
 
     return output, logits
 
