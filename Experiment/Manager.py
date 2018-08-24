@@ -23,6 +23,9 @@ LEARN_RATE = 0.0001  # 0.0001
 LAMBDA = None  # 10 for WGAN
 LOSS_MAX = 100
 
+# Messages
+TRAIN_COMPLETE = False
+
 # MinMax
 D_UPDATES_PER_G_UPDATES = 1  # 1 for WGAN
 G_UPDATES_PER_D_UPDATES = 1  # 1 for WGAN
@@ -31,11 +34,11 @@ G_UPDATES_PER_D_UPDATES = 1  # 1 for WGAN
 NETWORKS = None
 
 # Tensor Management
-CHECKPOINTS = 1000  # 10000
+CHECKPOINTS = 5000  # 10000
 ITERATIONS = None  # 40000
 OUTPUT_DIR = None
-SAMPLE_SAVE_RATE = 100  # 1000
-STEPS = 10  # 100
+SAMPLE_SAVE_RATE = 1000  # 1000
+STEPS = 100  # 100
 
 
 def main(args):
@@ -53,9 +56,12 @@ def main(args):
     global WAV_LENGTH
     WAV_LENGTH = args.wave
 
+    global D_UPDATES_PER_G_UPDATES
+    D_UPDATES_PER_G_UPDATES = args.D_updates
+
     # Parameter Search
     if args.mode[0] == 'search':
-        for lam in [4, 7, 10]:
+        for lam in [1000]:
             LAMBDA = lam
             for i in range(0, 10):
                 tf.reset_default_graph()
@@ -63,6 +69,15 @@ def main(args):
                 model_dir = _setup(runName, args.model[0])
                 print("Experiment:" + runName)
                 _train(args.words, runName, model_dir, args.model[0])
+
+    # Train to complete
+    elif args.mode[0] == "complete":
+        global TRAIN_COMPLETE
+        TRAIN_COMPLETE = False
+        model_dir = _setup(args.runName[0], args.model[0])
+        while not TRAIN_COMPLETE:
+            tf.reset_default_graph()
+            _train(args.words, args.runName[0], model_dir, args.model[0])
 
     # Training mode
     elif args.mode[0] == "train":
@@ -262,6 +277,9 @@ def _runSession(sess, D_train_op, D_loss, G_train_op, G_loss, G, model_dir):
     sess.close()
     if runawayLoss:
         shutil.rmtree(model_dir)
+    elif not runawayLoss:
+        global TRAIN_COMPLETE
+        TRAIN_COMPLETE = True
 
     print("Completed experiment.")
     return
@@ -647,6 +665,12 @@ if __name__ == "__main__":
         type=int,
         default=1000,
         help="The number of times you want the model to run."
+    )
+    parser.add_argument(
+        '-D_updates',
+        type=int,
+        default=1,
+        help="The number of discriminator updates to generator."
     )
     parser.add_argument(
         '-words',
