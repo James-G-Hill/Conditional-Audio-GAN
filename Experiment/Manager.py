@@ -38,7 +38,7 @@ NETWORKS = None
 CHECKPOINTS = 5000  # 10000
 ITERATIONS = None  # 40000
 OUTPUT_DIR = None
-SAMPLE_SAVE_RATE = 1000  # 1000
+SAMPLE_SAVE_RATE = 100  # 1000
 STEPS = 100  # 100
 
 
@@ -123,7 +123,6 @@ def _train(folders, runName, model_dir, model):
 
     # Create generated data
     Z_x, Z_y, Z_yFill = _makeGenerated()
-    print('Z_y: ' + str(Z_y))
 
     # Prepare real data
     X, X_y = audio_loader.loadTrainData()
@@ -152,6 +151,7 @@ def _train(folders, runName, model_dir, model):
             R = NETWORKS.discriminator(X["x"])
         with tf.variable_scope('D', reuse=True):
             F = NETWORKS.discriminator(G)
+
     elif model == 'CWGAN':
         with tf.variable_scope('G'):
             G = NETWORKS.generator(Z_x, Z_y)
@@ -174,7 +174,7 @@ def _train(folders, runName, model_dir, model):
     if model == 'WGAN':
         G_loss, D_loss = _wasser_loss(G, R, F, X)
     elif model == 'CWGAN':
-        G_loss, D_loss = _conditioned_wasser_loss(G, R, F, X)
+        G_loss, D_loss = _conditioned_wasser_loss_2(G, R, F, X)
 
     # Build optimizers
     G_opt = tf.train.AdamOptimizer(
@@ -390,6 +390,42 @@ def _conditioned_wasser_loss(G, R, F, X):
 
     # Discriminator loss
     D_loss += LAMBDA * gradient_penalty
+
+    # Summaries
+    tf.summary.scalar('norm', tf.norm(gradients))
+    tf.summary.scalar('grad_penalty', gradient_penalty)
+
+    return G_loss, D_loss
+
+
+def _conditioned_wasser_loss_2(G, R, F, X):
+    """ Calculates the loss """
+
+    # Cost functions
+    G_loss = tf.reduce_mean(F)
+    D_loss = tf.reduce_mean(R) - tf.reduce_mean(F)
+
+    alpha = tf.random_uniform(
+        shape=[BATCH_SIZE, 1, 1],
+        minval=0.,
+        maxval=1.
+    )
+    x_hat = X["x"] * alpha + (1 - alpha) * G
+    with tf.name_scope('D_interp'), tf.variable_scope('D', reuse=True):
+        D_interp = NETWORKS.discriminator(x_hat, X["yFill"])
+
+    # Gradient penalty
+    gradients = tf.gradients(D_interp, x_hat, name='grads')[0]
+    slopes = tf.sqrt(
+        tf.reduce_sum(
+            tf.square(gradients),
+            reduction_indices=[1]  # , 2]
+        )
+    )
+    gradient_penalty = LAMBDA * tf.reduce_mean((slopes - 1.) ** 2.)
+
+    # Discriminator loss
+    D_loss += gradient_penalty
 
     # Summaries
     tf.summary.scalar('norm', tf.norm(gradients))
