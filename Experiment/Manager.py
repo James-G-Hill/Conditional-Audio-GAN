@@ -58,7 +58,9 @@ def main(args):
     WAV_LENGTH = args.wave
 
     global D_UPDATES_PER_G_UPDATES
+    global G_UPDATES_PER_D_UPDATES
     D_UPDATES_PER_G_UPDATES = args.D_updates
+    G_UPDATES_PER_D_UPDATES = args.G_updates
 
     # Parameter Search
     if args.mode[0] == 'search':
@@ -740,6 +742,12 @@ if __name__ == "__main__":
         type=int,
         default=1,
         help="The number of discriminator updates to generator."
+    )
+    parser.add_argument(
+        '-G_updates',
+        type=int,
+        default=1,
+        help="The number of generator updates to discriminator ."
     )
     parser.add_argument(
         '-words',
