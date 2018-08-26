@@ -10,6 +10,7 @@ import types
 # Dimension
 ABS_INT16 = 32767.
 BATCH_SIZE = 64
+MODEL_SIZE = 16  # Matches the model size inside the NNs
 MODES = None
 WAV_LENGTH = None
 Z_LENGTH = 100
@@ -61,11 +62,12 @@ def main(args):
 
     # Parameter Search
     if args.mode[0] == 'search':
-        for lam in [1000]:
-            LAMBDA = lam
+        for param in [1, 5]:
+            D_UPDATES_PER_G_UPDATES = param
             for i in range(0, 10):
                 tf.reset_default_graph()
-                runName = args.runName[0] + '_lam' + str(lam) + '_' + str(i)
+                runName = args.runName[0] + '_param' + \
+                    str(param) + '_' + str(i)
                 model_dir = _setup(runName, args.model[0])
                 print("Experiment:" + runName)
                 _train(args.words, runName, model_dir, args.model[0])
@@ -107,7 +109,7 @@ def main(args):
 
 def _setup(runName, model):
     model_dir = _modelDirectory(runName, model)
-    _createGenGraph(model_dir, model)
+    # _createGenGraph(model_dir, model)
     return model_dir
 
 
@@ -121,6 +123,7 @@ def _train(folders, runName, model_dir, model):
 
     # Create generated data
     Z_x, Z_y, Z_yFill = _makeGenerated()
+    print('Z_y: ' + str(Z_y))
 
     # Prepare real data
     X, X_y = audio_loader.loadTrainData()
@@ -153,9 +156,9 @@ def _train(folders, runName, model_dir, model):
         with tf.variable_scope('G'):
             G = NETWORKS.generator(Z_x, Z_y)
         with tf.variable_scope('D'):
-            R, R_logits = NETWORKS.discriminator(X["x"], X["yFill"])
+            R = NETWORKS.discriminator(X["x"], X["yFill"])
         with tf.variable_scope('D', reuse=True):
-            F, F_logits = NETWORKS.discriminator(G, Z_yFill)
+            F = NETWORKS.discriminator(G, Z_yFill)
 
     # Create variables
     G_variables = tf.get_collection(
@@ -169,10 +172,9 @@ def _train(folders, runName, model_dir, model):
 
     # Build loss
     if model == 'WGAN':
-        G_loss, D_loss = _base_loss(G, R, F, X, Z_x)
+        G_loss, D_loss = _wasser_loss(G, R, F, X)
     elif model == 'CWGAN':
-        G_loss, D_loss = _conditioned_loss_2(G, R_logits, F_logits, X, Z_x)
-        # G_loss, D_loss = _conditioned_loss(R_logits, F_logits)
+        G_loss, D_loss = _conditioned_wasser_loss(G, R, F, X)
 
     # Build optimizers
     G_opt = tf.train.AdamOptimizer(
@@ -293,41 +295,18 @@ def _loadNetworksModule(modName, modPath):
     return mod
 
 
-def _base_loss(G, R, F, X, Z):
+def _vanilla_loss(R_logits, F_logits):
     """ Calculates the loss """
-    G_loss = -tf.reduce_mean(F)
-    D_loss = tf.reduce_mean(F) - tf.reduce_mean(R)
-    alpha = tf.random_uniform(
-        shape=[BATCH_SIZE, 1, 1],
-        minval=0.,
-        maxval=1.
-    )
-    differences = G - X["x"]
-    interpolates = X["x"] + (alpha * differences)
-    with tf.name_scope('D_interp'), tf.variable_scope('D', reuse=True):
-        D_interp = NETWORKS.discriminator(interpolates)
-    gradients = tf.gradients(D_interp, [interpolates], name='grads')[0]
-    slopes = tf.sqrt(
-        tf.reduce_sum(
-            tf.square(gradients),
-            reduction_indices=[1, 2]
-        )
-    )
-    gradient_penalty = tf.reduce_mean((slopes - 1.) ** 2.)
-    D_loss += LAMBDA * gradient_penalty
-    tf.summary.scalar('norm', tf.norm(gradients))
-    tf.summary.scalar('grad_penalty', gradient_penalty)
-    return G_loss, D_loss
 
-
-def _conditioned_loss(R_logits, F_logits):
-    """ Calculates the loss """
+    # Generator loss
     G_loss = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
             logits=F_logits,
             labels=tf.ones([BATCH_SIZE, 1])
         )
     )
+
+    # Discriminator Loss
     D_loss_real = tf.reduce_mean(
         tf.nn.sigmoid_cross_entropy_with_logits(
             logits=R_logits,
@@ -341,13 +320,54 @@ def _conditioned_loss(R_logits, F_logits):
         )
     )
     D_loss = D_loss_real + D_loss_fake
+
     return G_loss, D_loss
 
 
-def _conditioned_loss_2(G, R, F, X, Z):
+def _wasser_loss(G, R, F, X):
     """ Calculates the loss """
+
+    # Cost functions
     G_loss = -tf.reduce_mean(F)
     D_loss = tf.reduce_mean(F) - tf.reduce_mean(R)
+
+    alpha = tf.random_uniform(
+        shape=[BATCH_SIZE, 1, 1],
+        minval=0.,
+        maxval=1.
+    )
+    differences = G - X["x"]
+    interpolates = X["x"] + (alpha * differences)
+    with tf.name_scope('D_interp'), tf.variable_scope('D', reuse=True):
+        D_interp = NETWORKS.discriminator(interpolates)
+
+    # Gradient penalty
+    gradients = tf.gradients(D_interp, [interpolates], name='grads')[0]
+    slopes = tf.sqrt(
+        tf.reduce_sum(
+            tf.square(gradients),
+            reduction_indices=[1, 2]
+        )
+    )
+    gradient_penalty = tf.reduce_mean((slopes - 1.) ** 2.)
+
+    # Discriminator loss
+    D_loss += LAMBDA * gradient_penalty
+
+    # Summaries
+    tf.summary.scalar('norm', tf.norm(gradients))
+    tf.summary.scalar('grad_penalty', gradient_penalty)
+
+    return G_loss, D_loss
+
+
+def _conditioned_wasser_loss(G, R, F, X):
+    """ Calculates the loss """
+
+    # Cost functions
+    G_loss = -tf.reduce_mean(F)
+    D_loss = tf.reduce_mean(F) - tf.reduce_mean(R)
+
     alpha = tf.random_uniform(
         shape=[BATCH_SIZE, 1, 1],
         minval=0.,
@@ -357,6 +377,8 @@ def _conditioned_loss_2(G, R, F, X, Z):
     interpolates = X["x"] + (alpha * differences)
     with tf.name_scope('D_interp'), tf.variable_scope('D', reuse=True):
         D_interp = NETWORKS.discriminator(interpolates, X["yFill"])
+
+    # Gradient penalty
     gradients = tf.gradients(D_interp, [interpolates], name='grads')[0]
     slopes = tf.sqrt(
         tf.reduce_sum(
@@ -365,7 +387,11 @@ def _conditioned_loss_2(G, R, F, X, Z):
         )
     )
     gradient_penalty = tf.reduce_mean((slopes - 1.) ** 2.)
+
+    # Discriminator loss
     D_loss += LAMBDA * gradient_penalty
+
+    # Summaries
     tf.summary.scalar('norm', tf.norm(gradients))
     tf.summary.scalar('grad_penalty', gradient_penalty)
 
@@ -393,12 +419,19 @@ def _makeGenerated():
         MODES,
         dtype=tf.int32
     )
-    Z_y = tf.one_hot(
+    Z_one_hot = tf.one_hot(
         indices=one_hot[:, 0],
         depth=MODES
     )
+    Z_y = tf.multiply(
+        x=Z_one_hot,
+        y=tf.ones(
+            [BATCH_SIZE, MODEL_SIZE, MODES],
+            dtype=tf.float32
+        )
+    )
     Z_yFill = tf.multiply(
-        x=Z_y,
+        x=Z_one_hot,
         y=tf.ones(
             [BATCH_SIZE, WAV_LENGTH, MODES],
             dtype=tf.float32
