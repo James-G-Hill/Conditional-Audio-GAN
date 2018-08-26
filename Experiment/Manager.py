@@ -153,7 +153,6 @@ def _train(folders, runName, model_dir, model):
             R = NETWORKS.discriminator(X["x"])
         with tf.variable_scope('D', reuse=True):
             F = NETWORKS.discriminator(G)
-
     elif model == 'CWGAN':
         with tf.variable_scope('G'):
             G = NETWORKS.generator(Z_x, Z_y)
@@ -213,6 +212,7 @@ def _train(folders, runName, model_dir, model):
     tf.summary.scalar('G_loss', G_loss)
     tf.summary.scalar('D_loss', D_loss)
 
+    # Create a session
     sess = tf.train.MonitoredTrainingSession(
         checkpoint_dir=model_dir,
         config=tf.ConfigProto(log_device_placement=False),
@@ -225,6 +225,7 @@ def _train(folders, runName, model_dir, model):
         save_summaries_steps=STEPS
     )
 
+    # Run the session
     _runSession(
         sess,
         D_train_op,
@@ -243,6 +244,8 @@ def _runSession(sess, D_train_op, D_loss, G_train_op, G_loss, G, model_dir):
 
     runawayLoss = False
     print("Starting experiment . . .")
+
+    # Update model ITERATIONS number of times
     for iteration in range(1, ITERATIONS + 1):
 
         # Run Discriminator
@@ -253,6 +256,7 @@ def _runSession(sess, D_train_op, D_loss, G_train_op, G_loss, G, model_dir):
             if runawayLoss:
                 break
 
+        # Stop if the Generator loss starts to accelerate
         if runawayLoss:
             print("Ending: D loss = " + str(run_D_loss))
             break
@@ -265,10 +269,12 @@ def _runSession(sess, D_train_op, D_loss, G_train_op, G_loss, G, model_dir):
             if runawayLoss:
                 break
 
+        # Stop if the Generator loss starts to accelerate
         if runawayLoss:
             print("Ending: G loss = " + str(run_G_loss))
             break
 
+        # Save samples every SAMPLE_SAVE_RATE steps
         if iteration % SAMPLE_SAVE_RATE == 0:
             fileName = 'Run_' + str(iteration)
             _saveGenerated(
@@ -421,7 +427,7 @@ def _conditioned_wasser_loss_2(G, R, F, X):
     slopes = tf.sqrt(
         tf.reduce_sum(
             tf.square(gradients),
-            reduction_indices=[1]  # , 2]
+            axis=[1]  # , 2]
         )
     )
     gradient_penalty = LAMBDA * tf.reduce_mean((slopes - 1.) ** 2.)
