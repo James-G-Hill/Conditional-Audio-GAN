@@ -106,7 +106,7 @@ def discriminator(features):
 
     convolution1 = _phaseShuffle(convolution1)
 
-    # Input: [64, 1024, 32] > [64, 258, 64]
+    # Input: [64, 1024, 32] > [64, 256, 64]
     convolution2 = tf.layers.conv1d(
         inputs=convolution1,
         filters=MODEL_SIZE * 2,
@@ -119,7 +119,7 @@ def discriminator(features):
 
     convolution2 = _phaseShuffle(convolution2)
 
-    # Input: [64, 258, 64] > [64, 64, 128]
+    # Input: [64, 256, 64] > [64, 64, 128]
     convolution3 = tf.layers.conv1d(
         inputs=convolution2,
         filters=MODEL_SIZE * 4,
@@ -152,7 +152,7 @@ def discriminator(features):
     # Input: [64, 4096] > [64, 1]
     logits = tf.layers.dense(
         inputs=flatten,
-        units=CLASSES
+        units=1
     )
 
     return logits
