@@ -28,7 +28,7 @@ LOSS_MAX = 100
 TRAIN_COMPLETE = False
 
 # MinMax
-D_UPDATES_PER_G_UPDATES = 1  # 1 for WGAN
+D_UPDATES_PER_G_UPDATES = 5  # 1 for WGAN
 G_UPDATES_PER_D_UPDATES = 1  # 1 for WGAN
 
 # Objects
@@ -38,7 +38,7 @@ NETWORKS = None
 CHECKPOINTS = 5000  # 10000
 ITERATIONS = None  # 40000
 OUTPUT_DIR = None
-SAMPLE_SAVE_RATE = 100  # 1000
+SAMPLE_SAVE_RATE = 1000  # 1000
 STEPS = 100  # 100
 
 
@@ -78,9 +78,9 @@ def main(args):
     elif args.mode[0] == "complete":
         global TRAIN_COMPLETE
         TRAIN_COMPLETE = False
-        model_dir = _setup(args.runName[0], args.model[0])
         while not TRAIN_COMPLETE:
             tf.reset_default_graph()
+            model_dir = _setup(args.runName[0], args.model[0])
             _train(args.words, args.runName[0], model_dir, args.model[0])
 
     # Training mode
@@ -100,7 +100,7 @@ def main(args):
     elif args.mode[0] == "gen":
         _generate(
             args.runName[0],
-            args.checkpointNum[0],
+            args.checkpointNum,
             args.genMode,
             args.model[0],
             args.genLength
@@ -111,7 +111,7 @@ def main(args):
 
 def _setup(runName, model):
     model_dir = _modelDirectory(runName, model)
-    # _createGenGraph(model_dir, model)
+    _createGenGraph(model_dir, model)
     return model_dir
 
 
@@ -204,6 +204,19 @@ def _train(folders, runName, model_dir, model):
     Z_rms = tf.sqrt(tf.reduce_mean(tf.square(G[:, :, 0]), axis=1))
     X_rms = tf.sqrt(tf.reduce_mean(tf.square(X["x"][:, :, 0]), axis=1))
 
+    # Print hyperparameter summary
+    with open(model_dir + 'hyperparameters.txt', 'w') as f:
+        f.write('Batch Size  : ' + str(BATCH_SIZE) + '\n')
+        f.write('Checkpoints : ' + str(CHECKPOINTS) + '\n')
+        f.write('D Updates   : ' + str(D_UPDATES_PER_G_UPDATES) + '\n')
+        f.write('G Updates   : ' + str(G_UPDATES_PER_D_UPDATES) + '\n')
+        f.write('Iterations  : ' + str(ITERATIONS) + '\n')
+        f.write('Lambda      : ' + str(LAMBDA) + '\n')
+        f.write('Model Size  : ' + str(MODEL_SIZE) + '\n')
+        f.write('Model Type  : ' + model + '\n')
+        f.write('Modes       : ' + str(MODES) + '\n')
+        f.write('Wave length : ' + str(WAV_LENGTH) + '\n')
+
     # Summary
     tf.summary.audio('X', X["x"], WAV_LENGTH)
     tf.summary.audio('G', G, WAV_LENGTH)
@@ -216,12 +229,7 @@ def _train(folders, runName, model_dir, model):
     sess = tf.train.MonitoredTrainingSession(
         checkpoint_dir=model_dir,
         config=tf.ConfigProto(log_device_placement=False),
-        hooks=[
-            tf.train.CheckpointSaverHook(
-                checkpoint_dir=model_dir,
-                save_steps=CHECKPOINTS
-            )
-        ],
+        save_checkpoint_steps=CHECKPOINTS,
         save_summaries_steps=STEPS
     )
 
@@ -297,9 +305,11 @@ def _runSession(sess, D_train_op, D_loss, G_train_op, G_loss, G, model_dir):
 
 def _loadNetworksModule(modName, modPath):
     """ Loads the module containing the relevant networks """
+
     loader = im.SourceFileLoader(modName, modPath)
     mod = types.ModuleType(loader.name)
     loader.exec_module(mod)
+
     return mod
 
 
