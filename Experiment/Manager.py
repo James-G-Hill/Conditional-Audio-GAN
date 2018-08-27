@@ -62,6 +62,9 @@ def main(args):
     D_UPDATES_PER_G_UPDATES = args.D_updates
     G_UPDATES_PER_D_UPDATES = args.G_updates
 
+    global MODEL_SIZE
+    MODEL_SIZE = args.modelSize
+
     # Parameter Search
     if args.mode[0] == 'search':
         for param in [1, 5]:
@@ -763,7 +766,13 @@ if __name__ == "__main__":
         '-G_updates',
         type=int,
         default=1,
-        help="The number of generator updates to discriminator ."
+        help="The number of generator updates to discriminator."
+    )
+    parser.add_argument(
+        '-modelSize',
+        type=int,
+        default=16,
+        help="The depth of the model being used."
     )
     parser.add_argument(
         '-words',
