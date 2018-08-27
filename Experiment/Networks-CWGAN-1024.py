@@ -37,7 +37,6 @@ def generator(x, y):
 
     # Input: [64, 16, 62] > [64, 16, 64]
     concat = tf.concat(values=[shape, y], axis=2)
-    print('concat: ' + str(concat))
 
     # Input: [64, 16, 64] > [64, 64, 32]
     trans_conv_1 = tf.layers.conv2d_transpose(
@@ -79,8 +78,6 @@ def generator(x, y):
         name="GeneratedSamples"
     )
 
-    print('tanh: ' + str(tanh))
-
     return tanh
 
 
@@ -88,8 +85,6 @@ def discriminator(x, y):
     """ A waveGAN discriminator """
 
     concat = tf.concat(values=[x, y], axis=2)
-
-    print('D_concat: ' + str(concat))
 
     # Input: [64, 1024, 3] > [64, 256, 16]
     convolution1 = tf.layers.conv1d(
