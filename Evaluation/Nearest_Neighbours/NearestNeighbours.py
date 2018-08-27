@@ -64,7 +64,12 @@ if __name__ == '__main__':
         help='The query set for the KNN model.'
     )
     parser.add_argument(
-        '-count',
+        '-samRate',
+        type=int,
+        help='The sample rate of the data to analyse.'
+    )
+    parser.add_argument(
+        '-fileCount',
         type=int,
         help='The amount of real data to test.'
     )
