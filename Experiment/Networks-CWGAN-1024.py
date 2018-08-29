@@ -32,7 +32,7 @@ def generator(x, y):
     # Input: [64, 992] > [64, 16, 62]
     shape = tf.reshape(
         tensor=densify,
-        shape=[BATCH_SIZE, MODEL_SIZE, (MODEL_SIZE * 4) - 2]
+        shape=[BATCH_SIZE, 16, (MODEL_SIZE * 4) - 2]
     )
 
     # Input: [64, 16, 62] > [64, 16, 64]
