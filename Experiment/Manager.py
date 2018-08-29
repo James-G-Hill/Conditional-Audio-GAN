@@ -503,7 +503,8 @@ def _createGenGraph(model_dir, model):
 
     # Create graph
     Z_Input = tf.placeholder(tf.float32, [None, 1, Z_LENGTH], name='Z_Input')
-    Z_Labels = tf.placeholder(tf.float32, [None, 1, MODES], name='Z_Labels')
+    Z_Labels = tf.placeholder(
+        tf.float32, [None, MODEL_SIZE, MODES], name='Z_Labels')
 
     if model == 'WGAN':
         with tf.variable_scope('G'):
