@@ -6,6 +6,7 @@ BATCH_SIZE = -1
 BETA1 = 0.5
 BETA2 = 0.9
 CHANNELS = 1
+CLASSES = 2
 KERNEL_SIZE = 25
 LEARN_RATE = 0.0001
 MODEL_SIZE = 32
@@ -15,25 +16,29 @@ WAV_LENGTH = 4096
 Z_LENGTH = 100
 
 
-def generator(z):
+def generator(x, y):
     """ A waveGAN generator """
 
-    z = tf.cast(z, tf.float32)
+    x = tf.cast(x, tf.float32)
+    y = tf.cast(y, tf.float32)
 
-    # Input: [64, 100] > [64, 4096]
+    # Input: [64, 100] > [64, 4032]
     densify = tf.layers.dense(
-        inputs=z,
-        units=WAV_LENGTH,
+        inputs=x,
+        units=WAV_LENGTH - (CLASSES * MODEL_SIZE),
         name="Z-Input"
     )
 
-    # Input: [64, 4096] > [64, 16, 256]
+    # Input: [64, 4032] > [64, 16, 254]
     shape = tf.reshape(
         tensor=densify,
-        shape=[BATCH_SIZE, 16, MODEL_SIZE * 8]
+        shape=[BATCH_SIZE, 16, (MODEL_SIZE * 8) - CLASSES]
     )
 
-    relu = tf.nn.relu(shape)
+    # Input: [64, 16, 254] > [64, 16, 256]
+    concat = tf.concat(values=[shape, y], axis=2)
+
+    relu = tf.nn.relu(concat)
 
     # Input: [64, 16, 256] > [64, 64, 128]
     trans_conv = tf.layers.conv2d_transpose(
@@ -90,12 +95,14 @@ def generator(z):
     return tanh
 
 
-def discriminator(features):
+def discriminator(x, y):
     """ A waveGAN discriminator """
+
+    concat = tf.concat(values=[x, y], axis=2)
 
     # Input: [64, 4096, 1] > [64, 1024, 32]
     convolution1 = tf.layers.conv1d(
-        inputs=features,
+        inputs=concat,
         filters=MODEL_SIZE,
         kernel_size=KERNEL_SIZE,
         strides=STRIDE,
