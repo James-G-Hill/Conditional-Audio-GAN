@@ -603,11 +603,10 @@ def _generate(runName, checkpointNum, genMode, model, genLength):
         samples = sess.run(G, {Z_input: Z})
     elif model == 'CWGAN':
         Z_y = np.zeros(
-            shape=(BATCH_SIZE, MODEL_SIZE, MODES),
+            shape=(genLength, MODEL_SIZE, MODES),
             dtype=np.int16
         )
         Z_y[:, :, genMode] = 1
-        print(Z_y)
         Z_labels = graph.get_tensor_by_name('Z_Labels:0')
         samples = sess.run(G, {Z_input: Z, Z_labels: Z_y})
 
