@@ -185,7 +185,7 @@ def _train(folders, runName, model_dir, model):
     if model == 'WGAN':
         G_loss, D_loss = _wasser_loss(G, R, F, X)
     elif model == 'CWGAN':
-        G_loss, D_loss = _conditioned_wasser_loss_2(G, R, F, X)
+        G_loss, D_loss = _conditioned_wasser_loss(G, R, F, X)
 
     # Build optimizers
     G_opt = tf.train.AdamOptimizer(
@@ -324,35 +324,6 @@ def _loadNetworksModule(modName, modPath):
     return mod
 
 
-def _vanilla_loss(R_logits, F_logits):
-    """ Calculates the loss """
-
-    # Generator loss
-    G_loss = tf.reduce_mean(
-        tf.nn.sigmoid_cross_entropy_with_logits(
-            logits=F_logits,
-            labels=tf.ones([BATCH_SIZE, 1])
-        )
-    )
-
-    # Discriminator Loss
-    D_loss_real = tf.reduce_mean(
-        tf.nn.sigmoid_cross_entropy_with_logits(
-            logits=R_logits,
-            labels=tf.ones([BATCH_SIZE, 1])
-        )
-    )
-    D_loss_fake = tf.reduce_mean(
-        tf.nn.sigmoid_cross_entropy_with_logits(
-            logits=F_logits,
-            labels=tf.zeros([BATCH_SIZE, 1])
-        )
-    )
-    D_loss = D_loss_real + D_loss_fake
-
-    return G_loss, D_loss
-
-
 def _wasser_loss(G, R, F, X):
     """ Calculates the loss """
 
@@ -391,43 +362,6 @@ def _wasser_loss(G, R, F, X):
 
 
 def _conditioned_wasser_loss(G, R, F, X):
-    """ Calculates the loss """
-
-    # Cost functions
-    G_loss = -tf.reduce_mean(F)
-    D_loss = tf.reduce_mean(F) - tf.reduce_mean(R)
-
-    alpha = tf.random_uniform(
-        shape=[BATCH_SIZE, 1, 1],
-        minval=0.,
-        maxval=1.
-    )
-    differences = G - X["x"]
-    interpolates = X["x"] + (alpha * differences)
-    with tf.name_scope('D_interp'), tf.variable_scope('D', reuse=True):
-        D_interp = NETWORKS.discriminator(interpolates, X["yFill"])
-
-    # Gradient penalty
-    gradients = tf.gradients(D_interp, [interpolates], name='grads')[0]
-    slopes = tf.sqrt(
-        tf.reduce_sum(
-            tf.square(gradients),
-            reduction_indices=[1, 2]
-        )
-    )
-    gradient_penalty = tf.reduce_mean((slopes - 1.) ** 2.)
-
-    # Discriminator loss
-    D_loss += LAMBDA * gradient_penalty
-
-    # Summaries
-    tf.summary.scalar('norm', tf.norm(gradients))
-    tf.summary.scalar('grad_penalty', gradient_penalty)
-
-    return G_loss, D_loss
-
-
-def _conditioned_wasser_loss_2(G, R, F, X):
     """ Calculates the loss """
 
     # Cost functions
