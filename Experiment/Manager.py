@@ -9,7 +9,7 @@ import types
 
 # Dimension
 ABS_INT16 = 32767.
-BATCH_SIZE = 64
+BATCH_SIZE = None
 MODEL_SIZE = 16  # Matches the model size inside the NNs
 MODES = None
 WAV_LENGTH = None
@@ -45,6 +45,9 @@ STEPS = 100  # 100
 def main(args):
     """ Runs the relevant command passed through arguments """
 
+    global BATCH_SIZE
+    BATCH_SIZE = args.batch
+
     global ITERATIONS
     ITERATIONS = args.iterations
 
@@ -65,11 +68,14 @@ def main(args):
     global MODEL_SIZE
     MODEL_SIZE = args.modelSize
 
+    global LEARN_RATE
+    LEARN_RATE = args.learnRate
+
     # Parameter Search
     if args.mode[0] == 'search':
-        for param in [1, 5]:
-            D_UPDATES_PER_G_UPDATES = param
-            for i in range(0, 10):
+        for param in [32, 64]:
+            BATCH_SIZE = param
+            for i in range(0, 5):
                 tf.reset_default_graph()
                 runName = args.runName[0] + '_param' + \
                     str(param) + '_' + str(i)
@@ -114,6 +120,7 @@ def main(args):
 
 def _setup(runName, model):
     model_dir = _modelDirectory(runName, model)
+    os.makedirs(model_dir)
     _createGenGraph(model_dir, model)
     return model_dir
 
@@ -219,6 +226,7 @@ def _train(folders, runName, model_dir, model):
         f.write('Model Type  : ' + model + '\n')
         f.write('Modes       : ' + str(MODES) + '\n')
         f.write('Wave length : ' + str(WAV_LENGTH) + '\n')
+        f.close
 
     # Summary
     tf.summary.audio('X', X["x"], WAV_LENGTH)
@@ -440,7 +448,7 @@ def _conditioned_wasser_loss_2(G, R, F, X):
     slopes = tf.sqrt(
         tf.reduce_sum(
             tf.square(gradients),
-            axis=[1]  # , 2]
+            axis=[1, 2]
         )
     )
     gradient_penalty = LAMBDA * tf.reduce_mean((slopes - 1.) ** 2.)
@@ -751,6 +759,12 @@ if __name__ == "__main__":
         help="The lambda to be applied to Wasserstein Loss."
     )
     parser.add_argument(
+        '-batch',
+        type=int,
+        default=64,
+        help="The batch size."
+    )
+    parser.add_argument(
         '-iterations',
         type=int,
         default=1000,
@@ -773,6 +787,12 @@ if __name__ == "__main__":
         type=int,
         default=16,
         help="The depth of the model being used."
+    )
+    parser.add_argument(
+        '-learnRate',
+        type=float,
+        default=0.0001,
+        help="The learning rate used."
     )
     parser.add_argument(
         '-words',
