@@ -216,16 +216,17 @@ def _train(folders, runName, model_dir, model):
 
     # Print hyperparameter summary
     with open(model_dir + 'hyperparameters.txt', 'w') as f:
-        f.write('Batch Size  : ' + str(BATCH_SIZE) + '\n')
-        f.write('Checkpoints : ' + str(CHECKPOINTS) + '\n')
-        f.write('D Updates   : ' + str(D_UPDATES_PER_G_UPDATES) + '\n')
-        f.write('G Updates   : ' + str(G_UPDATES_PER_D_UPDATES) + '\n')
-        f.write('Iterations  : ' + str(ITERATIONS) + '\n')
-        f.write('Lambda      : ' + str(LAMBDA) + '\n')
-        f.write('Model Size  : ' + str(MODEL_SIZE) + '\n')
-        f.write('Model Type  : ' + model + '\n')
-        f.write('Modes       : ' + str(MODES) + '\n')
-        f.write('Wave length : ' + str(WAV_LENGTH) + '\n')
+        f.write('Batch Size    : ' + str(BATCH_SIZE) + '\n')
+        f.write('Checkpoints   : ' + str(CHECKPOINTS) + '\n')
+        f.write('D Updates     : ' + str(D_UPDATES_PER_G_UPDATES) + '\n')
+        f.write('G Updates     : ' + str(G_UPDATES_PER_D_UPDATES) + '\n')
+        f.write('Iterations    : ' + str(ITERATIONS) + '\n')
+        f.write('Lambda        : ' + str(LAMBDA) + '\n')
+        f.write('Learning Rate : ' + str(LEARN_RATE) + 'n')
+        f.write('Model Size    : ' + str(MODEL_SIZE) + '\n')
+        f.write('Model Type    : ' + model + '\n')
+        f.write('Modes         : ' + str(MODES) + '\n')
+        f.write('Wave length   : ' + str(WAV_LENGTH) + '\n')
         f.close
 
     # Summary
