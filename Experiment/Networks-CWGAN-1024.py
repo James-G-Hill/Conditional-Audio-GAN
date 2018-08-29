@@ -32,15 +32,17 @@ def generator(x, y):
     # Input: [64, 992] > [64, 16, 62]
     shape = tf.reshape(
         tensor=densify,
-        shape=[BATCH_SIZE, 16, (MODEL_SIZE * 4) - 2]
+        shape=[BATCH_SIZE, 16, (MODEL_SIZE * 4) - CLASSES]
     )
 
     # Input: [64, 16, 62] > [64, 16, 64]
     concat = tf.concat(values=[shape, y], axis=2)
 
+    relu = tf.nn.relu(concat)
+
     # Input: [64, 16, 64] > [64, 64, 32]
     trans_conv_1 = tf.layers.conv2d_transpose(
-        inputs=tf.expand_dims(concat, axis=1),
+        inputs=tf.expand_dims(relu, axis=1),
         filters=MODEL_SIZE * 2,
         kernel_size=(1, KERNEL_SIZE),
         strides=(1, STRIDE),
