@@ -134,7 +134,7 @@ def _train(folders, runName, model_dir, model):
     audio_loader.prepareData(training_data_path, folders)
 
     # Create generated data
-    Z_x, Z_y, Z_yFill = _makeGenerated()
+    Z_x, Z_y, Z_yFill = _makeGenerated(True, None)
 
     # Prepare real data
     X, X_y = audio_loader.loadTrainData()
@@ -403,20 +403,27 @@ def _modelDirectory(runName, model):
     return directory
 
 
-def _makeGenerated():
+def _makeGenerated(random, genMode):
     """ Makes the tensor generators """
+
+    if random:
+        one_hot = tf.random_uniform(
+            [BATCH_SIZE, 1, 1],
+            0,
+            MODES,
+            dtype=tf.int32
+        )
+    else:
+        one_hot = tf.fill(
+            [BATCH_SIZE, 1, 1],
+            genMode
+        )
 
     Z_x = tf.random_uniform(
         [BATCH_SIZE, 1, Z_LENGTH],
         -1.,
         1.,
         dtype=tf.float32
-    )
-    one_hot = tf.random_uniform(
-        [BATCH_SIZE, 1, 1],
-        0,
-        MODES,
-        dtype=tf.int32
     )
     Z_one_hot = tf.one_hot(
         indices=one_hot[:, 0],
@@ -594,12 +601,9 @@ def _generate(runName, checkpointNum, genMode, model, genLength):
     if model == 'WGAN':
         samples = sess.run(G, {Z_input: Z})
     elif model == 'CWGAN':
-        # Prepare labels
-        oneHot = np.zeros((genLength, 1, MODES), dtype=np.float32)
-        oneHot[np.arange(genLength), 0, genMode] = 1.0
+        Z_x, Z_y, _ = _makeGenerated(False, genMode)
         Z_labels = graph.get_tensor_by_name('Z_Labels:0')
-        # Compute
-        samples = sess.run(G, {Z_input: Z, Z_labels: oneHot})
+        samples = sess.run(G, {Z_input: Z_x, Z_labels: Z_y})
 
     # Create the output path
     path = os.path.abspath(
