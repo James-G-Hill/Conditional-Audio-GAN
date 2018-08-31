@@ -29,7 +29,7 @@ def generator(x, y):
         name="Z-Input"
     )
 
-    # Input: [64, 992] > [64, 16, 62]
+    # INPUT: [64, 992] > [64, 16, 62]
     shape = tf.reshape(
         tensor=densify,
         shape=[BATCH_SIZE, 16, (MODEL_SIZE * 4) - CLASSES]
