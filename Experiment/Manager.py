@@ -5,6 +5,7 @@ import numpy as np
 import shutil
 import soundfile as sf
 import tensorflow as tf
+import tfmpl
 import types
 
 # Dimension
@@ -18,11 +19,11 @@ Z_LENGTH = 100
 # Learning
 BETA1 = 0.5
 BETA2 = 0.9
-LEARN_RATE = 0.0001  # 0.0001
+LEARN_RATE = None  # 0.0001
 
 # Loss Constants
 LAMBDA = None  # 10 for WGAN
-LOSS_MAX = 100
+LOSS_MAX = 1000
 
 # Messages
 TRAIN_COMPLETE = False
@@ -35,10 +36,10 @@ G_UPDATES_PER_D_UPDATES = 1  # 1 for WGAN
 NETWORKS = None
 
 # Tensor Management
-CHECKPOINTS = 5000  # 10000
+CHECKPOINTS = 1000  # 5000
 ITERATIONS = None  # 40000
 OUTPUT_DIR = None
-SAMPLE_SAVE_RATE = 1000  # 1000
+SAMPLE_SAVE_RATE = 100  # 1000
 STEPS = 100  # 100
 
 
@@ -73,9 +74,9 @@ def main(args):
 
     # Parameter Search
     if args.mode[0] == 'search':
-        for param in [32, 64]:
-            BATCH_SIZE = param
-            for i in range(0, 5):
+        for param in [0.000005, 0.000001]:
+            LEARN_RATE = param
+            for i in range(0, 10):
                 tf.reset_default_graph()
                 runName = args.runName[0] + '_param' + \
                     str(param) + '_' + str(i)
@@ -138,6 +139,12 @@ def _train(folders, runName, model_dir, model):
 
     # Prepare real data
     X, X_y = audio_loader.loadTrainData()
+
+    # TESTING SECTION
+    X = X[0:BATCH_SIZE]
+    X_y = X_y[0:BATCH_SIZE]
+    # TESTING SECTION
+
     X = _makeIterators(
         tf.reshape(
             tf.convert_to_tensor(np.vstack(X), dtype=tf.float32),
@@ -214,6 +221,28 @@ def _train(folders, runName, model_dir, model):
     Z_rms = tf.sqrt(tf.reduce_mean(tf.square(G[:, :, 0]), axis=1))
     X_rms = tf.sqrt(tf.reduce_mean(tf.square(X["x"][:, :, 0]), axis=1))
 
+    # Plot wave
+    X_plotWave = plotWave(X["x"])
+    G_plotWave = plotWave(G)
+
+    # Plot spectrogram
+    X_plotSpec = plotSpec(X["x"])
+    G_plotSpec = plotSpec(G)
+
+    # Summary
+    tf.summary.audio('X', X["x"], WAV_LENGTH)
+    tf.summary.audio('G', G, WAV_LENGTH)
+    tf.summary.image('plotWave_X', X_plotWave)
+    tf.summary.image('plotWave_G', G_plotWave)
+    tf.summary.image('plotSpec_X', X_plotSpec)
+    tf.summary.image('plotSpec_G', G_plotSpec)
+    tf.summary.histogram('rms_batch_Z', Z_rms)
+    tf.summary.histogram('rms_batch_X', X_rms)
+    tf.summary.scalar('rms_X', tf.reduce_mean(X_rms))
+    tf.summary.scalar('rms_Z', tf.reduce_mean(Z_rms))
+    tf.summary.scalar('loss_G', G_loss)
+    tf.summary.scalar('loss_D', D_loss)
+
     # Print hyperparameter summary
     with open(model_dir + 'hyperparameters.txt', 'w') as f:
         f.write('Batch Size    : ' + str(BATCH_SIZE) + '\n')
@@ -222,20 +251,12 @@ def _train(folders, runName, model_dir, model):
         f.write('G Updates     : ' + str(G_UPDATES_PER_D_UPDATES) + '\n')
         f.write('Iterations    : ' + str(ITERATIONS) + '\n')
         f.write('Lambda        : ' + str(LAMBDA) + '\n')
-        f.write('Learning Rate : ' + str(LEARN_RATE) + 'n')
+        f.write('Learning Rate : ' + str(LEARN_RATE) + '\n')
         f.write('Model Size    : ' + str(MODEL_SIZE) + '\n')
         f.write('Model Type    : ' + model + '\n')
         f.write('Modes         : ' + str(MODES) + '\n')
         f.write('Wave length   : ' + str(WAV_LENGTH) + '\n')
         f.close
-
-    # Summary
-    tf.summary.audio('X', X["x"], WAV_LENGTH)
-    tf.summary.audio('G', G, WAV_LENGTH)
-    tf.summary.histogram('Z_rms', Z_rms)
-    tf.summary.histogram('X_rms', X_rms)
-    tf.summary.scalar('G_loss', G_loss)
-    tf.summary.scalar('D_loss', D_loss)
 
     # Create a session
     sess = tf.train.MonitoredTrainingSession(
@@ -652,6 +673,34 @@ def _saveGenerated(path, samples, fileName):
     return
 
 
+@tfmpl.figure_tensor
+def plotWave(audioTensor):
+    """ Plots audio to a wave graph """
+    figs = tfmpl.create_figures(BATCH_SIZE)
+    for i, f in enumerate(figs):
+        sp = f.add_subplot(111)
+        sp.plot(audioTensor[i, :, :])
+
+    return figs
+
+
+@tfmpl.figure_tensor
+def plotSpec(audioTensor):
+    """ Plots audio to a wave graph """
+    figs = tfmpl.create_figures(BATCH_SIZE)
+    for i, f in enumerate(figs):
+        sp = f.add_subplot(111)
+        dim = audioTensor[i, :, :]
+        dim = np.squeeze(dim)
+        sp.specgram(
+            x=dim,
+            NFFT=256,
+            Fs=2
+        )
+
+    return figs
+
+
 if __name__ == "__main__":
     parser = ag.ArgumentParser()
     parser.add_argument(
@@ -735,7 +784,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '-learnRate',
         type=float,
-        default=0.00001,
+        default=0.0001,
         help="The learning rate used."
     )
     parser.add_argument(
