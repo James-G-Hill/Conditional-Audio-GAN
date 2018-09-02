@@ -23,7 +23,7 @@ LEARN_RATE = None  # 0.0001
 
 # Loss Constants
 LAMBDA = None  # 10 for WGAN
-LOSS_MAX = 1000
+LOSS_MAX = 500
 
 # Messages
 TRAIN_COMPLETE = False
@@ -36,10 +36,11 @@ G_UPDATES_PER_D_UPDATES = 1  # 1 for WGAN
 NETWORKS = None
 
 # Tensor Management
-CHECKPOINTS = 1000  # 5000
+CHECKPOINTS = 5000  # 5000
 ITERATIONS = None  # 40000
+PROGRAM_MODE = None
 OUTPUT_DIR = None
-SAMPLE_SAVE_RATE = 100  # 1000
+SAMPLE_SAVE_RATE = 1000  # 1000
 STEPS = 100  # 100
 
 
@@ -71,6 +72,9 @@ def main(args):
 
     global LEARN_RATE
     LEARN_RATE = args.learnRate
+
+    global PROGRAM_MODE
+    PROGRAM_MODE = args.mode[0]
 
     # Parameter Search
     if args.mode[0] == 'search':
@@ -139,10 +143,11 @@ def _train(folders, runName, model_dir, model):
 
     # Prepare real data
     X, X_y = audio_loader.loadTrainData()
+    epochSize = len(X)
 
     # TESTING SECTION
-    X = X[0:BATCH_SIZE]
-    X_y = X_y[0:BATCH_SIZE]
+    # X = [np.array(X[X_y.index(0)]), np.array(X[X_y.index(1)+1])]
+    # X_y = [0, 1]
     # TESTING SECTION
 
     X = _makeIterators(
@@ -230,24 +235,60 @@ def _train(folders, runName, model_dir, model):
     G_plotSpec = plotSpec(G)
 
     # Summary
-    tf.summary.audio('X', X["x"], WAV_LENGTH)
-    tf.summary.audio('G', G, WAV_LENGTH)
-    tf.summary.image('plotWave_X', X_plotWave)
-    tf.summary.image('plotWave_G', G_plotWave)
-    tf.summary.image('plotSpec_X', X_plotSpec)
-    tf.summary.image('plotSpec_G', G_plotSpec)
-    tf.summary.histogram('rms_batch_Z', Z_rms)
-    tf.summary.histogram('rms_batch_X', X_rms)
-    tf.summary.scalar('rms_X', tf.reduce_mean(X_rms))
-    tf.summary.scalar('rms_Z', tf.reduce_mean(Z_rms))
-    tf.summary.scalar('loss_G', G_loss)
-    tf.summary.scalar('loss_D', D_loss)
+    with tf.name_scope('Audio'):
+        tf.summary.audio(
+            name='X',
+            tensor=X["x"],
+            sample_rate=WAV_LENGTH,
+            max_outputs=6
+        )
+        tf.summary.audio(
+            name='G',
+            tensor=G,
+            sample_rate=WAV_LENGTH,
+            max_outputs=6
+        )
+
+    with tf.name_scope('WavePlot'):
+        tf.summary.image(
+            name='plotWave_X',
+            tensor=X_plotWave,
+            max_outputs=6
+        )
+        tf.summary.image(
+            name='plotWave_G',
+            tensor=G_plotWave,
+            max_outputs=6
+        )
+
+    with tf.name_scope('plotSpec'):
+        tf.summary.image(
+            name='plotSpec_X',
+            tensor=X_plotSpec,
+            max_outputs=6
+        )
+        tf.summary.image(
+            name='plotSpec_G',
+            tensor=G_plotSpec,
+            max_outputs=6
+        )
+
+    with tf.name_scope('Rms'):
+        tf.summary.histogram('rms_batch_Z', Z_rms)
+        tf.summary.histogram('rms_batch_X', X_rms)
+        tf.summary.scalar('rms_X', tf.reduce_mean(X_rms))
+        tf.summary.scalar('rms_Z', tf.reduce_mean(Z_rms))
+
+    with tf.name_scope('Loss'):
+        tf.summary.scalar('loss_G', G_loss)
+        tf.summary.scalar('loss_D', D_loss)
 
     # Print hyperparameter summary
     with open(model_dir + 'hyperparameters.txt', 'w') as f:
         f.write('Batch Size    : ' + str(BATCH_SIZE) + '\n')
         f.write('Checkpoints   : ' + str(CHECKPOINTS) + '\n')
         f.write('D Updates     : ' + str(D_UPDATES_PER_G_UPDATES) + '\n')
+        f.write('Epoch Size    : ' + str(epochSize) + '\n')
         f.write('G Updates     : ' + str(G_UPDATES_PER_D_UPDATES) + '\n')
         f.write('Iterations    : ' + str(ITERATIONS) + '\n')
         f.write('Lambda        : ' + str(LAMBDA) + '\n')
@@ -317,16 +358,16 @@ def _runSession(sess, D_train_op, D_loss, G_train_op, G_loss, G, model_dir):
 
         # Save samples every SAMPLE_SAVE_RATE steps
         if iteration % SAMPLE_SAVE_RATE == 0:
-            fileName = 'Run_' + str(iteration)
-            _saveGenerated(
-                model_dir + 'Checkpoint_Samples/',
-                G_data,
-                fileName
-            )
+            # fileName = 'Run_' + str(iteration)
+            # _saveGenerated(
+            #     model_dir + 'Checkpoint_Samples/',
+            #     G_data,
+            #     fileName
+            # )
             print('Completed Iteration: ' + str(iteration))
 
     sess.close()
-    if runawayLoss:
+    if runawayLoss and not PROGRAM_MODE == "train":
         shutil.rmtree(model_dir)
     elif not runawayLoss:
         global TRAIN_COMPLETE
@@ -377,8 +418,9 @@ def _wasser_loss(G, R, F, X):
     D_loss += LAMBDA * gradient_penalty
 
     # Summaries
-    tf.summary.scalar('norm', tf.norm(gradients))
-    tf.summary.scalar('grad_penalty', gradient_penalty)
+    with tf.name_scope('Various'):
+        tf.summary.scalar('norm', tf.norm(gradients))
+        tf.summary.scalar('grad_penalty', gradient_penalty)
 
     return G_loss, D_loss
 
@@ -387,8 +429,8 @@ def _conditioned_wasser_loss(G, R, F, X):
     """ Calculates the loss """
 
     # Cost functions
-    G_loss = tf.reduce_mean(F)
-    D_loss = tf.reduce_mean(R) - tf.reduce_mean(F)
+    G_loss = -tf.reduce_mean(F)
+    D_loss = tf.reduce_mean(F) - tf.reduce_mean(R)
 
     alpha = tf.random_uniform(
         shape=[BATCH_SIZE, 1, 1],
@@ -413,8 +455,9 @@ def _conditioned_wasser_loss(G, R, F, X):
     D_loss += gradient_penalty
 
     # Summaries
-    tf.summary.scalar('norm', tf.norm(gradients))
-    tf.summary.scalar('grad_penalty', gradient_penalty)
+    with tf.name_scope('Various'):
+        tf.summary.scalar('norm', tf.norm(gradients))
+        tf.summary.scalar('grad_penalty', gradient_penalty)
 
     return G_loss, D_loss
 
