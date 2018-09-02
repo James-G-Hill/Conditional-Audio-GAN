@@ -11,7 +11,7 @@ import types
 # Dimension
 ABS_INT16 = 32767.
 BATCH_SIZE = None
-MODEL_SIZE = 16  # Matches the model size inside the NNs
+MODEL_SIZE = None
 MODES = None
 WAV_LENGTH = None
 Z_LENGTH = 100
@@ -68,7 +68,10 @@ def main(args):
     G_UPDATES_PER_D_UPDATES = args.G_updates
 
     global MODEL_SIZE
-    MODEL_SIZE = args.modelSize
+    if WAV_LENGTH == 1024:
+        MODEL_SIZE = 16
+    elif WAV_LENGTH == 4096:
+        MODEL_SIZE = 32
 
     global LEARN_RATE
     LEARN_RATE = args.learnRate
@@ -817,12 +820,6 @@ if __name__ == "__main__":
         type=int,
         default=1,
         help="The number of generator updates to discriminator."
-    )
-    parser.add_argument(
-        '-modelSize',
-        type=int,
-        default=16,
-        help="The depth of the model being used."
     )
     parser.add_argument(
         '-learnRate',
