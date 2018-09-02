@@ -3,12 +3,9 @@ import tensorflow as tf
 
 
 BATCH_SIZE = -1
-BETA1 = 0.5
-BETA2 = 0.9
 CHANNELS = 1
 CLASSES = 2
 KERNEL_SIZE = 25
-LEARN_RATE = 0.0001
 MODEL_SIZE = 16
 PHASE_SHUFFLE = 2
 STRIDE = 4
@@ -38,45 +35,45 @@ def generator(x, y):
     # Input: [64, 16, 62] > [64, 16, 64]
     concat = tf.concat(values=[shape, y], axis=2)
 
-    relu = tf.nn.relu(concat)
+    layer = tf.nn.relu(concat)
 
     # Input: [64, 16, 64] > [64, 64, 32]
-    trans_conv_1 = tf.layers.conv2d_transpose(
-        inputs=tf.expand_dims(relu, axis=1),
+    layer = tf.layers.conv2d_transpose(
+        inputs=tf.expand_dims(layer, axis=1),
         filters=MODEL_SIZE * 2,
         kernel_size=(1, KERNEL_SIZE),
         strides=(1, STRIDE),
-        padding='SAME',
+        padding='same',
         name="TransConvolution1"
     )[:, 0]
 
-    relu2 = tf.nn.relu(trans_conv_1)
+    layer = tf.nn.relu(layer)
 
     # Input: [64, 64, 32] > [64, 256, 16]
-    trans_conv_2 = tf.layers.conv2d_transpose(
-        inputs=tf.expand_dims(relu2, axis=1),
+    layer = tf.layers.conv2d_transpose(
+        inputs=tf.expand_dims(layer, axis=1),
         filters=MODEL_SIZE,
         kernel_size=(1, KERNEL_SIZE),
         strides=(1, STRIDE),
-        padding='SAME',
+        padding='same',
         name="TransConvolution2"
     )[:, 0]
 
-    relu3 = tf.nn.relu(trans_conv_2)
+    layer = tf.nn.relu(layer)
 
     # Input: [64, 256, 16] > [64, 1024, 1]
-    trans_conv_3 = tf.layers.conv2d_transpose(
-        inputs=tf.expand_dims(relu3, axis=1),
+    layer = tf.layers.conv2d_transpose(
+        inputs=tf.expand_dims(layer, axis=1),
         filters=CHANNELS,
         kernel_size=(1, KERNEL_SIZE),
         strides=(1, STRIDE),
-        padding='SAME',
+        padding='same',
         name="TransConvolution3"
     )[:, 0]
 
     # Input: [64, 1024, 1]
     tanh = tf.tanh(
-        x=trans_conv_3,
+        x=layer,
         name="GeneratedSamples"
     )
 
@@ -89,45 +86,40 @@ def discriminator(x, y):
     concat = tf.concat(values=[x, y], axis=2)
 
     # Input: [64, 1024, 3] > [64, 256, 16]
-    convolution1 = tf.layers.conv1d(
+    layer = tf.layers.conv1d(
         inputs=concat,
         filters=MODEL_SIZE,
         kernel_size=KERNEL_SIZE,
         strides=STRIDE,
-        padding='same',
-        use_bias=True,
-        activation=tf.nn.leaky_relu
+        padding='same'
     )
-
-    convolution1 = _phaseShuffle(convolution1)
+    layer = _leakyRelu(layer)
+    layer = _phaseShuffle(layer)
 
     # Input: [64, 256, 16] > [64, 64, 32]
-    convolution2 = tf.layers.conv1d(
-        inputs=convolution1,
+    layer = tf.layers.conv1d(
+        inputs=layer,
         filters=MODEL_SIZE * 2,
         kernel_size=KERNEL_SIZE,
         strides=STRIDE,
-        padding='same',
-        use_bias=True,
-        activation=tf.nn.leaky_relu
+        padding='same'
     )
-
-    convolution2 = _phaseShuffle(convolution2)
+    layer = _leakyRelu(layer)
+    layer = _phaseShuffle(layer)
 
     # Input: [64, 64, 32] > [64, 16, 64]
-    convolution3 = tf.layers.conv1d(
-        inputs=convolution2,
+    layer = tf.layers.conv1d(
+        inputs=layer,
         filters=MODEL_SIZE * 4,
         kernel_size=KERNEL_SIZE,
         strides=STRIDE,
-        padding='same',
-        use_bias=True,
-        activation=tf.nn.leaky_relu
+        padding='same'
     )
+    layer = _leakyRelu(layer)
 
     # Input: [64, 16, 64] > [64, 1024]
     flatten = tf.reshape(
-        tensor=convolution3,
+        tensor=layer,
         shape=[BATCH_SIZE, WAV_LENGTH]
     )
 
@@ -135,7 +127,7 @@ def discriminator(x, y):
     logits = tf.layers.dense(
         inputs=flatten,
         units=1
-    )
+    )[0, 1]
 
     return logits
 
@@ -156,6 +148,11 @@ def _phaseShuffle(layer):
     layer.set_shape([batch, length, channel])
 
     return layer
+
+
+def _leakyRelu(inputs, alpha=0.2):
+    """ Creates a leaky relu layer """
+    return tf.maximum(inputs * alpha, inputs)
 
 
 def _returnPhaseShuffleValue():
