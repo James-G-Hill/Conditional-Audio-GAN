@@ -23,7 +23,7 @@ LEARN_RATE = None  # 0.0001
 
 # Loss Constants
 LAMBDA = None  # 10 for WGAN
-LOSS_MAX = 500
+LOSS_MAX = 400
 
 # Messages
 TRAIN_COMPLETE = False
@@ -148,11 +148,6 @@ def _train(folders, runName, model_dir, model):
     X, X_y = audio_loader.loadTrainData()
     epochSize = len(X)
 
-    # TESTING SECTION
-    # X = [np.array(X[X_y.index(0)]), np.array(X[X_y.index(1)+1])]
-    # X_y = [0, 1]
-    # TESTING SECTION
-
     X = _makeIterators(
         tf.reshape(
             tf.convert_to_tensor(np.vstack(X), dtype=tf.float32),
@@ -200,6 +195,7 @@ def _train(folders, runName, model_dir, model):
     if model == 'WGAN':
         G_loss, D_loss = _wasser_loss(G, R, F, X)
     elif model == 'CWGAN':
+        # G_loss, D_loss = _alt_conditional_loss(R, F)
         G_loss, D_loss = _conditioned_wasser_loss(G, R, F, X)
 
     # Build optimizers
@@ -361,12 +357,6 @@ def _runSession(sess, D_train_op, D_loss, G_train_op, G_loss, G, model_dir):
 
         # Save samples every SAMPLE_SAVE_RATE steps
         if iteration % SAMPLE_SAVE_RATE == 0:
-            # fileName = 'Run_' + str(iteration)
-            # _saveGenerated(
-            #     model_dir + 'Checkpoint_Samples/',
-            #     G_data,
-            #     fileName
-            # )
             print('Completed Iteration: ' + str(iteration))
 
     sess.close()
@@ -396,6 +386,9 @@ def _wasser_loss(G, R, F, X):
     # Cost functions
     G_loss = -tf.reduce_mean(F)
     D_loss = tf.reduce_mean(F) - tf.reduce_mean(R)
+
+    with tf.name_scope('Loss'):
+        tf.summary.scalar('loss_D_RAW', D_loss)
 
     alpha = tf.random_uniform(
         shape=[BATCH_SIZE, 1, 1],
@@ -432,8 +425,13 @@ def _conditioned_wasser_loss(G, R, F, X):
     """ Calculates the loss """
 
     # Cost functions
-    G_loss = -tf.reduce_mean(F)
-    D_loss = tf.reduce_mean(F) - tf.reduce_mean(R)
+    # G_loss = -tf.reduce_mean(F)
+    # D_loss = tf.reduce_mean(F) - tf.reduce_mean(R)
+    G_loss = tf.reduce_mean(F)
+    D_loss = tf.reduce_mean(R) - tf.reduce_mean(F)
+
+    with tf.name_scope('Loss'):
+        tf.summary.scalar('loss_D_RAW', D_loss)
 
     alpha = tf.random_uniform(
         shape=[BATCH_SIZE, 1, 1],
@@ -465,6 +463,32 @@ def _conditioned_wasser_loss(G, R, F, X):
     return G_loss, D_loss
 
 
+def _alt_conditional_loss(R, F):
+    """ This is an alternative loss function to W-GP """
+
+    D_loss_real = tf.reduce_mean(
+        tf.nn.sigmoid_cross_entropy_with_logits(
+            logits=R,
+            labels=tf.ones([BATCH_SIZE, 1])
+        )
+    )
+    D_loss_fake = tf.reduce_mean(
+        tf.nn.sigmoid_cross_entropy_with_logits(
+            logits=F,
+            labels=tf.zeros([BATCH_SIZE, 1])
+        )
+    )
+    D_loss = D_loss_real + D_loss_fake
+    G_loss = tf.reduce_mean(
+        tf.nn.sigmoid_cross_entropy_with_logits(
+            logits=F,
+            labels=tf.ones([BATCH_SIZE, 1])
+        )
+    )
+
+    return G_loss, D_loss
+
+
 def _modelDirectory(runName, model):
     """ Creates / obtains the name of the model directory """
     directory = 'tmp/' + model + '_' + str(WAV_LENGTH) + '_' + runName + '/'
@@ -472,7 +496,7 @@ def _modelDirectory(runName, model):
 
 
 def _makeGenerated(random, genMode):
-    """ Makes the tensor generators """
+    """ Makes the generator tensors """
 
     if random:
         one_hot = tf.random_uniform(
@@ -498,19 +522,13 @@ def _makeGenerated(random, genMode):
         depth=MODES
     )
     Z_y = tf.multiply(
-        x=Z_one_hot,
+        x=tf.expand_dims(Z_one_hot, axis=1),
         y=tf.ones(
-            [BATCH_SIZE, MODEL_SIZE, MODES],
+            [BATCH_SIZE, 1, MODEL_SIZE, MODES],
             dtype=tf.float32
         )
     )
-    Z_yFill = tf.multiply(
-        x=Z_one_hot,
-        y=tf.ones(
-            [BATCH_SIZE, WAV_LENGTH, MODES],
-            dtype=tf.float32
-        )
-    )
+    Z_yFill = _makeYFill(BATCH_SIZE, Z_one_hot)
 
     return Z_x, Z_y, Z_yFill
 
@@ -523,10 +541,7 @@ def _makeIterators(data, labels, data_size, data_length):
     oneHotFill = oneHot * \
         np.ones((data_size, WAV_LENGTH, MODES), dtype=np.float32)
     oneHot = tf.convert_to_tensor(oneHot, dtype=tf.float32)
-    oneHotFill = tf.reshape(
-        tensor=tf.cast(oneHotFill, tf.float32),
-        shape=[data_size, WAV_LENGTH, MODES]
-    )
+    oneHotFill = _makeYFill(data_size, oneHot)
 
     dSet = tf.data.Dataset.from_tensor_slices(
         {
@@ -545,6 +560,46 @@ def _makeIterators(data, labels, data_size, data_length):
     iterator = iterator.get_next()
 
     return iterator
+
+
+def _makeYFill(size, one_hot):
+    """ Makes the Y-Fill tensor """
+
+    yFill = tf.multiply(
+        x=one_hot,
+        y=tf.ones(
+            [size, WAV_LENGTH, MODES],
+            dtype=tf.float32
+        )
+    )
+
+    return yFill
+
+
+def _altMakeYFill(size, one_hot):
+    """ Makes the Y-Fill tensor """
+
+    divisor = 64
+
+    # Result (example): [64, 256, 2]
+    yFill = tf.multiply(
+        x=one_hot,
+        y=tf.ones(
+            [size, WAV_LENGTH / divisor, MODES],
+            dtype=tf.float32
+        )
+    )
+
+    # Input: [64, 256, 2] > [64, 1024, 2]
+    yFill = tf.layers.conv2d_transpose(
+        inputs=tf.expand_dims(yFill, axis=1),
+        filters=MODES,
+        kernel_size=(1, 16),
+        strides=(1, divisor),
+        padding='same'
+    )[:, 0]
+
+    return yFill
 
 
 def _loadAudioModule():
@@ -579,7 +634,7 @@ def _createGenGraph(model_dir, model):
     # Create graph
     Z_Input = tf.placeholder(tf.float32, [None, 1, Z_LENGTH], name='Z_Input')
     Z_Labels = tf.placeholder(
-        tf.float32, [None, MODEL_SIZE, MODES], name='Z_Labels')
+        tf.float32, [None, 1, MODEL_SIZE, MODES], name='Z_Labels')
 
     if model == 'WGAN':
         with tf.variable_scope('G'):
@@ -670,7 +725,7 @@ def _generate(runName, checkpointNum, genMode, model, genLength):
         samples = sess.run(G, {Z_input: Z})
     elif model == 'CWGAN':
         Z_y = np.zeros(
-            shape=(genLength, MODEL_SIZE, MODES),
+            shape=(genLength, 1, MODEL_SIZE, MODES),
             dtype=np.int16
         )
         Z_y[:, :, genMode] = 1
@@ -793,7 +848,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '-lamb',
-        type=int,
+        type=float,
         default=10,
         help="The lambda to be applied to Wasserstein Loss."
     )
