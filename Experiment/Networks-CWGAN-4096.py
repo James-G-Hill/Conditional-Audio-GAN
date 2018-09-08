@@ -3,12 +3,9 @@ import tensorflow as tf
 
 
 BATCH_SIZE = -1
-BETA1 = 0.5
-BETA2 = 0.9
 CHANNELS = 1
 CLASSES = 2
 KERNEL_SIZE = 25
-LEARN_RATE = 0.0001
 MODEL_SIZE = 32
 PHASE_SHUFFLE = 2
 STRIDE = 4
@@ -25,70 +22,82 @@ def generator(x, y):
     # Input: [64, 100] > [64, 4032]
     densify = tf.layers.dense(
         inputs=x,
-        units=WAV_LENGTH - (CLASSES * MODEL_SIZE),
+        units=WAV_LENGTH - CLASSES,
         name="Z-Input"
     )
 
     # Input: [64, 4032] > [64, 16, 254]
     shape = tf.reshape(
         tensor=densify,
-        shape=[BATCH_SIZE, 16, (MODEL_SIZE * 8) - CLASSES]
+        shape=[BATCH_SIZE, 1, 1, WAV_LENGTH - CLASSES]
     )
 
-    # Input: [64, 16, 254] > [64, 16, 256]
-    concat = tf.concat(values=[shape, y], axis=2)
+    y = y[:, :, 0:1, :]
 
-    relu = tf.nn.relu(concat)
+    # Input: [64, 1, 1, 4094] > [64, 1, 1, 4096]
+    concat = tf.concat(values=[shape, y], axis=3)
 
-    # Input: [64, 16, 256] > [64, 64, 128]
-    trans_conv = tf.layers.conv2d_transpose(
-        inputs=tf.expand_dims(relu, axis=1),
+    layer = tf.nn.relu(concat)
+
+    # Input: [64, 1, 1, 4096] > [64, 1, 16, 256]
+    layer = tf.layers.conv2d_transpose(
+        inputs=layer,
+        filters=MODEL_SIZE * 8,
+        kernel_size=(1, 16),
+        strides=(1, 1),
+        padding='valid',
+        name="TransConvolution"
+    )
+
+    # Input: [64, 1, 16, 256] > [64, 1, 64, 128]
+    layer = tf.layers.conv2d_transpose(
+        inputs=layer,
         filters=MODEL_SIZE * 4,
         kernel_size=(1, KERNEL_SIZE),
         strides=(1, STRIDE),
-        padding='SAME',
-        name="TransConvolution1"
-    )[:, 0]
+        padding='same',
+        name="TransConvolution"
+    )
 
-    relu = tf.nn.relu(trans_conv)
+    layer = tf.nn.relu(layer)
 
-    # Input: [64, 64, 128] > [64, 256, 64]
-    trans_conv = tf.layers.conv2d_transpose(
-        inputs=tf.expand_dims(relu, axis=1),
+    # Input: [64, 1, 64, 128] > [64, 1, 256, 64]
+    layer = tf.layers.conv2d_transpose(
+        inputs=layer,
         filters=MODEL_SIZE * 2,
         kernel_size=(1, KERNEL_SIZE),
         strides=(1, STRIDE),
-        padding='SAME',
+        padding='same',
         name="TransConvolution2"
-    )[:, 0]
+    )
 
-    relu = tf.nn.relu(trans_conv)
+    layer = tf.nn.relu(layer)
 
-    # Input: [64, 256, 64] > [64, 1024, 32]
-    trans_conv = tf.layers.conv2d_transpose(
-        inputs=tf.expand_dims(relu, axis=1),
+    # Input: [64, 1, 256, 64] > [64, 1024, 32]
+    layer = tf.layers.conv2d_transpose(
+        inputs=layer,
         filters=MODEL_SIZE,
         kernel_size=(1, KERNEL_SIZE),
         strides=(1, STRIDE),
-        padding='SAME',
+        padding='same',
         name="TransConvolution3"
     )[:, 0]
 
-    relu = tf.nn.relu(trans_conv)
+    layer = tf.nn.relu(layer)
 
-    # Input: [64, 1024, 32] > [64, 4096, 1]
-    trans_conv = tf.layers.conv2d_transpose(
-        inputs=tf.expand_dims(relu, axis=1),
+    # Input: [64, 1, 1024, 32] > [64, 4096, 1]
+    layer = tf.layers.conv2d_transpose(
+        inputs=layer,
         filters=CHANNELS,
         kernel_size=(1, KERNEL_SIZE),
         strides=(1, STRIDE),
-        padding='SAME',
+        padding='same',
         name="TransConvolution4"
     )[:, 0]
 
     # Input: [64, 4096, 1]
     tanh = tf.tanh(
-        x=trans_conv,
+        x=layer,
         name="GeneratedSamples"
     )
 
@@ -101,66 +110,61 @@ def discriminator(x, y):
     concat = tf.concat(values=[x, y], axis=2)
 
     # Input: [64, 4096, 1] > [64, 1024, 32]
-    convolution1 = tf.layers.conv1d(
+    layer = tf.layers.conv1d(
         inputs=concat,
         filters=MODEL_SIZE,
         kernel_size=KERNEL_SIZE,
         strides=STRIDE,
-        padding='same',
-        use_bias=True,
-        activation=tf.nn.leaky_relu
+        padding='same'
     )
-
-    convolution1 = _phaseShuffle(convolution1)
+    layer = _leakyRelu(layer)
+    layer = _phaseShuffle(layer)
 
     # Input: [64, 1024, 32] > [64, 256, 64]
-    convolution2 = tf.layers.conv1d(
-        inputs=convolution1,
+    layer = tf.layers.conv1d(
+        inputs=layer,
         filters=MODEL_SIZE * 2,
         kernel_size=KERNEL_SIZE,
         strides=STRIDE,
-        padding='same',
-        use_bias=True,
-        activation=tf.nn.leaky_relu
+        padding='same'
     )
-
-    convolution2 = _phaseShuffle(convolution2)
+    layer = _leakyRelu(layer)
+    layer = _phaseShuffle(layer)
 
     # Input: [64, 256, 64] > [64, 64, 128]
-    convolution3 = tf.layers.conv1d(
-        inputs=convolution2,
+    layer = tf.layers.conv1d(
+        inputs=layer,
         filters=MODEL_SIZE * 4,
         kernel_size=KERNEL_SIZE,
         strides=STRIDE,
-        padding='same',
-        use_bias=True,
-        activation=tf.nn.leaky_relu
+        padding='same'
     )
-
-    convolution3 = _phaseShuffle(convolution3)
+    layer = _leakyRelu(layer)
+    layer = _phaseShuffle(layer)
 
     # Input: [64, 64, 128] > [64, 16, 256]
-    convolution4 = tf.layers.conv1d(
-        inputs=convolution3,
+    layer = tf.layers.conv1d(
+        inputs=layer,
         filters=MODEL_SIZE * 8,
         kernel_size=KERNEL_SIZE,
         strides=STRIDE,
-        padding='same',
-        use_bias=True,
-        activation=tf.nn.leaky_relu
+        padding='same'
     )
 
-    # Input: [64, 16, 256] > [64, 4096]
-    flatten = tf.reshape(
-        tensor=convolution4,
-        shape=[BATCH_SIZE, WAV_LENGTH]
-    )
+    # Input: [64, 16, 64] > [64, 1, 1]
+    layer = tf.layers.conv1d(
+        inputs=layer,
+        filters=1,
+        kernel_size=16,
+        strides=1,
+        padding='valid'
+    )[:, 0]
 
     # Input: [64, 4096] > [64, 1]
     logits = tf.layers.dense(
-        inputs=flatten,
+        inputs=layer,
         units=1
-    )
+    )[:, 0]
 
     return logits
 
@@ -179,6 +183,11 @@ def _phaseShuffle(layer):
     layer = layer[:, rgt:rgt+length]
     layer.set_shape([batch, length, channel])
     return layer
+
+
+def _leakyRelu(inputs, alpha=0.2):
+    """ Creates a leaky relu layer """
+    return tf.maximum(inputs * alpha, inputs)
 
 
 def _returnPhaseShuffleValue():
