@@ -19,7 +19,7 @@ def generator(x, y):
     x = tf.cast(x, tf.float32)
     y = tf.cast(y, tf.float32)
 
-    # Input: [64, 100] > [64, 4032]
+    # Input: [64, 100] > [64, 4094]
     densify = tf.layers.dense(
         inputs=x,
         units=WAV_LENGTH - CLASSES,
@@ -46,7 +46,7 @@ def generator(x, y):
         kernel_size=(1, 16),
         strides=(1, 1),
         padding='valid',
-        name="TransConvolution"
+        name="TransConvolution0"
     )
 
     # Input: [64, 1, 16, 256] > [64, 1, 64, 128]
@@ -56,7 +56,7 @@ def generator(x, y):
         kernel_size=(1, KERNEL_SIZE),
         strides=(1, STRIDE),
         padding='same',
-        name="TransConvolution"
+        name="TransConvolution1"
     )
 
     layer = tf.nn.relu(layer)
@@ -81,7 +81,7 @@ def generator(x, y):
         strides=(1, STRIDE),
         padding='same',
         name="TransConvolution3"
-    )[:, 0]
+    )
 
     layer = tf.nn.relu(layer)
 
@@ -107,11 +107,17 @@ def generator(x, y):
 def discriminator(x, y):
     """ A waveGAN discriminator """
 
-    concat = tf.concat(values=[x, y], axis=2)
+    # x = tf.concat(values=[x, y], axis=2)
+
+    # x = x + tf.random_normal(
+    #     shape=tf.shape(x),
+    #     mean=0.0,
+    #     stddev=0.1
+    # )
 
     # Input: [64, 4096, 1] > [64, 1024, 32]
     layer = tf.layers.conv1d(
-        inputs=concat,
+        inputs=x,
         filters=MODEL_SIZE,
         kernel_size=KERNEL_SIZE,
         strides=STRIDE,
@@ -151,8 +157,8 @@ def discriminator(x, y):
         padding='same'
     )
 
-    # Input: [64, 16, 64] > [64, 1, 1]
-    layer = tf.layers.conv1d(
+    # Input: [64, 16, 256] > [64, 1, 1]
+    disc = tf.layers.conv1d(
         inputs=layer,
         filters=1,
         kernel_size=16,
@@ -160,13 +166,18 @@ def discriminator(x, y):
         padding='valid'
     )[:, 0]
 
-    # Input: [64, 4096] > [64, 1]
-    logits = tf.layers.dense(
-        inputs=layer,
-        units=1
-    )[:, 0]
+    # Input: [64, 16, 256] > [64, 4096]
+    flatten = tf.reshape(
+        tensor=layer,
+        shape=[BATCH_SIZE, WAV_LENGTH]
+    )
 
-    return logits
+    cat = tf.layers.dense(
+        inputs=flatten,
+        units=2
+    )
+
+    return cat, disc
 
 
 def _phaseShuffle(layer):

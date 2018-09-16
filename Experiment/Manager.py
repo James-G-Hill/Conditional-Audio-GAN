@@ -79,20 +79,8 @@ def main(args):
     global PROGRAM_MODE
     PROGRAM_MODE = args.mode[0]
 
-    # Parameter Search
-    if args.mode[0] == 'search':
-        for param in [0.000005, 0.000001]:
-            LEARN_RATE = param
-            for i in range(0, 10):
-                tf.reset_default_graph()
-                runName = args.runName[0] + '_param' + \
-                    str(param) + '_' + str(i)
-                model_dir = _setup(runName, args.model[0])
-                print("Experiment:" + runName)
-                _train(args.words, runName, model_dir, args.model[0])
-
     # Train to complete
-    elif args.mode[0] == "complete":
+    if args.mode[0] == "complete":
         global TRAIN_COMPLETE
         TRAIN_COMPLETE = False
         while not TRAIN_COMPLETE:
@@ -104,14 +92,6 @@ def main(args):
     elif args.mode[0] == "train":
         model_dir = _setup(args.runName[0], args.model[0])
         _train(args.words, args.runName[0], model_dir, args.model[0])
-
-    # Restart Training
-    elif args.mode[0] == "restart":
-        _restart(
-            args.runName[0],
-            args.model[0],
-            args.checkpointNum
-        )
 
     # Generator mode
     elif args.mode[0] == "gen":
@@ -142,7 +122,7 @@ def _train(folders, runName, model_dir, model):
     audio_loader.prepareData(training_data_path, folders)
 
     # Create generated data
-    Z_x, Z_y, Z_yFill = _makeGenerated(True, None)
+    Z_x, Z_y, Z_yFill, Z_multi = _makeGenerated(True, None)
 
     # Prepare real data
     X, X_y = audio_loader.loadTrainData()
@@ -173,13 +153,13 @@ def _train(folders, runName, model_dir, model):
             R = NETWORKS.discriminator(X["x"])
         with tf.variable_scope('D', reuse=True):
             F = NETWORKS.discriminator(G)
-    elif model == 'CWGAN':
+    elif model == 'CWGAN' or model == 'ACGAN':
         with tf.variable_scope('G'):
             G = NETWORKS.generator(Z_x, Z_y)
         with tf.variable_scope('D'):
-            R = NETWORKS.discriminator(X["x"], X["yFill"])
+            R_cat, R = NETWORKS.discriminator(X["x"], X["yFill"])
         with tf.variable_scope('D', reuse=True):
-            F = NETWORKS.discriminator(G, Z_yFill)
+            F_cat, F = NETWORKS.discriminator(G, Z_yFill)
 
     # Create variables
     G_variables = tf.get_collection(
@@ -195,8 +175,10 @@ def _train(folders, runName, model_dir, model):
     if model == 'WGAN':
         G_loss, D_loss = _wasser_loss(G, R, F, X)
     elif model == 'CWGAN':
-        # G_loss, D_loss = _alt_conditional_loss(R, F)
-        G_loss, D_loss = _conditioned_wasser_loss(G, R, F, X)
+        G_loss, D_loss = _alt_conditional_loss(R, F)
+        # G_loss, D_loss = _conditioned_wasser_loss(G, R, F, X)
+    elif model == 'ACGAN':
+        G_loss, D_loss = _categorical_loss(R, F, R_cat, F_cat, X["y"], Z_multi)
 
     # Build optimizers
     G_opt = tf.train.AdamOptimizer(
@@ -328,6 +310,7 @@ def _runSession(sess, D_train_op, D_loss, G_train_op, G_loss, G, model_dir):
 
     # Update model ITERATIONS number of times
     for iteration in range(1, ITERATIONS + 1):
+        print(iteration)
 
         # Run Discriminator
         for D_update in range(D_UPDATES_PER_G_UPDATES):
@@ -425,8 +408,6 @@ def _conditioned_wasser_loss(G, R, F, X):
     """ Calculates the loss """
 
     # Cost functions
-    # G_loss = -tf.reduce_mean(F)
-    # D_loss = tf.reduce_mean(F) - tf.reduce_mean(R)
     G_loss = tf.reduce_mean(F)
     D_loss = tf.reduce_mean(R) - tf.reduce_mean(F)
 
@@ -489,6 +470,58 @@ def _alt_conditional_loss(R, F):
     return G_loss, D_loss
 
 
+def _categorical_loss(R, F, R_cat, F_cat, X_y, Z_multi):
+    """ A loss for manaing categorical auxiliary values """
+
+    # True / Fake loss
+    D_loss_real = tf.reduce_mean(
+        tf.nn.sigmoid_cross_entropy_with_logits(
+            logits=R,
+            labels=tf.multiply(
+                tf.ones([BATCH_SIZE, 1]),
+                tf.random_uniform(
+                    shape=[BATCH_SIZE, 1],
+                    minval=0.7,
+                    maxval=1.2
+                )
+            )
+        )
+    )
+    D_loss_fake = tf.reduce_mean(
+        tf.nn.sigmoid_cross_entropy_with_logits(
+            logits=F,
+            labels=tf.zeros([BATCH_SIZE, 1])
+        )
+    )
+    D_loss = (D_loss_real + D_loss_fake) / 2
+    G_loss = tf.reduce_mean(
+        tf.nn.sigmoid_cross_entropy_with_logits(
+            logits=F,
+            labels=tf.ones([BATCH_SIZE, 1])
+        )
+    )
+
+    # Categorical loss
+    D_catLoss_R = tf.reduce_mean(
+        tf.nn.softmax_cross_entropy_with_logits_v2(
+            logits=R_cat,
+            labels=tf.squeeze(X_y)
+        )
+    )
+    D_catLoss_F = tf.reduce_mean(
+        tf.nn.softmax_cross_entropy_with_logits_v2(
+            logits=F_cat,
+            labels=Z_multi
+        )
+    )
+    Cat_loss = (D_catLoss_R + D_catLoss_F) / 2
+
+    G_loss = G_loss + Cat_loss
+    D_loss = D_loss + Cat_loss
+
+    return G_loss, D_loss
+
+
 def _modelDirectory(runName, model):
     """ Creates / obtains the name of the model directory """
     directory = 'tmp/' + model + '_' + str(WAV_LENGTH) + '_' + runName + '/'
@@ -530,7 +563,7 @@ def _makeGenerated(random, genMode):
     )
     Z_yFill = _makeYFill(BATCH_SIZE, Z_one_hot)
 
-    return Z_x, Z_y, Z_yFill
+    return Z_x, Z_y, Z_yFill, Z_one_hot
 
 
 def _makeIterators(data, labels, data_size, data_length):
@@ -820,7 +853,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '-wave',
         type=int,
-        default=1024,
+        default=4096,
         help="The wave length of files for this experiment"
     )
     parser.add_argument(

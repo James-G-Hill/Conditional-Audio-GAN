@@ -15,7 +15,7 @@ def nn_distance(args):
         'TransformData.py'
     )
     realData = dataTransformer.transform_data(
-        args.trainDir,
+        'Real_Data/Zero/',  # args.trainDir,
         args.samRate,
         args.fileCount
     )
@@ -24,6 +24,9 @@ def nn_distance(args):
         args.samRate,
         args.fileCount
     )
+
+    realData = np.reshape(realData, [realData.shape[0], -1])
+    genData = np.reshape(genData, [genData.shape[0], -1])
 
     # Create models and calculate
     nn = NearestNeighbors(
