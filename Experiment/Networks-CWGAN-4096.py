@@ -107,13 +107,7 @@ def generator(x, y):
 def discriminator(x, y):
     """ A waveGAN discriminator """
 
-    # x = tf.concat(values=[x, y], axis=2)
-
-    # x = x + tf.random_normal(
-    #     shape=tf.shape(x),
-    #     mean=0.0,
-    #     stddev=0.1
-    # )
+    x = tf.concat(values=[x, y], axis=2)
 
     # Input: [64, 4096, 1] > [64, 1024, 32]
     layer = tf.layers.conv1d(
@@ -166,18 +160,7 @@ def discriminator(x, y):
         padding='valid'
     )[:, 0]
 
-    # Input: [64, 16, 256] > [64, 4096]
-    flatten = tf.reshape(
-        tensor=layer,
-        shape=[BATCH_SIZE, WAV_LENGTH]
-    )
-
-    cat = tf.layers.dense(
-        inputs=flatten,
-        units=2
-    )
-
-    return cat, disc
+    return disc, disc
 
 
 def _phaseShuffle(layer):
