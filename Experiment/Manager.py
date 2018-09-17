@@ -19,29 +19,29 @@ Z_LENGTH = 100
 # Learning
 BETA1 = 0.5
 BETA2 = 0.9
-LEARN_RATE = None  # 0.0001
+LEARN_RATE = None
 
 # Loss Constants
-LAMBDA = None  # 10 for WGAN
+LAMBDA = None
 LOSS_MAX = 400
 
 # Messages
 TRAIN_COMPLETE = False
 
 # MinMax
-D_UPDATES_PER_G_UPDATES = 1  # 1 for WGAN
-G_UPDATES_PER_D_UPDATES = 1  # 1 for WGAN
+D_UPDATES_PER_G_UPDATES = 1
+G_UPDATES_PER_D_UPDATES = 1
 
 # Objects
 NETWORKS = None
 
 # Tensor Management
-CHECKPOINTS = 5000  # 5000
-ITERATIONS = None  # 40000
+CHECKPOINTS = 5000
+ITERATIONS = None
 PROGRAM_MODE = None
 OUTPUT_DIR = None
-SAMPLE_SAVE_RATE = 1000  # 1000
-STEPS = 100  # 100
+SAMPLE_SAVE_RATE = 1000
+STEPS = 100
 
 
 def main(args):
@@ -673,7 +673,7 @@ def _createGenGraph(model_dir, model):
         with tf.variable_scope('G'):
             G = NETWORKS.generator(Z_Input)
         G = tf.identity(G, name='Generator')
-    elif model == 'CWGAN':
+    elif model == 'CWGAN' or model == 'ACGAN':
         with tf.variable_scope('G'):
             G = NETWORKS.generator(Z_Input, Z_Labels)
         G = tf.identity(G, name='Generator')
@@ -698,35 +698,6 @@ def _createGenGraph(model_dir, model):
         saver_def=saver.as_saver_def()
     )
     tf.reset_default_graph()
-
-    return
-
-
-def _restart(runName, model, ckptNum):
-    """ Restarts the training of the model """
-
-    model_dir = _modelDirectory(runName, model)
-
-    tf.reset_default_graph()
-    sess = tf.Session()
-    ckpt = tf.train.latest_checkpoint(model_dir)
-    saver = tf.train.import_meta_graph(
-        model_dir + 'model.ckpt-' + str(ckptNum) + '.meta'
-    )
-    saver.restore(sess, ckpt)
-    graph = tf.get_default_graph()
-
-    _runSession(
-        sess,
-        graph.get_operation_by_name('Adam_1'),
-        graph.get_tensor_by_name('add_1:0'),
-        graph.get_operation_by_name('Adam'),
-        graph.get_tensor_by_name('Neg:0'),
-        graph.get_collection('G'),
-        model_dir
-    )
-
-    sess.close()
 
     return
 
@@ -756,7 +727,7 @@ def _generate(runName, checkpointNum, genMode, model, genLength):
     # Enter into graph
     if model == 'WGAN':
         samples = sess.run(G, {Z_input: Z})
-    elif model == 'CWGAN':
+    elif model == 'CWGAN' or model == 'ACGAN':
         Z_y = np.zeros(
             shape=(genLength, 1, MODEL_SIZE, MODES),
             dtype=np.int16
@@ -778,7 +749,7 @@ def _generate(runName, checkpointNum, genMode, model, genLength):
 
     if model == 'WGAN':
         fileName = 'Random'
-    elif model == 'CWGAN':
+    elif model == 'CWGAN' or model == 'ACGAN':
         fileName = 'Mode_' + str(genMode)
 
     # Write samples to file
