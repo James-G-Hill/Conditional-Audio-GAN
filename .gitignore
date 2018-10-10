@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /Proposal.aux
 /Proposal.log
 /Proposal.out
@@ -5,3 +6,32 @@
 /Proposal.bbl
 /Proposal.blg
 /Proposal.toc
+=======
+/Audio Manipulation/__pycache__/audioDataLoader.cpython-36.pyc
+/CommandPad.py
+/Initial Testing/
+/Experiments/Experiment-WGAN-1024/__pycache__/Networks-WGAN-1024.cpython-36.pyc
+/Experiments/Experiment-WGAN-4096/__pycache__/Networks-WGAN-4096.cpython-36.pyc
+/AWS Instance/TestPair.pem
+Experiments/Experiment-WGAN-1024/Data/*
+Experiments/Experiment-WGAN-4096/Data/*
+Experiments/Experiment-WGAN-1024/__pycache__/*
+/Testing/Initial Testing/__pycache__/Testing Discriminator.cpython-36.pyc
+/Testing/Initial Testing/__pycache__/Testing Generator.cpython-36.pyc
+/Testing/Initial Testing/__pycache__/waveGAN-D-1024.cpython-36.pyc
+/Testing/Initial Testing/__pycache__/waveGAN-G-1024.cpython-36.pyc
+/Testing/Initial Testing/__pycache__/waveGAN2048.cpython-36.pyc
+/.#CommandPad.py
+Experiments/Experiment-CWGAN/__pycache__/*
+Experiments/Experiment-CWGAN/Data/*
+Experiments/Experiment-CWGAN/tmp/*
+Experiment/Data/*
+Experiment/__pycache__/
+Experiment/tmp/*
+Generated/*
+Results/*
+Results/*
+Outputs/*
+Temp Results/*
+*.txt
+>>>>>>> ProjectCode/master
