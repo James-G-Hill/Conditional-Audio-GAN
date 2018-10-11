@@ -1,0 +1,122 @@
+\message{ !name(Report.tex)}% Setup
+\documentclass[a4paper, titlepage]{article}
+
+% Packages
+\usepackage{amsfonts}
+\usepackage[toc, page]{appendix}
+\usepackage[hyphenbreaks]{breakurl}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage[round]{natbib}
+\usepackage{pdflscape}
+\usepackage{pgfgantt}
+\usepackage{pifont}
+\usepackage{ragged2e}
+\usepackage{soul}
+\usepackage{textgreek}
+\usepackage[nottoc, numbib]{tocbibind}
+\usepackage{xcolor}
+
+% Preamble
+\hypersetup{hidelinks}
+
+% Document Information
+\title{
+  \begin{center}Audio Sample Selection\end{center}
+  \begin{center}with\end{center}
+  \begin{center}Generative Adversarial Networks\end{center}
+  \begin{center}\end{center}
+  \begin{center}A dissertation submitted in partial fulfilment of the requirements for the MSc in Intelligent Technologies\end{center}
+  \begin{center}\end{center}
+  \begin{center}by James Hill\end{center}
+  \begin{center}\end{center}
+  \begin{center}Department of Computer Science and Information Systems\end{center}
+  \begin{center}Birkbeck College, University of London\end{center}
+  \begin{center}\end{center}
+  \begin{center}September 2018\end{center}
+  }
+\author{}
+\date{}
+
+% Document
+\begin{document}
+
+\message{ !name(Report.tex) !offset(434) }
+\section{Experiment Results}
+
+There are two experiments: the first uses the smaller dataset \textit{Speech Commands Binary Dataset} with only two modes of data; the second uses four modes of data in the \textit{Speech Commands Directions Dataset}.
+\newpage
+\newpage
+The intitial WaveGAN paper showed that the models were capable of converging within 700 epochs, which corresponded to 200k iterations.
+Further experiments with different datasets that did not measure convergence therefore used the 200k iterations required for convergence as an endpoint.
+\newpage
+\newpage
+The current experiment is going to runthrough the dataset for a set number of iterations.
+Given that the initial \textit{Speech Commands Zero Through Nine} dataset converged at 200k iterations with 10 modes of data the number of iterations per experiment for this paper will be decreased proportionately.
+
+\subsection{2-Modes Experiment}
+
+The two mode experiment has two spoken words: 'zero' and 'one'.
+The training set is derived from the training set for the \textit{Speech Commands Zero Through Nine} dataset and there are 1850 utterances of each word.
+A single epoch passing through both sets of recordings therefore requires 3700 samples. 
+\newpage
+\newpage
+The batch size used for this experiment is 64 and each batch passed through counts as one iteration of the data.
+An epoch therefore requires 57.8 iterations of the data.
+The TensorFlow code is written so that the data is shuffled for each epoch and then divided by the batch size; any data that is remaining is dropped from that epoch.
+Each epoch within the model is therefore 57 iterations long.
+\newpage
+\newpage
+Given that the original experiments were based on 200k iterations with 10-modes of data in the dataset, this experiment uses a proportionately reduced number of iterations as a cut-off point.
+The two-modes of data are one fifth the size of the original ten modes, so the cut-off point will be 40k iterations.
+
+\subsubsection{Baseline WaveGAN}
+
+\subsubsection{Conditional WaveGAN}
+
+\subsubsection{Inception Score}
+
+\subsubsection{Nearest Neighbours}
+
+\subsection{4-Modes Experiment}
+
+The four mode experiment has four spoken words: 'up', 'down', 'left' and 'right'.
+The training set is derived from the training set for the \textit{Speech Commands Zero Through Nine} dataset and there are 1850 utterances of each word.
+A single epoch passing through both sets of recordings therefore requires 7400 samples. 
+\newpage
+\newpage
+The batch size used for this experiment is 64 and each batch passed through counts as one iteration of the data.
+An epoch therefore requires 115.6 iterations of the data.
+The TensorFlow code is written so that the data is shuffled for each epoch and then divided by the batch size; any data that is remaining is dropped from that epoch.
+Each epoch within the model is therefore 115 iterations long.
+\newpage
+\newpage
+Given that the original experiments were based on 200k iterations with 10-modes of data in the dataset, this experiment uses a proportionately reduced number of iterations as a cut-off point.
+The four-modes of data are a little less than half the size of the original ten modes, so the cut-off point will be 80k iterations.
+
+\subsubsection{Baseline WaveGAN}
+
+\subsubsection{Conditional WaveGAN}
+
+\subsubsection{Inception Score}
+
+\subsubsection{Nearest Neighbours}
+
+\subsection{Comparison of Experiments}
+
+Differences between 2-mode and 4-mode.
+
+\subsection{Reflection on Results}
+
+\newpage
+
+% Bibliography
+\setlength{\bibhang}{0pt}
+\bibliography{Bibliography}
+\bibliographystyle{agsm}
+
+% Wrapup
+
+\message{ !name(Report.tex) !offset(431) }
+
+\end{document}

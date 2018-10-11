@@ -1,0 +1,73 @@
+* Outline of Project Report
+
+- Table of Contents
+
+** Introduction
+
+- The Problem area
+- Aims & Objectives
+- Structure of the report
+
+** Theory
+
+- Related Work
+- Design of GANs:
+  - MinMax
+  - Wasserstein loss
+- Measurement:
+  - Inception Score
+  - Nearest Neighbours
+
+** Model Design
+
+- WaveGAN model:
+  - Phase Shuffle
+  - Hyperparameter choice
+- Conditional WaveGAN model:
+  - Modifications made for 'conditioning'
+  - Hyperparameter choice
+
+** Data
+
+- Data choice & manipulation:
+  - Differences between audio & images
+  - Sample rates & choice of 4000hz for experiments
+  - Data Sets:
+    - 2-mode: zero, one
+    - 4-mode: up, down, left, right
+
+** Development Environment
+
+- Code Environment:
+  - Ubuntu
+  - Python
+    - numpy
+    - librosa
+    - soundfile
+  - Tensorflow
+  - Tensorboard
+  - Jupyter
+- AWS:
+  - EC2
+  - On demand GPU instances
+
+** Experiment Results
+
+- 2-mode data experiment (zero, one):
+  - Baseline WaveGAN results
+  - Conditional WaveGAN results
+  - Inception Scores
+  - Nearest Neighbours
+
+- 4-mode data experiment (up, down, left, right):
+  - Baseline WaveGAN results
+  - Conditional WaveGAN results
+  - Inception Scores
+  - Nearest Neighbours
+
+- Comparison of Experiments
+  - Differences between 2-mode & 4-mode
+
+- Reflection on Results
+
+** Bibliography
