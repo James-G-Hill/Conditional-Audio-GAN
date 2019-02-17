@@ -1,6 +1,6 @@
 # Conditional Audio Generative Adversarial Network
 
-My final project for an MSc Intelligent Technologies at Birkbeck, University of London.
+My dissertation project for an MSc Intelligent Technologies at Birkbeck, University of London.
 
 ## Research Area
 
