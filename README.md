@@ -1,6 +1,6 @@
 # Conditional Audio Generative Adversarial Network
 
-My dissertation project for an MSc Intelligent Technologies at Birkbeck, University of London.
+My dissertation project for MSc Intelligent Technologies at Birkbeck College, University of London.
 
 ## Research Area
 
@@ -40,6 +40,11 @@ With more time (and a better understanding than I had when setting out on this p
 The results of this research would have allowed me more insight into the factors that would be effecting the successful design of the conditioned models.
 
 I also think that the adjustment I made to the concatenation method of conditioning, where the audio sample was directly placed into the relevant channel of the tensor, rather than a layer of 1s being placed there, could be tested on more primitive experiments with conditioning GANs (for example, with the MNIST handwritten digits dataset) to check whether this does improve on any previous methods.
+
+## Tooling
+
+The code for these experiments was written in Python, TensorFlow and Numpy with some other Python packages also used for minor functionality.
+The experiments were run on AWS EC2 instances.
 
 ## Further Reading
 
